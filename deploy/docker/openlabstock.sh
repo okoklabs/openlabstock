@@ -145,6 +145,6 @@ case "${1:-}" in
   status) need_env; compose ps; health ;;
   logs) need_env; compose logs -f --tail=100 app ;;
   down) need_env; compose down ;;
-  smoke) "$SCRIPT_DIR/smoke-test.sh" ;;
+  smoke) bash "$SCRIPT_DIR/smoke-test.sh" ;;
   *) usage; exit 1 ;;
 esac
