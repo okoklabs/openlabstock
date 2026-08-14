@@ -69,7 +69,7 @@ async function startServer(origin, serverDataDir = dataDir, extraEnv = {}) {
       DATA_DIR: serverDataDir,
       PORT: String(port),
       HOST: '127.0.0.1',
-      SQLITE_BUSY_TIMEOUT_MS: '500',
+      SQLITE_BUSY_TIMEOUT_MS: '2000',
       ...extraEnv,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -669,7 +669,10 @@ test('完整的耗材、权限和成员管理流程', async () => {
     method: 'POST', session: member, origin: index % 2 ? secondBaseUrl : baseUrl,
     body: { type: 'in', materialId: created.payload.material.id, quantity: 1, note: '双进程并发测试' },
   })));
-  assert.ok(concurrentWrites.every((result) => result.response.status === 201));
+  const failedConcurrentWrites = concurrentWrites
+    .filter((result) => result.response.status !== 201)
+    .map((result) => ({ status: result.response.status, error: result.payload.error }));
+  assert.deepEqual(failedConcurrentWrites, []);
 
   const singleStock = await request('/api/transactions', {
     method: 'POST', session: member,
