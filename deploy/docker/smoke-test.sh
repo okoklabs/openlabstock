@@ -43,6 +43,13 @@ replace_env() {
   mv "$temporary" "$ENV_FILE"
 }
 
+start_compose() {
+  if ! compose up "$@"; then
+    compose logs --tail=200 app >&2 || true
+    die '应用容器未通过启动或健康检查'
+  fi
+}
+
 cleanup() {
   local status="$1" image
   trap - EXIT INT TERM
@@ -146,7 +153,7 @@ compose build --pull
 
 printf '2/7 首次启动并等待健康检查\n'
 STARTED=1
-compose up -d --wait
+start_compose -d --wait
 container_id="$(compose ps -q app)"
 [[ -n "$container_id" ]] || die '没有找到 app 容器'
 [[ "$(compose ps -q app | wc -l | tr -d ' ')" == 1 ]] || die '必须且只能运行一个 app 容器'
@@ -170,7 +177,7 @@ docker image tag "$INITIAL_IMAGE" "openlabstock:$ROLLBACK_TAG"
 
 printf '5/7 清除初始化密码并重建，验证数据持久化\n'
 replace_env INITIAL_ADMIN_PASSWORD ''
-compose up -d --force-recreate --wait
+start_compose -d --force-recreate --wait
 [[ -z "$(compose exec -T app printenv INITIAL_ADMIN_PASSWORD | tr -d '\r\n')" ]] || die '重建后容器仍持有明文初始化密码'
 api_check 0
 
@@ -185,14 +192,14 @@ printf '7/7 模拟更新与镜像回滚，复核数据仍存在\n'
 replace_env OPENLABSTOCK_IMAGE_TAG "$CANDIDATE_TAG"
 replace_env OPENLABSTOCK_IMAGE_VERSION 'smoke-candidate'
 compose build
-compose up -d --wait
+start_compose -d --wait
 container_id="$(compose ps -q app)"
 CANDIDATE_IMAGE="$(docker inspect -f '{{.Image}}' "$container_id")"
 [[ "$CANDIDATE_IMAGE" != "$INITIAL_IMAGE" ]] || die '候选镜像与初始镜像没有形成不同版本'
 api_check 0
 
 docker image tag "openlabstock:$ROLLBACK_TAG" "openlabstock:$CANDIDATE_TAG"
-compose up -d --force-recreate --wait
+start_compose -d --force-recreate --wait
 container_id="$(compose ps -q app)"
 [[ "$(docker inspect -f '{{.Image}}' "$container_id")" == "$INITIAL_IMAGE" ]] || die '容器没有切回初始镜像'
 api_check 0

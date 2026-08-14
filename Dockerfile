@@ -35,6 +35,7 @@ RUN install -d -o node -g node -m 700 /var/lib/openlabstock /var/backups/openlab
 
 COPY package.json password.mjs server.mjs storage.mjs ./
 COPY scripts ./scripts
+COPY src/server ./src/server
 COPY --from=build /build/dist ./dist
 
 USER node

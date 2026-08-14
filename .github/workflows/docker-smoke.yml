@@ -16,6 +16,7 @@ on:
       - "password.mjs"
       - "server.mjs"
       - "storage.mjs"
+      - "src/server/**"
       - "scripts/backup.mjs"
       - "scripts/reset-owner-password.mjs"
   pull_request:
@@ -32,6 +33,7 @@ on:
       - "password.mjs"
       - "server.mjs"
       - "storage.mjs"
+      - "src/server/**"
       - "scripts/backup.mjs"
       - "scripts/reset-owner-password.mjs"
   workflow_dispatch:
