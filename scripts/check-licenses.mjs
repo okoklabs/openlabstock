@@ -16,6 +16,7 @@ const allowedExpressions = new Set([
   'CC0-1.0',
   'CC-BY-4.0',
   'ISC',
+  'LGPL-3.0-or-later',
   'MIT',
   'MPL-2.0',
   'Python-2.0',

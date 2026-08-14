@@ -20,7 +20,7 @@ Versions are pinned by [`pnpm-lock.yaml`](./pnpm-lock.yaml). This table is an in
 | `@types/qrcode` | Type declarations | MIT | <https://github.com/DefinitelyTyped/DefinitelyTyped> |
 | `typescript` | Type checking | Apache-2.0 | <https://github.com/microsoft/TypeScript> |
 
-Important transitive components used by browser or build workflows include `@zxing/library` (`Apache-2.0`), `@zxing/text-encoding` (`Unlicense OR Apache-2.0`), and platform Sharp/libvips packages whose installed metadata can include `Apache-2.0 AND LGPL-3.0-or-later`.
+Important transitive components used by browser or build workflows include `@zxing/library` (`Apache-2.0`), `@zxing/text-encoding` (`Unlicense OR Apache-2.0`), and platform Sharp/libvips packages whose installed metadata can include `Apache-2.0 AND LGPL-3.0-or-later` or `LGPL-3.0-or-later`.
 
 ## Audited License Expressions
 
@@ -35,6 +35,7 @@ For the `2026.8.14-r41` lockfile, `pnpm licenses list --prod --json` reported on
 - `CC0-1.0`
 - `CC-BY-4.0`
 - `ISC`
+- `LGPL-3.0-or-later`
 - `MIT`
 - `MPL-2.0`
 - `Python-2.0`
