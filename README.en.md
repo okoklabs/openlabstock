@@ -92,7 +92,7 @@ Examples include precision probes and probe cards, quartz cuvettes, reference el
 
 OpenLabStock uses a compact responsive Material 3 interface. Members can scan, register, and search from a phone; administrators can stocktake, maintain units, and resolve anomalies. Its restricted-network PWA never caches, queues, or replays inventory writes.
 
-All README screenshots were captured from the running application with isolated synthetic data. No production database or real member record is included.
+Product UI shown in the README comes from the running application with isolated synthetic data. The QR workflow is drawn from the same interface structure. No production database or real member record is included.
 
 ## Best fit
 

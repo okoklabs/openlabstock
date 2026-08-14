@@ -8,7 +8,8 @@
 - [ ] `[PUBLIC]` 配置并测试 `conduct@okoklabs.com` 后，移除行为准则中的待启用说明。
 - [ ] `[PUBLIC]` 在全新 Linux 环境从本仓库完成安装、构建、空库启动、旧库升级、备份、恢复和回滚演练。
 - [ ] `[PUBLIC]` 在具备 Docker Engine 的 Linux 环境运行 `bash deploy/docker/openlabstock.sh smoke`，确认 Compose 不连接任何正式卷。
-- [ ] `[PUBLIC]` 逐领域拆分前端、API 路由和测试，每次只迁移一个边界并保持现有 API 行为。
+- [ ] `[PUBLIC]` 为登录、扫码定位、登记确认和库存写入建立最小浏览器回归基线，覆盖桌面与 `390 x 844` 手机视口，并确认扫码不会直接生成流水。
+- [ ] `[PUBLIC]` 以“记录查询与导出”为第一个边界拆分 `server.mjs` 与 `src/scripts/app.ts`；保持现有 API、权限和导出行为，并用现有回归测试锁定迁移结果。
 
 ## Manual Verification
 

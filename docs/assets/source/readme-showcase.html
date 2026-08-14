@@ -1,0 +1,659 @@
+<!doctype html>
+<!-- Render at a 2560 x 1440 viewport. Use capture=windows125 only when the capture surface applies Windows 125% scaling. -->
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenLabStock README showcase</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: "Microsoft YaHei", "Noto Sans SC", "PingFang SC", Arial, sans-serif;
+        color: #17211e;
+        background: #f4f8f6;
+      }
+
+      * { box-sizing: border-box; }
+
+      html,
+      body {
+        width: 2560px;
+        height: 1440px;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body[data-view="hero"] .workflow,
+      body[data-view="workflow"] .hero { display: none; }
+
+      .scene {
+        position: relative;
+        width: 2560px;
+        height: 1440px;
+        overflow: hidden;
+        background: #f4f8f6;
+      }
+
+      .eyebrow {
+        margin: 0 0 26px;
+        color: #087a61;
+        font-size: 30px;
+        font-weight: 800;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 960px 1fr;
+      }
+
+      .hero::after {
+        position: absolute;
+        inset: 0 0 0 1060px;
+        z-index: 0;
+        background: #d9eee6;
+        content: "";
+      }
+
+      .hero-copy {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        padding: 82px 70px 68px 112px;
+        background: #f4f8f6;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        font-size: 46px;
+        font-weight: 800;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 72px;
+        height: 72px;
+        place-items: center;
+        border-radius: 8px;
+        color: white;
+        background: #087a61;
+        box-shadow: 0 12px 26px rgba(11, 72, 58, 0.18);
+        font-size: 38px;
+      }
+
+      .hero-main {
+        margin-top: 178px;
+      }
+
+      .hero h1 {
+        max-width: 820px;
+        margin: 0;
+        font-size: 82px;
+        line-height: 1.16;
+        letter-spacing: 0;
+      }
+
+      .hero-summary {
+        max-width: 780px;
+        margin: 42px 0 40px;
+        color: #4e5d58;
+        font-size: 35px;
+        line-height: 1.62;
+      }
+
+      .hero-points {
+        display: grid;
+        gap: 25px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: 29px;
+        font-weight: 700;
+      }
+
+      .hero-points li {
+        display: grid;
+        grid-template-columns: 64px 1fr;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .number {
+        display: grid;
+        width: 60px;
+        height: 60px;
+        place-items: center;
+        border: 2px solid #8fc8b7;
+        border-radius: 50%;
+        color: #087a61;
+        font-size: 23px;
+      }
+
+      .hero-meta {
+        margin-top: auto;
+        color: #087a61;
+        font-size: 26px;
+        font-weight: 800;
+      }
+
+      .hero-stage {
+        position: relative;
+        z-index: 1;
+      }
+
+      .desktop-shot {
+        position: absolute;
+        top: 298px;
+        right: 92px;
+        width: 1180px;
+        height: 820px;
+        overflow: hidden;
+        border: 10px solid rgba(255, 255, 255, 0.92);
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 28px 70px rgba(21, 67, 54, 0.16);
+      }
+
+      .desktop-shot img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .mobile-shot {
+        position: absolute;
+        z-index: 2;
+        top: 425px;
+        right: 92px;
+        width: 390px;
+        height: 843px;
+        overflow: hidden;
+        border: 11px solid #24302c;
+        border-radius: 62px;
+        background: #fff;
+        box-shadow: 0 28px 70px rgba(21, 45, 37, 0.24);
+      }
+
+      .mobile-shot img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .stage-note {
+        position: absolute;
+        right: 100px;
+        bottom: 66px;
+        color: #55635f;
+        font-size: 25px;
+      }
+
+      .workflow {
+        padding: 64px 96px 58px;
+      }
+
+      .workflow-header {
+        display: grid;
+        grid-template-columns: 1fr 940px;
+        align-items: end;
+        gap: 80px;
+        padding-bottom: 34px;
+        border-bottom: 2px solid #cbd8d3;
+      }
+
+      .workflow h1 {
+        margin: 0;
+        font-size: 66px;
+        line-height: 1.2;
+      }
+
+      .workflow-lead {
+        margin: 0 0 8px;
+        color: #5d6965;
+        font-size: 29px;
+        line-height: 1.55;
+        text-align: right;
+      }
+
+      .workflow-grid {
+        display: grid;
+        grid-template-columns: 1fr 116px 1fr 116px 1fr;
+        align-items: center;
+        gap: 22px;
+        height: 1090px;
+        padding-top: 30px;
+      }
+
+      .flow-panel {
+        display: grid;
+        grid-template-rows: 820px auto;
+        align-self: stretch;
+        min-width: 0;
+      }
+
+      .panel-visual {
+        display: grid;
+        place-items: center;
+        min-width: 0;
+      }
+
+      .step-copy {
+        align-self: start;
+        padding: 18px 14px 0;
+      }
+
+      .step-title {
+        display: flex;
+        align-items: baseline;
+        gap: 22px;
+        margin-bottom: 18px;
+        font-size: 32px;
+        font-weight: 800;
+      }
+
+      .step-index { color: #087a61; font-size: 25px; }
+
+      .step-copy p {
+        margin: 0;
+        color: #5a6763;
+        font-size: 25px;
+        line-height: 1.55;
+      }
+
+      .arrow {
+        display: grid;
+        width: 76px;
+        height: 76px;
+        place-self: center;
+        place-items: center;
+        border: 2px solid #8fc8b7;
+        border-radius: 50%;
+        color: #087a61;
+        background: #f8fbfa;
+        font-size: 42px;
+      }
+
+      .box-card {
+        position: relative;
+        width: 660px;
+        height: 650px;
+        padding: 46px;
+        border: 2px solid #cddbd6;
+        border-radius: 8px;
+        background: #edf3f0;
+        box-shadow: 0 18px 44px rgba(27, 63, 52, 0.09);
+      }
+
+      .physical-box {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        padding: 34px;
+        border: 9px solid #647a73;
+        border-radius: 8px;
+        background: #fbfdfc;
+        box-shadow: inset 0 0 0 3px #d9e3df;
+      }
+
+      .box-heading {
+        display: flex;
+        justify-content: space-between;
+        padding-bottom: 22px;
+        border-bottom: 2px solid #cbd8d3;
+        font-size: 25px;
+        font-weight: 800;
+      }
+
+      .slot-grid {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 11px 8px;
+        margin-top: 28px;
+      }
+
+      .slot {
+        display: grid;
+        aspect-ratio: 1;
+        place-items: center;
+        border: 2px solid #c8d6d1;
+        border-radius: 6px;
+        color: #70807b;
+        font-size: 13px;
+      }
+
+      .qr-label {
+        position: absolute;
+        right: 32px;
+        bottom: 30px;
+        display: grid;
+        grid-template-columns: 138px 1fr;
+        align-items: center;
+        gap: 18px;
+        width: 330px;
+        padding: 16px;
+        border: 2px solid #cbd8d3;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 10px 22px rgba(22, 59, 48, 0.1);
+      }
+
+      .qr-label img { width: 138px; height: 138px; }
+
+      .qr-label strong { display: block; font-size: 19px; }
+      .qr-label span { color: #61706b; font-size: 15px; line-height: 1.45; }
+
+      .bench-label {
+        position: absolute;
+        right: 50px;
+        bottom: 20px;
+        color: #7a8883;
+        font-size: 20px;
+      }
+
+      .phone {
+        position: relative;
+        width: 430px;
+        height: 760px;
+        overflow: hidden;
+        border: 18px solid #26332f;
+        border-radius: 64px;
+        background: #e8efec;
+        box-shadow: 0 24px 54px rgba(21, 45, 37, 0.2);
+      }
+
+      .phone::before {
+        position: absolute;
+        z-index: 5;
+        top: 15px;
+        left: 50%;
+        width: 132px;
+        height: 12px;
+        border-radius: 999px;
+        background: #43534e;
+        content: "";
+        transform: translateX(-50%);
+      }
+
+      .camera-bar {
+        display: grid;
+        height: 92px;
+        place-items: center;
+        color: #fff;
+        background: #1d2b26;
+        font-size: 23px;
+        font-weight: 700;
+      }
+
+      .camera-view {
+        position: relative;
+        display: grid;
+        height: 520px;
+        place-items: center;
+        background: #dbe5e1;
+      }
+
+      .camera-object {
+        position: relative;
+        width: 300px;
+        height: 320px;
+        padding: 20px;
+        border: 7px solid #71837d;
+        border-radius: 8px;
+        background: #f9fbfa;
+        transform: rotate(-3deg);
+      }
+
+      .camera-object .slot-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        margin: 30px 0 0;
+      }
+
+      .camera-object .slot { font-size: 0; }
+      .camera-object img { position: absolute; right: 22px; bottom: 22px; width: 118px; height: 118px; }
+
+      .scan-line {
+        position: absolute;
+        z-index: 2;
+        right: 35px;
+        left: 35px;
+        top: 50%;
+        height: 5px;
+        background: #20c997;
+        box-shadow: 0 0 18px rgba(32, 201, 151, 0.55);
+      }
+
+      .scan-corner {
+        position: absolute;
+        width: 68px;
+        height: 68px;
+        border-color: #20c997;
+        border-style: solid;
+      }
+
+      .scan-corner.tl { top: 80px; left: 48px; border-width: 5px 0 0 5px; }
+      .scan-corner.tr { top: 80px; right: 48px; border-width: 5px 5px 0 0; }
+      .scan-corner.bl { bottom: 80px; left: 48px; border-width: 0 0 5px 5px; }
+      .scan-corner.br { right: 48px; bottom: 80px; border-width: 0 5px 5px 0; }
+
+      .scan-result {
+        display: grid;
+        height: 112px;
+        place-items: center;
+        color: #fff;
+        background: #1d2b26;
+        text-align: center;
+      }
+
+      .scan-result strong { display: block; color: #5ee0b6; font-size: 24px; }
+      .scan-result span { font-size: 18px; }
+
+      .form-phone {
+        height: 790px;
+        background: #f7faf9;
+      }
+
+      .form-appbar {
+        padding: 52px 28px 20px;
+        border-bottom: 2px solid #d5dfdb;
+        background: #fff;
+      }
+
+      .form-appbar strong { display: block; font-size: 23px; }
+      .form-appbar span { color: #697672; font-size: 16px; }
+
+      .form-sheet {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 630px;
+        padding: 26px;
+        border-radius: 34px 34px 0 0;
+        background: white;
+        box-shadow: 0 -14px 32px rgba(25, 59, 48, 0.13);
+      }
+
+      .sheet-heading {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        margin-bottom: 22px;
+      }
+
+      .sheet-heading strong { display: block; font-size: 26px; }
+      .sheet-heading span { color: #61706b; font-size: 16px; }
+      .close { font-size: 24px; }
+
+      .selected-unit {
+        margin-bottom: 20px;
+        padding: 17px 18px;
+        border-left: 7px solid #087a61;
+        background: #e2f2ec;
+      }
+
+      .selected-unit strong { display: block; font-size: 19px; }
+      .selected-unit span { color: #52625d; font-size: 15px; }
+
+      .field { margin-top: 15px; }
+      .field label { display: block; margin-bottom: 7px; font-size: 16px; font-weight: 800; }
+      .required { color: #a9413b; }
+
+      .input {
+        display: flex;
+        height: 54px;
+        align-items: center;
+        padding: 0 15px;
+        border: 2px solid #aab8b3;
+        border-radius: 7px;
+        color: #34423d;
+        font-size: 17px;
+      }
+
+      .helper { margin-top: 5px; color: #73807c; font-size: 13px; }
+
+      .form-actions {
+        position: absolute;
+        right: 26px;
+        bottom: 24px;
+        left: 26px;
+        display: grid;
+        grid-template-columns: 112px 1fr;
+        gap: 13px;
+      }
+
+      .button {
+        display: grid;
+        height: 56px;
+        place-items: center;
+        border: 2px solid #9ab0a8;
+        border-radius: 28px;
+        color: #315249;
+        font-size: 17px;
+        font-weight: 800;
+      }
+
+      .button.primary { border-color: #087a61; color: white; background: #087a61; }
+    </style>
+  </head>
+  <body>
+    <main class="scene hero">
+      <section class="hero-copy">
+        <div class="brand"><span class="brand-mark">▦</span>OpenLabStock</div>
+        <div class="hero-main">
+          <p class="eyebrow">常规耗材与逐件追踪物品</p>
+          <h1>让实验室库存<br />真正跟得上实验台</h1>
+          <p class="hero-summary">普通耗材按数量，高价值、可复用或需追溯的物品再按盒号、格位和单件管理。</p>
+          <ul class="hero-points">
+            <li><span class="number">01</span><span>微信或系统相机扫码，直达登记</span></li>
+            <li><span class="number">02</span><span>盒号、格位、状态、自用人逐项可查</span></li>
+            <li><span class="number">03</span><span>更正、盘点与管理员操作完整留痕</span></li>
+          </ul>
+        </div>
+        <div class="hero-meta">自托管 · SQLite · AGPL-3.0</div>
+      </section>
+      <section class="hero-stage">
+        <div class="desktop-shot"><img src="../openlabstock-probe-tablet.png" alt="平板端库存单元界面" /></div>
+        <div class="mobile-shot"><img src="../openlabstock-probe-mobile.png" alt="手机端库存单元界面" /></div>
+        <div class="stage-note">桌面、平板、手机响应式 Material 3 工作台</div>
+      </section>
+    </main>
+
+    <main class="scene workflow">
+      <header class="workflow-header">
+        <div>
+          <p class="eyebrow">扫码登记场景</p>
+          <h1>把登记入口贴到耗材上</h1>
+        </div>
+        <p class="workflow-lead">先给实体盒贴二维码，再用微信或系统相机扫描；只有确认数量、格位与用途后，才生成库存记录。</p>
+      </header>
+
+      <section class="workflow-grid">
+        <article class="flow-panel">
+          <div class="panel-visual">
+            <div class="box-card">
+              <div class="physical-box">
+                <div class="box-heading"><span>P260814-01</span><span>50 件 / 容量 50</span></div>
+                <div class="slot-grid" data-slots="50"></div>
+                <div class="qr-label">
+                  <img src="./demo-qr.svg" alt="库存单元二维码" />
+                  <div><strong>P260814-01</strong><span>微波阻抗探针 GSG-100<br />探针柜 A2</span></div>
+                </div>
+              </div>
+              <span class="bench-label">实验台</span>
+            </div>
+          </div>
+          <div class="step-copy">
+            <div class="step-title"><span class="step-index">01</span><span>为实体盒贴码</span></div>
+            <p>盒、批次或序列单元拥有独立二维码，不依赖可能修改的耗材名称。</p>
+          </div>
+        </article>
+
+        <div class="arrow" aria-hidden="true">→</div>
+
+        <article class="flow-panel">
+          <div class="panel-visual">
+            <div class="phone">
+              <div class="camera-bar">微信扫一扫 / 系统相机</div>
+              <div class="camera-view">
+                <div class="camera-object">
+                  <div class="slot-grid" data-slots="20"></div>
+                  <img src="./demo-qr.svg" alt="正在扫描的二维码" />
+                </div>
+                <i class="scan-line"></i>
+                <i class="scan-corner tl"></i><i class="scan-corner tr"></i>
+                <i class="scan-corner bl"></i><i class="scan-corner br"></i>
+              </div>
+              <div class="scan-result"><div><strong>已识别 P260814-01</strong><span>正在打开对应耗材与库存单元</span></div></div>
+            </div>
+          </div>
+          <div class="step-copy">
+            <div class="step-title"><span class="step-index">02</span><span>手机扫描二维码</span></div>
+            <p>扫码只负责精确定位，不会立即扣减库存，也不会自动生成使用记录。</p>
+          </div>
+        </article>
+
+        <div class="arrow" aria-hidden="true">→</div>
+
+        <article class="flow-panel">
+          <div class="panel-visual">
+            <div class="phone form-phone">
+              <div class="form-appbar"><strong>微波阻抗探针 GSG-100</strong><span>库存单元、状态与使用范围</span></div>
+              <div class="form-sheet">
+                <div class="sheet-heading"><div><strong>登记使用</strong><span>确认本次使用信息后保存</span></div><span class="close">×</span></div>
+                <div class="selected-unit"><strong>P260814-01 · 探针柜 A2 · 2-3</strong><span>已启用 · 开放使用</span></div>
+                <div class="field"><label>数量 <span class="required">· 必填</span></label><div class="input">1</div></div>
+                <div class="field"><label>用途 / 实验项目 <span class="required">· 必填</span></label><div class="input">微波阻抗测试</div><div class="helper">填写本次使用位置、项目或样品信息</div></div>
+                <div class="field"><label>发生时间 <span class="required">· 必填</span></label><div class="input">2026/08/14 20:10</div></div>
+                <div class="form-actions"><div class="button">取消</div><div class="button primary">保存使用记录</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="step-copy">
+            <div class="step-title"><span class="step-index">03</span><span>确认后保存</span></div>
+            <p>成员确认数量、格位、用途和时间；后端校验通过后才写入流水与审计链路。</p>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script>
+      const parameters = new URLSearchParams(location.search);
+      document.body.dataset.view = parameters.get('view') === 'workflow' ? 'workflow' : 'hero';
+      if (parameters.get('capture') === 'windows125') document.body.style.zoom = '0.8';
+      document.querySelectorAll('[data-slots]').forEach((grid) => {
+        const count = Number(grid.dataset.slots);
+        for (let index = 0; index < count; index += 1) {
+          const slot = document.createElement('span');
+          slot.className = 'slot';
+          slot.textContent = count === 50 ? `${Math.floor(index / 10) + 1}-${(index % 10) + 1}` : '';
+          grid.append(slot);
+        }
+      });
+    </script>
+  </body>
+</html>
