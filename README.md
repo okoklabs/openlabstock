@@ -46,7 +46,7 @@
 
 ## 把登记入口贴到耗材上
 
-![OpenLabStock 扫码登记流程：贴码、扫码定位、确认使用](./docs/assets/openlabstock-scan-workflow.png)
+![OpenLabStock 扫码登记流程：盒子贴码、手机扫描、确认后保存](./docs/assets/openlabstock-scan-workflow-v2.png)
 
 二维码绑定不可变的耗材或库存单元 UUID，而不是可能被修改的名称。扫码只负责定位，不会绕过登录、数量确认和后端校验，也不会发生“一扫就误扣库存”。
 

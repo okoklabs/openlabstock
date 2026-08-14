@@ -34,7 +34,7 @@ Spreadsheets can count what remains. They are much less reliable at answering wh
 
 ## Put the registration entry point on the material
 
-![OpenLabStock QR workflow: label, locate, and confirm usage](./docs/assets/openlabstock-scan-workflow.png)
+![OpenLabStock QR workflow: label the box, scan with a phone, and confirm the record](./docs/assets/openlabstock-scan-workflow-v2.png)
 
 QR codes bind immutable material or inventory-unit UUIDs rather than editable names. A scan locates the record but never bypasses sign-in, confirmation, or backend validation.
 
