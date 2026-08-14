@@ -10,9 +10,9 @@
 > or other submission as acceptance of this candidate. The agreement will
 > become available for acceptance only after the contact address is verified,
 > the public repository and designated signing service are configured, the
-> governing-law provision is finalized, and the required `license/cla` check is
-> tested. Until then, maintainers must not merge external copyrightable
-> contributions.
+> governing-law provision receives final professional review, and the required
+> `license/cla` check is tested. Until then, maintainers must not merge external
+> copyrightable contributions.
 
 This candidate is based on the structure and licensing approach of the
 [Harmony Agreements](https://www.harmonyagreements.org/) and is adapted for an
@@ -172,9 +172,13 @@ Your GitHub identity and whether the CLA check passed.
 4. This Agreement may be accepted electronically. The authoritative acceptance
    record is the record retained by the designated signing service and the
    Project's private compliance archive.
-5. **Governing law and dispute forum must be inserted and reviewed before this
-   candidate is activated. No one may accept this candidate while this item is
-   unresolved.**
+5. This Agreement is governed by the laws of the People's Republic of China,
+   excluding for this purpose the laws of the Hong Kong Special Administrative
+   Region, the Macao Special Administrative Region, and Taiwan, and without
+   regard to conflict-of-laws principles. Any dispute arising out of or in
+   connection with this Agreement is subject to the exclusive jurisdiction of
+   a people's court with competent jurisdiction at the domicile of the Project
+   Steward.
 
 ## Activation Record
 
@@ -188,6 +192,6 @@ This section is operational and is not a signature block.
 | Intended public repository | `okoklabs/openlabstock` |
 | Planned signing service | CLA Assistant hosted service |
 | Contact | `contact@okoklabs.com` (receiving verified; activation review pending) |
-| Governing law and forum | Not yet finalized |
+| Governing law and forum | Laws of the People's Republic of China; competent people's court at the Project Steward's domicile (pending final professional review) |
 | Activation date | Not set |
 | Authoritative agreement revision | Not set |
