@@ -2,7 +2,7 @@
   <img src="./public/icons/labstock-192-v1.png" alt="OpenLabStock logo" width="88" />
   <h1>OpenLabStock</h1>
   <h2>Inventory that keeps up with the laboratory bench</h2>
-  <p>From gloves and pipette tips to reusable probes packed 50 per box: checkout, QR registration, stocktake, and traceability in one self-hosted workspace.</p>
+  <p>From ordinary consumables to high-value, reusable, or traceability-critical lab items: checkout, QR registration, stocktake, and traceability in one self-hosted workspace.</p>
   <p><a href="./README.md">简体中文</a> · <strong>English</strong></p>
   <p><strong>Note:</strong> the current application interface is Chinese-first. This page is an English project overview, not a claim of complete UI localization.</p>
   <p>
@@ -13,7 +13,7 @@
   </p>
 </div>
 
-![OpenLabStock cover showing the desktop dashboard and a mobile QR label](./docs/assets/openlabstock-readme-hero.png)
+![OpenLabStock cover showing quantity inventory and tracked high-value items](./docs/assets/openlabstock-readme-hero-v2.png)
 
 ## The hard part is not making another spreadsheet
 
@@ -24,10 +24,10 @@ Spreadsheets can count what remains. They are much less reliable at answering wh
 <table>
   <tr>
     <td width="50%"><h3>Scan to the record; confirm before stock changes</h3><p>Put a QR label on a material or box. WeChat or the built-in scanner opens the exact form; quantity, destination, and time are confirmed before the write.</p></td>
-    <td width="50%"><h3>Count ordinary supplies; trace reusable items</h3><p>Manage gloves and tips by quantity, while probes, kits, and lots can continue down to box, position, state, and reserved member.</p></td>
+    <td width="50%"><h3>Count ordinary supplies; trace important items</h3><p>Keep gloves and tips simple, while high-value, reusable, or quality-sensitive items can continue down to box, position, state, and reserved member.</p></td>
   </tr>
   <tr>
-    <td width="50%"><h3>A use event does not require a fake state change</h3><p>Usage and lifecycle state are separate facts, so a reusable probe can accumulate usage history while remaining in the same state.</p></td>
+    <td width="50%"><h3>A use event does not require a fake state change</h3><p>Usage and lifecycle state are separate facts, so a reusable item can accumulate usage history while remaining in the same state.</p></td>
     <td width="50%"><h3>Correct mistakes without erasing history</h3><p>Corrections are explicit reversal records. Original entries, reasons, stocktake differences, and privileged changes remain traceable.</p></td>
   </tr>
 </table>
@@ -53,17 +53,28 @@ QR codes bind immutable material or inventory-unit UUIDs rather than editable na
   </tr>
 </table>
 
-## Three inventory models, one workspace
+## Keep ordinary supplies simple; trace important items only when it pays off
 
 | Model | Best for | What is tracked |
 | --- | --- | --- |
 | **Quantity** | Gloves, tips, bottles, and tubes | Current quantity, safety stock, inbound and outbound transactions |
-| **Stateful pool** | Reusable items that need states but not box identity | Quantity by configurable state and shared or member-reserved scope |
-| **Tracked units** | Probes, kits, lots, boxes, positions, and serialized items | Unit identity, exact position, state, reserved member, and every use event |
+| **Stateful pool** | Washable filters, quartz cuvettes, and other items that need states but not box identity | Quantity by configurable state and shared or member-reserved scope |
+| **Tracked units** | Precision probes, reference electrodes, calibration standards, sensor modules, lots, and serialized items | Unit identity, exact position, state, reserved member, and every use event |
 
 Teams can begin with ordinary quantity inventory and enable state or unit tracking only where physical traceability is worth the effort.
 
-## A 50-probe box can still explain position 2-3
+### When is item-level tracking worth the effort?
+
+Use item or lot tracking when at least one of these conditions applies:
+
+- **High unit value:** loss, damage, or incorrect checkout costs more than the registration effort.
+- **Repeated use:** current state and usage history affect the next experiment.
+- **The same item must be found again:** it has a box, position, serial number, or fixed location.
+- **Quality, safety, or calibration matters:** lot, validity, responsible member, or disposal reason needs traceability.
+
+Examples include precision probes and probe cards, quartz cuvettes, reference electrodes, washable filters, calibration standards, reference samples, sensor modules, microfluidic chips, specialty columns, sample holders and fixtures, gas cylinders, and compact tool kits. When none of these conditions applies, quantity mode avoids unnecessary per-item work.
+
+## One representative scenario: a 50-probe box can still explain position 2-3
 
 <table>
   <tr>
@@ -86,7 +97,7 @@ All README screenshots were captured from the running application with isolated 
 ## Best fit
 
 - Research teams replacing linked spreadsheets, forms, and chat messages.
-- Laboratories with both quantity consumables and stateful reusable items.
+- Laboratories with both quantity consumables and high-value, reusable, or quality-sensitive items.
 - Shared facilities that need member self-service plus administrator stocktake, correction, and audit.
 - Small and medium teams that want data on their own server and straightforward SQLite backups.
 
