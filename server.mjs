@@ -7,8 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { openStorage, validateBackupDatabase } from './storage.mjs';
 import { hashPassword, verifyPassword } from './password.mjs';
 import { createLoginProtection } from './src/server/login-attempts.mjs';
-import { encodeRecordCursor, recordPageOptions } from './src/server/record-query.mjs';
 import { normalizedMaterialName, planQuantityImport } from './src/server/quantity-import.mjs';
+import { readTransactionsResponse } from './src/server/transaction-read.mjs';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const packageMetadata = JSON.parse(await readFile(path.join(rootDir, 'package.json'), 'utf8'));
@@ -1519,34 +1519,14 @@ async function handleApi(request, response, url) {
 
   if (url.pathname === '/api/transactions' && request.method === 'GET') {
     const view = requestStorage.getStore() ?? storage.readView;
-    if (url.searchParams.get('mode') === 'export') {
-      const { store, exportedAt } = view.readStoreSnapshot();
-      const user = store.users.find((candidate) => candidate.id === session.userId && candidate.active);
-      if (!user) return sendJson(response, 401, { error: '账号已停用' });
-      return sendJson(response, 200, formatExportSnapshot(store, user, exportedAt));
-    }
-    const user = view.readActiveUser(session.userId);
-    if (!user) return sendJson(response, 401, { error: '账号已停用' });
-    if (url.searchParams.get('mode') === 'page') {
-      const page = view.queryRecordPage(recordPageOptions(url, {
-        userId: user.id,
-        canViewAll: canViewAllTransactions(user),
-      }));
-      return sendJson(response, 200, {
-        items: page.items,
-        total: page.total,
-        hasMore: page.hasMore,
-        nextCursor: encodeRecordCursor(page.nextCursor),
-      });
-    }
-    const query = canViewAllTransactions(user) ? {} : { userId: user.id };
-    const transactions = view.queryTransactions(query);
-    const result = { transactions, total: transactions.length };
-    if (url.searchParams.get('includeInventoryEvents') === '1') {
-      result.inventoryEvents = view.queryInventoryEvents(query);
-      result.eventTotal = result.inventoryEvents.length;
-    }
-    return sendJson(response, 200, result);
+    const result = readTransactionsResponse({
+      url,
+      session,
+      view,
+      canViewAllTransactions,
+      formatExportSnapshot,
+    });
+    return sendJson(response, result.statusCode, result.body);
   }
 
   if (url.pathname === '/api/transactions' && request.method === 'POST') {

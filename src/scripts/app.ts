@@ -1,5 +1,5 @@
 import { detectMobileKeyboard, measureMobileViewport } from './mobile-viewport.mjs';
-import { DEFAULT_RECORD_PAGE_SIZE } from './record-pagination.mjs';
+import { buildRecordPageUrl, createRecordPageState, DEFAULT_RECORD_PAGE_SIZE, recordRangeStart } from './record-page.mjs';
 import { terminalStateConfirmation } from './inventory-operation.mjs';
 import { effectiveManualOutboundTransactions, groupConsumptionRows } from './inventory-export.mjs';
 import { inventoryAnomalyEntryLabel, inventoryAnomalyResolutionBody } from './inventory-anomaly.mjs';
@@ -189,18 +189,11 @@ let unitQuantityFollowsCapacity = true;
 let qrMaterialTargetId = '';
 let qrInventoryUnitTarget: InventoryUnit | null = null;
 let qrMaterialDataUrl = '';
-let recordPageItems: RecordPageItem[] = [];
-let recordTotal = 0;
-let recordHasMore = false;
-let recordNextCursor = '';
-let recordCursorHistory = [''];
-let recordFrom = '';
+const recordPager = createRecordPageState();
 let recordPageLoadController: AbortController | null = null;
 let recordPageLoadSequence = 0;
 let recordSearchTimer = 0;
 let exportSnapshot: ExportSnapshot | null = null;
-let recordPage = 1;
-let recordScope: 'all' | 'mine' = 'all';
 let auditPageItems: AuditLog[] = [];
 let auditTotal = 0;
 let auditHasMore = false;
@@ -2350,28 +2343,26 @@ function renderTransactions() {
   const recordsBody = $('[data-records-body]');
   if (recentBody) recentBody.innerHTML = transactionRows(state.transactions.slice(0, 5), true);
   if (recordsBody) {
-    recordsBody.innerHTML = recordTotal
-      ? recordPageItems.map((entry) => entry.kind === 'transaction' ? transactionRows([entry.record]) : inventoryEventRows([entry.event])).join('')
+    recordsBody.innerHTML = recordPager.total
+      ? recordPager.items.map((entry: RecordPageItem) => entry.kind === 'transaction' ? transactionRows([entry.record]) : inventoryEventRows([entry.event])).join('')
       : '<tr><td colspan="7" class="empty-note">没有符合条件的记录</td></tr>';
     const paginationBar = $<HTMLElement>('[data-record-pagination]');
     const rangeLabel = $('[data-record-page-range]');
     const pageLabel = $('[data-record-page-label]');
     const previous = $<HTMLButtonElement>('[data-record-page-previous]');
     const next = $<HTMLButtonElement>('[data-record-page-next]');
-    const from = recordTotal ? (recordPage - 1) * DEFAULT_RECORD_PAGE_SIZE + 1 : 0;
-    const to = recordTotal ? from + recordPageItems.length - 1 : 0;
-    const totalPages = Math.max(1, Math.ceil(recordTotal / DEFAULT_RECORD_PAGE_SIZE));
-    if (paginationBar) paginationBar.hidden = recordTotal === 0;
-    if (rangeLabel) rangeLabel.textContent = `第 ${from}–${to} 条，共 ${recordTotal} 条`;
-    if (pageLabel) pageLabel.textContent = `第 ${recordPage} / ${totalPages} 页`;
-    if (previous) previous.disabled = recordPage <= 1;
-    if (next) next.disabled = !recordHasMore;
+    const summary = recordPager.summary();
+    if (paginationBar) paginationBar.hidden = recordPager.total === 0;
+    if (rangeLabel) rangeLabel.textContent = `第 ${summary.from}–${summary.to} 条，共 ${recordPager.total} 条`;
+    if (pageLabel) pageLabel.textContent = `第 ${recordPager.page} / ${summary.totalPages} 页`;
+    if (previous) previous.disabled = recordPager.page <= 1;
+    if (next) next.disabled = !recordPager.hasMore;
   }
 }
 
 function syncRecordScopeButtons() {
   $$<HTMLButtonElement>('[data-record-scope]').forEach((button) => {
-    const active = button.dataset.recordScope === recordScope;
+    const active = button.dataset.recordScope === recordPager.scope;
     button.classList.toggle('active', active);
     button.setAttribute('aria-pressed', String(active));
   });
@@ -2411,31 +2402,16 @@ function cancelTransactionLoad() {
   setTransactionLoadingState('idle');
 }
 
-function recordFilterFrom() {
-  const range = $<HTMLSelectElement>('select[data-record-range]')?.value ?? '30';
-  if (range === 'all') return '';
-  const now = new Date();
-  const start = new Date(now);
-  if (range === '30' || range === '90') start.setDate(now.getDate() - Number(range));
-  if (range === 'year') {
-    start.setMonth(0, 1);
-    start.setHours(0, 0, 0, 0);
-  }
-  return start.toISOString();
-}
-
-function currentRecordPageUrl({ cursor = recordCursorHistory[recordPage - 1] ?? '', pageSize = DEFAULT_RECORD_PAGE_SIZE, queryOverride, typeOverride, scopeOverride }: { cursor?: string; pageSize?: number; queryOverride?: string; typeOverride?: string; scopeOverride?: 'all' | 'mine' } = {}) {
-  const parameters = new URLSearchParams({
-    mode: 'page',
-    pageSize: String(pageSize),
-    type: typeOverride ?? $<HTMLSelectElement>('select[data-record-type]')?.value ?? 'all',
-    scope: scopeOverride ?? recordScope,
-  });
+function currentRecordPageUrl({ cursor = recordPager.currentCursor(), pageSize = recordPager.pageSize, queryOverride, typeOverride, scopeOverride }: { cursor?: string; pageSize?: number; queryOverride?: string; typeOverride?: string; scopeOverride?: 'all' | 'mine' } = {}) {
   const query = queryOverride ?? $<HTMLInputElement>('[data-filter="records"]')?.value.trim() ?? '';
-  if (query) parameters.set('q', query);
-  if (queryOverride === undefined && recordFrom) parameters.set('from', recordFrom);
-  if (cursor) parameters.set('cursor', cursor);
-  return `/api/transactions?${parameters}`;
+  return buildRecordPageUrl({
+    cursor,
+    pageSize,
+    type: typeOverride ?? $<HTMLSelectElement>('select[data-record-type]')?.value ?? 'all',
+    scope: scopeOverride ?? recordPager.scope,
+    query,
+    from: queryOverride === undefined ? recordPager.from : '',
+  });
 }
 
 async function loadRecordPage(force = false): Promise<boolean> {
@@ -2451,10 +2427,7 @@ async function loadRecordPage(force = false): Promise<boolean> {
   try {
     const result = await api<RecordPageResponse>(currentRecordPageUrl(), { signal: controller.signal });
     if (!state || generation !== bootstrapGeneration || sequence !== recordPageLoadSequence) return false;
-    recordPageItems = result.items;
-    recordTotal = result.total;
-    recordHasMore = result.hasMore;
-    recordNextCursor = result.nextCursor;
+    recordPager.applyResult(result);
     renderTransactions();
     setTransactionLoadingState('idle');
     return true;
@@ -3410,7 +3383,7 @@ function renderApp() {
 function showLogin(message = '') {
   setMobileDrawer(false);
   state = null;
-  recordScope = 'all';
+  recordPager.reset({ scope: 'all' });
   syncRecordScopeButtons();
   const memberSearch = $<HTMLInputElement>('[data-filter="members"]');
   if (memberSearch) memberSearch.value = '';
@@ -3436,14 +3409,8 @@ async function loadBootstrap() {
   const nextState = await api<Bootstrap>('/api/bootstrap');
   if (generation !== bootstrapGeneration) return;
   state = nextState;
-  recordPageItems = [];
-  recordTotal = 0;
-  recordHasMore = false;
-  recordNextCursor = '';
-  recordCursorHistory = [''];
-  recordFrom = recordFilterFrom();
+  recordPager.reset({ from: recordRangeStart($<HTMLSelectElement>('select[data-record-range]')?.value ?? '30') });
   exportSnapshot = null;
-  recordPage = 1;
   auditPageItems = [];
   auditTotal = 0;
   auditHasMore = false;
@@ -3541,13 +3508,13 @@ inventoryCommandMenu?.addEventListener('click', (event) => {
 });
 $$<HTMLButtonElement>('[data-go-view]').forEach((item) => item.addEventListener('click', () => switchView(item.dataset.goView)));
 $<HTMLButtonElement>('[data-go-all-records]')?.addEventListener('click', () => {
-  recordScope = 'all';
+  recordPager.setScope('all');
   syncRecordScopeButtons();
   switchView('transactions');
   applyRecordFilters();
 });
 $<HTMLButtonElement>('[data-go-my-records]')?.addEventListener('click', () => {
-  recordScope = 'mine';
+  recordPager.setScope('mine');
   syncRecordScopeButtons();
   switchView('transactions');
   applyRecordFilters();
@@ -4341,13 +4308,13 @@ $<HTMLElement>('[data-records-body]')?.addEventListener('click', (event) => {
   const target = event.target as Element;
   const correctionButton = target.closest<HTMLButtonElement>('[data-correct-transaction]');
   if (correctionButton?.dataset.correctTransaction) {
-    const record = recordPageItems.find((candidate) => candidate.kind === 'transaction' && candidate.record.id === correctionButton.dataset.correctTransaction)?.record;
+    const record = (recordPager.items as RecordPageItem[]).find((candidate) => candidate.kind === 'transaction' && candidate.record.id === correctionButton.dataset.correctTransaction)?.record;
     if (record) openTransactionCorrection(record);
     return;
   }
   const inventoryEventCorrectionButton = target.closest<HTMLButtonElement>('[data-correct-inventory-event]');
   if (inventoryEventCorrectionButton?.dataset.correctInventoryEvent) {
-    const inventoryEvent = recordPageItems.find((candidate) => candidate.kind === 'event' && candidate.event.id === inventoryEventCorrectionButton.dataset.correctInventoryEvent)?.event;
+    const inventoryEvent = (recordPager.items as RecordPageItem[]).find((candidate) => candidate.kind === 'event' && candidate.event.id === inventoryEventCorrectionButton.dataset.correctInventoryEvent)?.event;
     if (inventoryEvent) openInventoryEventCorrection(inventoryEvent);
     return;
   }
@@ -5039,10 +5006,7 @@ const applyInventoryFilters = () => {
 };
 
 const applyRecordFilters = () => {
-  recordPage = 1;
-  recordCursorHistory = [''];
-  recordNextCursor = '';
-  recordFrom = recordFilterFrom();
+  recordPager.reset({ from: recordRangeStart($<HTMLSelectElement>('select[data-record-range]')?.value ?? '30') });
   void loadRecordPage(true);
 };
 
@@ -5055,7 +5019,7 @@ $<HTMLInputElement>('[data-filter="records"]')?.addEventListener('input', () => 
 $<HTMLSelectElement>('select[data-record-type]')?.addEventListener('change', applyRecordFilters);
 $<HTMLSelectElement>('select[data-record-range]')?.addEventListener('change', applyRecordFilters);
 $$<HTMLButtonElement>('[data-record-scope]').forEach((button) => button.addEventListener('click', () => {
-  recordScope = button.dataset.recordScope === 'mine' ? 'mine' : 'all';
+  recordPager.setScope(button.dataset.recordScope === 'mine' ? 'mine' : 'all');
   syncRecordScopeButtons();
   applyRecordFilters();
 }));
@@ -5066,15 +5030,12 @@ const scrollToRecordPageStart = () => {
   });
 };
 $<HTMLButtonElement>('[data-record-page-previous]')?.addEventListener('click', () => {
-  if (recordPage <= 1) return;
-  recordPage -= 1;
+  if (!recordPager.previous()) return;
   void loadRecordPage(true);
   scrollToRecordPageStart();
 });
 $<HTMLButtonElement>('[data-record-page-next]')?.addEventListener('click', () => {
-  if (!recordHasMore || !recordNextCursor) return;
-  recordCursorHistory[recordPage] = recordNextCursor;
-  recordPage += 1;
+  if (!recordPager.next()) return;
   void loadRecordPage(true);
   scrollToRecordPageStart();
 });

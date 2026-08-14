@@ -125,11 +125,13 @@ flowchart LR
 | `src/pages/index.astro` | 页面结构、样式、弹窗和响应式布局 |
 | `src/scripts/app.ts` | 前端状态、API、Material 菜单、导入导出和事件处理 |
 | `src/scripts/material-qr.mjs` | 耗材 UUID 校验、二维码网址生成与扫码文本解析 |
-| `src/scripts/record-pagination.mjs` | 记录页的稳定分页边界与页码修正 |
+| `src/scripts/record-pagination.mjs` | 通用数组分页边界与页码修正 |
+| `src/scripts/record-page.mjs` | 前端记录页筛选 URL、游标历史、范围与翻页状态 |
 | `src/server/record-query.mjs` | 服务端记录游标、筛选参数和可见范围协议 |
+| `src/server/transaction-read.mjs` | 流水分页、完整导出和旧版兼容读取控制器 |
 | `src/server/login-attempts.mjs` | 有容量上限和过期清理的登录失败限制 |
 | `src/server/quantity-import.mjs` | 普通数量 Excel 导入的整批校验、目标库存与差额流水计划 |
-| `server.mjs` | HTTP 服务、登录、权限、接口和安全策略 |
+| `server.mjs` | HTTP 服务装配、登录、权限、写接口和安全策略 |
 | `storage.mjs` | SQLite 表结构、事务、增量保存和旧 JSON 迁移 |
 | `password.mjs` | 服务端与恢复工具共用的 scrypt 密码哈希实现 |
 | `scripts/backup.mjs` | SQLite 一致性备份、校验和保留策略 |
