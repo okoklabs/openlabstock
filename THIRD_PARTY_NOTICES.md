@@ -24,7 +24,7 @@ Important transitive components used by browser or build workflows include `@zxi
 
 ## Audited License Expressions
 
-For the `2026.8.14-r41` lockfile, `pnpm licenses list --prod --json` reported only these expressions on the Windows development graph:
+For the `2026.8.14-r42` lockfile, `pnpm licenses list --prod --json` reported only these expressions on the Windows development graph:
 
 - `(Unlicense OR Apache-2.0)`
 - `Apache-2.0`

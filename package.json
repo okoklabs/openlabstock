@@ -1,6 +1,6 @@
 {
   "name": "openlabstock",
-  "version": "2026.8.14-r41",
+  "version": "2026.8.14-r42",
   "description": "Self-hosted laboratory consumables inventory, stocktake, and audit system",
   "private": true,
   "license": "AGPL-3.0-only",

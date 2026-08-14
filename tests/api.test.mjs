@@ -313,6 +313,7 @@ test('完整的耗材、权限和成员管理流程', async () => {
   assert.equal(manifest.start_url, '/');
   assert.equal(manifest.scope, '/');
   assert.equal(manifest.display, 'standalone');
+  assert.equal('orientation' in manifest, false, 'PWA direction should follow the operating system rotation setting');
   assert.ok(manifest.icons.some((icon) => icon.sizes === '512x512' && icon.purpose === 'maskable'));
   const unchangedManifest = await fetch(`${baseUrl}/manifest.webmanifest`, { headers: { 'If-None-Match': manifestEtag } });
   assert.equal(unchangedManifest.status, 304);

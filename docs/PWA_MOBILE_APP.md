@@ -15,7 +15,7 @@
 
 ## 当前实现
 
-- `public/manifest.webmanifest`：提供中性的应用名称、主题色、启动范围和安装图标。
+- `public/manifest.webmanifest`：提供中性的应用名称、主题色、启动范围和安装图标；不声明固定或任意屏幕方向，由操作系统旋转锁和浏览器决定方向。
 - `public/icons/`：提供 180、192、512 px 图标及 Android maskable 图标；图标不包含具体实验室名称，方便复用部署。
 - `public/sw.js`：只预缓存带版本文件名的 PNG 安装图标。
 - `src/scripts/app.ts`：只在 HTTPS 或 localhost 等安全上下文注册 Service Worker，并设置 `updateViaCache: none`。
