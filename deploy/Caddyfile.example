@@ -1,0 +1,7 @@
+www.inventory.example.org {
+    redir https://inventory.example.org{uri} permanent
+}
+
+inventory.example.org {
+    reverse_proxy 127.0.0.1:4388
+}

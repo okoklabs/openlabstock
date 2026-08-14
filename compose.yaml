@@ -1,0 +1,54 @@
+name: ${COMPOSE_PROJECT_NAME:-openlabstock}
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        IMAGE_VERSION: ${OPENLABSTOCK_IMAGE_VERSION:-local}
+    image: openlabstock:${OPENLABSTOCK_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    init: true
+    read_only: true
+    ports:
+      - "${OPENLABSTOCK_BIND_IP:-127.0.0.1}:${OPENLABSTOCK_PORT:-4388}:4388"
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 4388
+      DATA_DIR: /var/lib/openlabstock
+      BACKUP_DIR: /var/backups/openlabstock
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      COOKIE_SECURE: ${COOKIE_SECURE:-1}
+      SESSION_MAX_AGE_DAYS: ${SESSION_MAX_AGE_DAYS:-15}
+      SQLITE_BUSY_TIMEOUT_MS: ${SQLITE_BUSY_TIMEOUT_MS:-10000}
+      DATABASE_UPLOAD_MAX_BYTES: ${DATABASE_UPLOAD_MAX_BYTES:-104857600}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD:-}
+    volumes:
+      - openlabstock_data:/var/lib/openlabstock
+      - openlabstock_backups:/var/backups/openlabstock
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: ${OPENLABSTOCK_MEMORY_LIMIT:-512m}
+    cpus: ${OPENLABSTOCK_CPU_LIMIT:-1.0}
+    stop_grace_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  openlabstock_data:
+    labels:
+      com.openlabstock.purpose: database
+  openlabstock_backups:
+    labels:
+      com.openlabstock.purpose: backups

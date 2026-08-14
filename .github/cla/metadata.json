@@ -1,0 +1,34 @@
+{
+  "legalName": {
+    "title": "Legal name / 法定姓名",
+    "description": "Enter your legal name in Chinese, English, or both. / 可填写中文、英文或同时填写。",
+    "type": "string",
+    "githubKey": "name",
+    "required": true
+  },
+  "contactEmail": {
+    "title": "Contact email / 联系邮箱",
+    "description": "Used only for agreement and rights-chain administration. / 仅用于协议与权利链管理。",
+    "type": "string",
+    "githubKey": "email",
+    "required": true
+  },
+  "legalCapacity": {
+    "title": "I have legal capacity to accept this agreement. / 我具备接受本协议的法律行为能力。",
+    "description": "Do not sign if a guardian process is required and has not been approved. / 如需监护人程序且项目尚未批准，请勿签署。",
+    "type": "boolean",
+    "required": true
+  },
+  "rightsAuthority": {
+    "title": "I own or control the necessary rights and have obtained any required employer or organization approval. / 我拥有或控制必要权利，并已取得雇主或组织要求的批准。",
+    "description": "Contact the project before signing if an organization owns the Contribution. / 如果贡献归组织所有，请先联系项目。",
+    "type": "boolean",
+    "required": true
+  },
+  "privacyNotice": {
+    "title": "I have read the CLA privacy notice. / 我已阅读 CLA 隐私说明。",
+    "description": "The notice explains the signing data and retention workflow. / 该说明解释签署数据和保留流程。",
+    "type": "boolean",
+    "required": true
+  }
+}

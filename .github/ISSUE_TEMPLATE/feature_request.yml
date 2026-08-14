@@ -1,0 +1,59 @@
+name: Feature request
+description: 提议一个有明确使用场景的通用改进
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 使用场景与问题
+      description: 描述谁在什么情况下遇到什么问题，不要只写期望按钮或字段。
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: 当前做法
+      description: 当前如何完成任务，成本或风险是什么？
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: 期望结果
+      description: 描述可验收结果，具体实现可以留给讨论。
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 已考虑的替代方案
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 预计影响范围
+      multiple: true
+      options:
+        - 普通库存
+        - 状态化库存 / 探针
+        - 权限与成员
+        - 盘点与审计
+        - 导入导出
+        - 手机 / PWA / 二维码
+        - 部署与运维
+        - 文档或开发体验
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 该建议不包含客户、合同、真实成员或私有生产环境信息。
+          required: true

@@ -1,0 +1,1358 @@
+---
+import {
+  AlertTriangle,
+  Archive,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Bell,
+  Building2,
+  Boxes,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCheck,
+  ClipboardList,
+  Download,
+  FileSpreadsheet,
+  History,
+  Camera,
+  Info,
+  ImageDown,
+  ImageUp,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  MoreVertical,
+  Package,
+  Plus,
+  Printer,
+  QrCode,
+  RotateCcw,
+  RotateCcwKey,
+  Search,
+  ScanLine,
+  Settings,
+  ShieldCheck,
+  Star,
+  Tags,
+  KeyRound,
+  Trash2,
+  Upload,
+  UserCheck,
+  UserX,
+  Users,
+  X,
+} from 'lucide-react';
+---
+
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta name="description" content="OpenLabStock 实验室耗材管理工作台" />
+    <meta name="theme-color" content="#006b55" />
+    <meta name="color-scheme" content="light" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="耗材管理" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/labstock-180-v1.png" />
+    <title>OpenLabStock · 实验室耗材管理</title>
+    <style is:global>
+      :root {
+        --bg: #f7faf8;
+        --surface: #ffffff;
+        --surface-soft: #eef3f0;
+        --surface-tint: #e3eee9;
+        --surface-container: #e9efec;
+        --ink: #18201c;
+        --muted: #52615a;
+        --line: #c4cec8;
+        --primary: #006b55;
+        --primary-deep: #004b3b;
+        --primary-soft: #c9ecdf;
+        --warning: #9a6200;
+        --warning-soft: #fff0c9;
+        --danger: #b32d30;
+        --danger-soft: #fde5e2;
+        --info: #476b9f;
+        --info-soft: #e4edfb;
+        --shadow-1: 0 1px 2px rgba(23, 33, 29, .12);
+        --shadow-2: 0 8px 24px rgba(23, 33, 29, .14);
+        --radius: 8px;
+        font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body { margin: 0; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+      body.modal-open { overflow: hidden; }
+      datalist { display: none !important; }
+      button, input, select, textarea { font: inherit; }
+      button { cursor: pointer; }
+      a { color: inherit; text-decoration: none; }
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+      .app-shell { min-height: 100vh; display: flex; }
+      .sidebar { width: 256px; flex: 0 0 256px; border-right: 1px solid #e0e6e2; background: #fbfdfb; display: flex; flex-direction: column; padding: 20px 12px 14px; }
+      .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px 25px; }
+      .brand > span:last-child, .login-brand > span:last-child { min-width: 0; flex: 1; }
+      .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; color: white; background: var(--primary); box-shadow: 0 2px 5px rgba(0,75,59,.18); }
+      .brand-mark img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+      .brand-name { font-size: 18px; font-weight: 740; letter-spacing: 0; }
+      .brand-sub { display: block; max-width: 100%; overflow: hidden; color: var(--muted); font-size: 12px; font-weight: 500; margin-top: 1px; text-overflow: ellipsis; white-space: nowrap; }
+      .workspace-switcher { min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px; border: 0; border-radius: 28px; background: var(--surface-soft); margin-bottom: 24px; color: var(--ink); }
+      .workspace-switcher > span { min-width: 0; display: flex; align-items: center; gap: 0; font-size: 13px; font-weight: 650; }
+      .workspace-name { min-width: 0; display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.35; overflow-wrap: anywhere; }
+      .workspace-dot { display: none; }
+      .nav-label { color: var(--muted); font-size: 12px; font-weight: 650; letter-spacing: 0; padding: 0 16px 8px; }
+      .nav { display: grid; gap: 3px; }
+      .nav-item { width: 100%; display: flex; align-items: center; gap: 13px; min-height: 48px; padding: 0 16px; border: 0; border-radius: 24px; background: transparent; color: var(--muted); text-align: left; font-size: 14px; font-weight: 600; }
+      .nav-item svg { color: #7d8b83; }
+      .nav-item:hover { color: var(--ink); }
+      .nav-item.active { color: #00382c; background: var(--primary-soft); font-weight: 700; }
+      .nav-item.active svg { color: var(--primary); }
+      .nav-badge { margin-left: auto; min-width: 20px; padding: 2px 6px; border-radius: 10px; background: var(--warning-soft); color: var(--warning); font-size: 10px; text-align: center; }
+      .sidebar-spacer { flex: 1; }
+      .sidebar-note { margin: 10px 7px 16px; padding: 11px 12px; border-left: 3px solid var(--primary); background: var(--surface-tint); border-radius: 0 6px 6px 0; }
+      .sidebar-note strong { display: block; font-size: 11px; margin-bottom: 4px; }
+      .sidebar-note span { display: block; color: var(--muted); font-size: 11px; line-height: 1.5; }
+      .sidebar-version { padding: 0 10px 8px; color: var(--muted); font-size: 10px; }
+      .sidebar-version span { font-variant-numeric: tabular-nums; }
+      .user-card { display: flex; align-items: center; gap: 10px; padding: 11px 9px 3px; border-top: 1px solid var(--line); }
+      .avatar { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; color: var(--primary-deep); background: var(--primary-soft); font-size: 12px; font-weight: 760; }
+      .account-avatar { padding: 0; border: 0; transition: background-color .16s ease, box-shadow .16s ease; }
+      .account-avatar:hover, .account-avatar:focus-visible { background: #b8e3d3; box-shadow: 0 0 0 3px rgba(18,107,89,.11); }
+      .user-meta { min-width: 0; flex: 1; }
+      .user-meta strong { display: block; font-size: 12px; }
+      .user-meta span { display: block; color: var(--muted); font-size: 10px; margin-top: 2px; }
+      .icon-button { width: 40px; height: 40px; display: grid; place-items: center; padding: 0; border: 1px solid transparent; border-radius: 50%; color: var(--muted); background: transparent; }
+      .icon-button:hover { color: var(--ink); }
+      .main { min-width: 0; flex: 1; }
+      .topbar { height: 72px; display: flex; align-items: center; gap: 18px; padding: 0 32px; border-bottom: 1px solid #e1e7e3; background: rgba(251,253,251,.94); }
+      .mobile-menu { display: none; color: var(--ink); }
+      .mobile-menu:active { transform: scale(.96); }
+      .mobile-menu[aria-expanded="true"] { color: var(--primary); }
+      .mobile-menu[aria-expanded="true"]::before { opacity: .12; transform: scale(1); }
+      .search { width: min(420px, 42vw); position: relative; }
+      .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #8a968f; }
+      .search input { width: 100%; height: 46px; padding: 0 16px 0 43px; border: 1px solid transparent; border-radius: 23px; color: var(--ink); background: var(--surface-soft); outline: none; font-size: 13px; }
+      .search input:focus { border-color: var(--primary); background: var(--surface); box-shadow: 0 0 0 3px rgba(18,107,89,.12); }
+      .topbar-spacer { flex: 1; }
+      .topbar-link { color: var(--muted); font-size: 12px; font-weight: 650; }
+      .topbar-link:hover { color: var(--primary); }
+      .notification { position: relative; }
+      .notification-dot { position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border: 2px solid white; border-radius: 50%; background: var(--danger); }
+      .content { max-width: 1360px; margin: 0 auto; padding: 34px 32px 60px; }
+      .view { display: none; }
+      .view.active { display: block; animation: fade-in .2s ease-out; }
+      @keyframes fade-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+      .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 25px; }
+      .page-heading h1 { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: 0; line-height: 1.2; }
+      .page-heading p { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+      .heading-actions { display: flex; gap: 9px; }
+      .inventory-overflow { position: relative; display: block; }
+      .inventory-command-scrim { position: fixed; inset: 0; z-index: 28; display: none; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; }
+      .inventory-command-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 29; width: 238px; padding: 6px 0; border: 1px solid #dce4df; border-radius: 8px; visibility: hidden; opacity: 0; background: var(--surface); box-shadow: var(--shadow-2); pointer-events: none; transform: translateY(-5px) scale(.98); transform-origin: top right; transition: opacity .16s ease, transform .2s cubic-bezier(.2, 0, 0, 1), visibility 0s linear .2s; }
+      .inventory-overflow.open .inventory-command-scrim { display: block; }
+      .inventory-overflow.open .inventory-command-menu { visibility: visible; opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); transition-delay: 0s; }
+      .inventory-command-item { width: 100%; min-height: 48px; display: flex; align-items: center; gap: 13px; padding: 0 16px; border: 0; border-radius: 0; color: var(--ink); background: transparent; font-size: 14px; font-weight: 600; text-align: left; white-space: nowrap; }
+      .inventory-command-item svg { flex: 0 0 auto; color: var(--muted); }
+      .inventory-command-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
+      .inventory-command-divider { height: 1px; margin: 6px 0; background: var(--line); }
+      .inventory-action-proxies, .inventory-toolbar-actions { display: none !important; }
+      .button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; border: 1px solid var(--line); border-radius: 20px; color: var(--primary-deep); background: transparent; font-size: 13px; font-weight: 700; white-space: nowrap; }
+      .button:hover { box-shadow: var(--shadow-1); }
+      .button:active { transform: scale(.98); }
+      .button:disabled, .icon-button:disabled { cursor: not-allowed; opacity: .42; box-shadow: none; }
+      .button.primary { border-color: var(--primary); color: white; background: var(--primary); box-shadow: 0 1px 2px rgba(0,75,59,.25); }
+      .button.primary:hover { background: var(--primary); }
+      .button.tonal { border-color: transparent; color: #17352d; background: var(--primary-soft); }
+      .button.tonal:hover { background: var(--primary-soft); }
+      .button.ghost { border-color: transparent; background: transparent; color: var(--muted); }
+      .button.danger { color: var(--danger); border-color: var(--danger-soft); background: var(--danger-soft); }
+      .button.danger-filled { border-color: var(--danger); color: white; background: var(--danger); box-shadow: 0 1px 2px rgba(179,45,48,.22); }
+      .button.danger-filled:hover { background: var(--danger); }
+      .text-button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; border: 0; border-radius: 20px; color: var(--primary); background: transparent; font-size: 14px; font-weight: 700; white-space: nowrap; }
+      .text-button:disabled { cursor: not-allowed; opacity: .42; }
+      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .stocktake-batch-row, .mobile-nav button) { position: relative; isolation: isolate; overflow: hidden; -webkit-tap-highlight-color: transparent; transition: color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s cubic-bezier(.2, 0, 0, 1); }
+      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .stocktake-batch-row, .mobile-nav button)::before { position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: currentColor; content: ""; opacity: 0; transform: scale(.72); transition: opacity .18s ease, transform .24s cubic-bezier(.2, 0, 0, 1); }
+      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .stocktake-batch-row, .mobile-nav button):not(:disabled):hover::before { opacity: .08; transform: scale(1); }
+      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .stocktake-batch-row, .mobile-nav button):not(:disabled):focus-visible::before { opacity: .1; transform: scale(1); }
+      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .stocktake-batch-row, .mobile-nav button):not(:disabled):active::before { opacity: .12; transform: scale(1); transition-duration: .06s; }
+      .m3-ripple { position: absolute; z-index: 0; border-radius: 50%; background: currentColor; pointer-events: none; transform: scale(0); animation: m3-ripple .46s cubic-bezier(.2, 0, 0, 1) forwards; }
+      @keyframes m3-ripple { 0% { opacity: .16; transform: scale(0); } 65% { opacity: .1; } 100% { opacity: 0; transform: scale(1); } }
+      .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 13px; margin-bottom: 25px; }
+      .summary-card { min-height: 142px; padding: 20px; border: 1px solid #dce4df; border-radius: var(--radius); background: var(--surface); box-shadow: none; }
+      .summary-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 13px; font-weight: 600; }
+      .summary-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 18px; color: var(--primary); background: var(--primary-soft); }
+      .summary-card:nth-child(2) .summary-icon { color: var(--danger); background: var(--danger-soft); }
+      .summary-card:nth-child(3) .summary-icon { color: var(--primary); background: var(--primary-soft); }
+      .summary-card:nth-child(4) .summary-icon { color: var(--info); background: var(--info-soft); }
+      .summary-value { margin-top: 14px; font-size: 30px; font-weight: 700; letter-spacing: 0; }
+      .summary-meta { display: flex; align-items: center; gap: 5px; margin-top: 8px; color: var(--muted); font-size: 11px; }
+      .summary-meta.positive { color: var(--primary); }
+      .summary-meta.warning { color: var(--warning); }
+      .section-row { display: grid; grid-template-columns: minmax(0, 1.48fr) minmax(300px, .82fr); gap: 18px; align-items: stretch; margin-bottom: 18px; }
+      .section-row > .panel { height: 100%; }
+      .panel { border: 1px solid #dce4df; border-radius: var(--radius); background: var(--surface); box-shadow: none; overflow: hidden; }
+      .panel-header { min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 0 20px; border-bottom: 1px solid #e6ebe8; }
+      .panel-header h2 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: 0; }
+      .panel-header p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+      .panel-header .text-button { min-height: 36px; flex: 0 0 auto; padding: 0 12px; border: 0; border-radius: 18px; color: var(--primary); background: transparent; font-size: 12px; font-weight: 700; white-space: nowrap; }
+      .panel-header .text-button:hover { background: transparent; }
+      .stock-table, .transaction-table, .data-table { width: 100%; border-collapse: collapse; }
+      .stock-table th, .stock-table td, .transaction-table th, .transaction-table td, .data-table th, .data-table td { height: 52px; padding: 10px 20px; border-bottom: 1px solid #edf1ee; text-align: left; font-size: 13px; vertical-align: middle; }
+      .stock-table th, .transaction-table th, .data-table th { color: var(--muted); font-size: 11px; font-weight: 650; letter-spacing: 0; background: var(--surface-soft); }
+      .stock-table tr:last-child td, .transaction-table tr:last-child td, .data-table tr:last-child td { border-bottom: 0; }
+      .low-stock-panel .table-scroll { max-height: 286px; overflow: auto; scrollbar-color: #aab7b0 transparent; scrollbar-width: thin; }
+      .low-stock-panel .stock-table thead { position: sticky; top: 0; z-index: 2; }
+      .low-stock-panel .stock-table tbody tr { transition: background-color .18s ease; }
+      .low-stock-panel .stock-table tbody tr:hover { background: color-mix(in srgb, var(--danger) 4%, var(--surface)); }
+      .stock-item { display: flex; align-items: center; gap: 9px; min-width: 155px; }
+      .material-info-trigger { width: 100%; padding: 0; border: 0; color: inherit; background: transparent; font: inherit; text-align: left; cursor: pointer; }
+      .material-info-trigger:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+      .item-avatar { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 6px; color: var(--primary); background: var(--surface-tint); font-size: 11px; font-weight: 760; }
+      .stock-item strong { display: block; color: var(--ink); font-size: 13px; }
+      .stock-item > span:last-child > span { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+      .stock-number { font-weight: 750; }
+      .stock-low { color: var(--danger); }
+      .stock-mid { color: var(--warning); }
+      .progress { width: 90px; height: 5px; overflow: hidden; border-radius: 3px; background: #e9eeeb; }
+      .progress > span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+      .progress > span.mid { background: #d69222; }
+      .progress > span.low { background: var(--danger); }
+      .quick-panel { padding-bottom: 4px; }
+      .quick-list { display: grid; gap: 8px; padding: 15px 16px; }
+      .quick-action { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 62px; padding: 8px 12px; border: 0; border-radius: 8px; background: var(--surface-soft); text-align: left; }
+      .quick-action:hover { background: var(--surface-soft); }
+      .quick-action-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 18px; color: var(--primary); background: var(--primary-soft); }
+      .quick-action.out .quick-action-icon { color: var(--info); background: var(--info-soft); }
+      .quick-action.import .quick-action-icon { color: var(--warning); background: var(--warning-soft); }
+      .quick-action.records .quick-action-icon { color: #6b4e16; background: #fff0c7; }
+      .quick-action strong { display: block; font-size: 13px; }
+      .quick-action > span:not(.quick-action-icon) { display: block; color: var(--muted); font-size: 11px; margin-top: 0; }
+      .quick-action-icon svg { display: block; margin: 0; }
+      .quick-action > svg { margin-left: auto; color: #a1aca5; }
+      .notice { display: flex; align-items: flex-start; gap: 9px; margin: 0 16px 15px; padding: 10px 11px; color: var(--warning); background: var(--warning-soft); border-radius: 6px; font-size: 10px; line-height: 1.5; }
+      .notice svg { flex: 0 0 auto; margin-top: 1px; }
+      .chart { height: 218px; padding: 18px 18px 10px; }
+      .chart-legend { display: flex; gap: 17px; margin-bottom: 13px; color: var(--muted); font-size: 10px; }
+      .legend-dot { width: 7px; height: 7px; display: inline-block; margin-right: 5px; border-radius: 50%; background: var(--primary); }
+      .legend-dot.out { background: #90a8ca; }
+      .bars { height: 154px; display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 15px; align-items: end; padding: 0 7px; border-bottom: 1px solid var(--line); }
+      .bar-group { height: 100%; display: flex; align-items: end; justify-content: center; gap: 4px; position: relative; }
+      .bar { width: 11px; min-height: 4px; border-radius: 3px 3px 0 0; background: var(--primary); }
+      .bar.out { background: #90a8ca; }
+      .bar.zero { opacity: .22; }
+      .bar-label { position: absolute; bottom: -21px; color: var(--muted); font-size: 10px; }
+      .table-scroll { overflow-x: auto; }
+      .type-chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+      .type-chip.in { color: var(--primary-deep); background: var(--primary-soft); }
+      .type-chip.out { color: #3f5d87; background: var(--info-soft); }
+      .type-chip.adjustment { color: #674000; background: var(--warning-soft); }
+      .record-note-content { width: 100%; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .record-note-copy { min-width: 0; overflow-wrap: anywhere; }
+      .record-inline-action { flex: 0 0 auto; }
+      .record-inline-action svg { width: 16px; height: 16px; }
+      .record-correction-state { flex: 0 0 auto; color: var(--muted); font-size: 12px; font-weight: 650; white-space: nowrap; }
+      .status-chip { display: inline-flex; align-items: center; padding: 5px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+      .status-chip.ok { color: var(--primary-deep); background: var(--primary-soft); }
+      .status-chip.low { color: var(--danger); background: var(--danger-soft); }
+      .status-chip.archived { color: var(--muted); background: var(--surface-container); }
+      .role-chip.owner { color: #704d00; background: var(--warning-soft); }
+      .role-chip.admin { color: #31537f; background: var(--info-soft); }
+      .role-chip.inventory { color: var(--primary-deep); background: var(--primary-soft); }
+      .role-chip.member { color: var(--muted); background: var(--surface-container); }
+      .user-cell { display: flex; align-items: center; gap: 8px; }
+      .mini-avatar { width: 23px; height: 23px; display: grid; place-items: center; border-radius: 50%; color: var(--primary-deep); background: var(--surface-tint); font-size: 9px; font-weight: 750; }
+      .member-actions { width: 52px; text-align: right !important; }
+      .material-row-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; }
+      .inventory-quantity-stack { display: grid; gap: 2px; }
+      .inventory-quantity-stack small { color: var(--muted); font-size: 12px; font-weight: 500; white-space: nowrap; }
+      .tracking-mode-label { display: inline-flex; align-items: center; width: fit-content; margin-top: 4px; padding: 2px 6px; border-radius: 6px; color: var(--primary-deep); background: var(--primary-soft); font-size: 12px; font-weight: 650; }
+      .member-action-button { width: 36px; height: 36px; color: var(--primary); background: var(--surface-soft); }
+      .member-action-button:hover { color: var(--primary-deep); background: var(--primary-soft); }
+      .material-info-action { display: none; }
+      .material-info-modal { width: min(520px, 100%); }
+      .material-info-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; border-top: 1px solid var(--line); }
+      .material-info-item { min-width: 0; display: grid; gap: 4px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+      .material-info-item span { color: var(--muted); font-size: 12px; font-weight: 650; }
+      .material-info-item strong { overflow-wrap: anywhere; font-size: 14px; }
+      .material-info-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-bottom: 18px; }
+      .material-info-actions .button { min-width: 0; padding-inline: 8px; font-size: 14px; }
+      .material-info-actions .button svg { flex: 0 0 auto; }
+      .inventory-header-mobile { display: none; }
+      .member-action-list { display: grid; gap: 9px; }
+      .member-action-list .button { justify-content: flex-start; width: 100%; border-radius: 8px; }
+      .member-action-list .button svg { flex: 0 0 auto; }
+      .member-action-list .button:disabled { cursor: not-allowed; opacity: .48; }
+      .member-action-summary { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding: 12px; border-radius: 8px; background: var(--surface-soft); }
+      .member-action-summary strong { display: block; font-size: 14px; }
+      .member-action-summary small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+      .member-action-section { display: grid; gap: 11px; padding: 15px 0; border-top: 1px solid var(--line); }
+      .member-action-section:first-of-type { padding-top: 0; border-top: 0; }
+      .member-action-section h3 { margin: 0; font-size: 12px; }
+      .member-action-section > p { margin: -5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+      .member-info-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 11px; align-items: start; }
+      .member-info-grid > .field { align-content: start; }
+      .member-info-grid > .field.full { grid-column: 1 / -1; }
+      .member-info-grid .field:last-child { grid-column: 1 / -1; }
+      .modal.permission-modal { width: min(680px, 100%); }
+      .permission-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .permission-role { min-width: 0; padding: 15px; border: 1px solid #dce4df; border-radius: 8px; background: var(--surface); }
+      .permission-role-heading { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+      .permission-role-icon { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; color: var(--primary-deep); background: var(--primary-soft); }
+      .permission-role.owner .permission-role-icon { color: #704d00; background: var(--warning-soft); }
+      .permission-role.admin .permission-role-icon { color: #31537f; background: var(--info-soft); }
+      .permission-role.member .permission-role-icon { color: var(--muted); background: var(--surface-container); }
+      .permission-role strong { font-size: 12px; }
+      .permission-role p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.65; }
+      .member-directory-toolbar { margin-top: 2px; }
+      .member-directory-toolbar .toolbar-count { color: var(--muted); font-size: 11px; white-space: nowrap; }
+      .directory-panel { margin-bottom: 18px; }
+      .directory-panel .panel-header > div { min-width: 0; }
+      .directory-panel .panel-header > .toolbar-count { min-width: 56px; flex: 0 0 auto; text-align: right; white-space: nowrap; }
+      .directory-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 15px 17px 17px; }
+      .directory-person { min-width: 0; padding: 13px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease; }
+      .directory-person:hover { border-color: #b7cec4; background: var(--surface-soft); box-shadow: var(--shadow-1); }
+      .directory-person-top { display: flex; align-items: center; gap: 9px; min-width: 0; }
+      .directory-person-top .avatar { width: 38px; height: 38px; flex: 0 0 38px; }
+      .directory-person-name { min-width: 0; flex: 1; }
+      .directory-person-name strong, .directory-person-name span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .directory-person-name strong { font-size: 13px; }
+      .directory-person-name span { margin-top: 3px; color: var(--muted); font-size: 10px; }
+      .directory-person .role-chip { flex: 0 0 auto; }
+      .low-stock-panel .status-chip { white-space: nowrap; }
+      .directory-person.disabled { background: var(--surface-container); }
+      .directory-person-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+      .directory-person-actions .member-action-button { width: 36px; height: 36px; }
+      .directory-person-admin-meta { display: flex; flex-wrap: wrap; gap: 5px 12px; margin: 10px 0 0; color: var(--muted); font-size: 10px; }
+      .directory-person-admin-meta span { display: inline-flex; align-items: center; gap: 4px; }
+      .directory-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+      .member-tag { display: inline-flex; align-items: center; min-height: 24px; max-width: 100%; padding: 3px 9px; border: 1px solid #b9c9c1; border-radius: 12px; color: var(--primary-deep); background: var(--surface-tint); font-size: 10px; font-weight: 650; overflow-wrap: anywhere; }
+      .directory-person p { min-height: 34px; margin: 12px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .owner-transfer-section { border-top-color: #efccc7; }
+      .owner-transfer-section > p { color: #7b4642; }
+      .record-row { transition: background-color 160ms ease; }
+      .record-row:hover { background: color-mix(in srgb, var(--primary) 5%, var(--surface)); }
+      .record-time, .record-context, .record-note { color: var(--muted); }
+      .record-context-label { display: none; }
+      .record-material-wrap { display: flex; align-items: center; gap: 10px; min-width: 180px; }
+      .record-material-copy { display: grid; gap: 2px; min-width: 0; }
+      .record-material-detail { color: var(--muted); font-size: 12px; font-weight: 500; line-height: 1.35; }
+      .record-material-icon { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; color: var(--primary-deep); background: var(--primary-soft); font-size: 11px; font-weight: 750; }
+      .record-material-icon.out { color: #34506f; background: var(--info-soft); }
+      .record-quantity { font-weight: 750; white-space: nowrap; }
+      .record-quantity.in { color: var(--primary); }
+      .record-quantity.out { color: var(--info); }
+      .view-toolbar { display: flex; align-items: center; gap: 9px; margin-bottom: 16px; }
+      .view-toolbar .search { width: 255px; }
+      .record-scope { width: 218px; flex: 0 0 218px; margin: 0; }
+      .filter-select { height: 40px; padding: 0 34px 0 14px; border: 1px solid var(--line); border-radius: 20px; color: var(--muted); background: transparent; font-size: 12px; }
+      select[data-m3-enhanced] { position: absolute !important; width: 1px !important; height: 1px !important; min-height: 1px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; opacity: 0; pointer-events: none; }
+      .m3-select { position: relative; min-width: 0; }
+      .m3-autocomplete { position: relative; width: 100%; min-width: 0; }
+      .m3-select.field-select { width: 100%; }
+      .m3-select.toolbar-select { min-width: 128px; }
+      .m3-select-trigger { width: 100%; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--ink); background: transparent; text-align: left; transition: border-color .16s, background .16s, box-shadow .16s; }
+      .field-select .m3-select-trigger { min-height: 48px; padding: 0 14px; border: 1px solid #7a8981; border-radius: 4px; font-size: 13px; }
+      .toolbar-select .m3-select-trigger { height: 40px; padding: 0 14px; border: 1px solid var(--line); border-radius: 20px; color: var(--muted); font-size: 12px; }
+      .m3-select-trigger:hover { background: var(--surface-soft); }
+      .m3-select.open .m3-select-trigger, .m3-select-trigger:focus-visible { border-color: var(--primary); background: var(--surface); box-shadow: 0 0 0 3px rgba(18,107,89,.11); outline: none; }
+      .m3-select-trigger:disabled { cursor: not-allowed; color: #89938e; background: #f0f3f1; opacity: .72; }
+      .m3-select-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .m3-select-chevron { width: 8px; height: 8px; flex: 0 0 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .16s ease; }
+      .m3-select.open .m3-select-chevron { transform: translateY(2px) rotate(225deg); }
+      .m3-select-menu { position: absolute; top: calc(100% + 5px); left: 0; z-index: 90; display: none; width: max(100%, 168px); max-height: 240px; overflow-y: auto; padding: 6px; border: 1px solid #dce4df; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-2); transform-origin: top center; }
+      .m3-select.open .m3-select-menu, .m3-autocomplete.open .m3-autocomplete-menu { display: grid; animation: m3-menu-in .16s ease-out; }
+      .m3-select-option { width: 100%; min-height: 42px; display: grid; grid-template-columns: minmax(0, 1fr) 18px; align-items: center; gap: 10px; padding: 7px 10px 7px 12px; border: 0; border-radius: 4px; color: var(--ink); background: transparent; text-align: left; font-size: 12px; }
+      .m3-select-option:hover, .m3-select-option:focus-visible { background: var(--surface-soft); outline: none; }
+      .m3-select-option.selected { color: var(--primary-deep); background: var(--primary-soft); font-weight: 700; }
+      .m3-select-option:disabled { cursor: not-allowed; opacity: .45; }
+      .m3-autocomplete-option { grid-template-columns: minmax(0, 1fr); }
+      .m3-autocomplete-option strong, .m3-autocomplete-option small { display: block; }
+      .m3-autocomplete-option strong { font-size: 12px; }
+      .m3-autocomplete-option small { margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 500; }
+      .m3-select-check { width: 11px; height: 6px; border-left: 2px solid transparent; border-bottom: 2px solid transparent; transform: translateY(-1px) rotate(-45deg); }
+      .m3-select-option.selected .m3-select-check { border-color: var(--primary); }
+      @keyframes m3-menu-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      .toolbar-spacer { flex: 1; }
+      .toolbar-actions { display: flex; align-items: center; gap: 8px; }
+      .empty-note { padding: 45px 18px; color: var(--muted); text-align: center; font-size: 12px; }
+      .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(20,30,25,.38); }
+      .modal-backdrop.open { display: flex; animation: modal-scrim-in .18s ease-out; }
+      .modal { width: min(540px, 100%); max-height: min(740px, calc(100vh - 40px)); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #dce4df; border-radius: 28px; background: #fbfdfb; box-shadow: var(--shadow-2); animation: modal-container-in .24s cubic-bezier(.2, 0, 0, 1); }
+      .modal-header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 17px; border-bottom: 1px solid var(--line); }
+      .modal-header h2 { margin: 0; font-size: 17px; }
+      .modal-header p { margin: 5px 0 0; color: var(--muted); font-size: 11px; }
+      .modal-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 20px 24px 24px; }
+      @keyframes modal-scrim-in { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes modal-container-in { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 7px; background: var(--surface-soft); margin-bottom: 17px; }
+      .segment { height: 40px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 20px; color: var(--muted); background: transparent; font-size: 13px; font-weight: 700; }
+      .segment.active { color: var(--primary-deep); background: var(--surface); box-shadow: var(--shadow-1); }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      .field { display: grid; gap: 6px; }
+      .field.full { grid-column: 1 / -1; }
+      .field label { color: var(--muted); font-size: 12px; font-weight: 700; }
+      .field:has(input:required, select:required, textarea:required) > label::after,
+      .field:has(> .m3-autocomplete > input:required) > label::after,
+      .field:has(> .m3-select > select:required) > label::after,
+      .field:has(input:required, select:required, textarea:required) > .field-heading label::after { content: " · 必填"; color: var(--primary); font-weight: 650; }
+      .field input, .field select, .field textarea { width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid #7a8981; border-radius: 4px; color: var(--ink); background: transparent; outline: none; font-size: 13px; }
+      .field textarea { min-height: 70px; padding-top: 10px; resize: vertical; }
+      .field-hint { min-height: 16px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+      .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(18,107,89,.11); }
+      .material-form-grid { align-items: start; }
+      .material-form-grid .field { min-width: 0; align-content: start; align-self: start; }
+      [data-modal="transaction"] > .modal .form-grid { align-items: start; }
+      [data-modal="transaction"] > .modal .form-grid > .field { min-width: 0; align-content: start; align-self: start; }
+      [data-modal="transaction"] > .modal input[type="datetime-local"] { height: 48px; }
+      .new-material-fields { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 14px; border-left: 3px solid var(--primary); border-radius: 0 6px 6px 0; background: var(--surface-tint); }
+      .new-material-fields > p { grid-column: 1 / -1; margin: 0; color: var(--primary-deep); font-size: 11px; font-weight: 700; }
+      .new-material-fields[hidden] { display: none; }
+      .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 19px; }
+      .stocktake-modal { width: min(920px, 100%); }
+      .stocktake-create-scope-mode { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
+      .stocktake-create-scope-field[hidden] { display: none; }
+      .stocktake-create-scope-field .m3-select-menu { position: static; width: 100%; max-height: min(320px, 46dvh); margin-top: 5px; }
+      .stocktake-modal-header { gap: 12px; }
+      .stocktake-modal-title { min-width: 0; flex: 1; }
+      .stocktake-modal-title h2, .stocktake-modal-title p { overflow-wrap: anywhere; }
+      .stocktake-header-back { flex: 0 0 40px; }
+      .stocktake-list-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
+      .stocktake-status-filter { width: min(480px, 100%); grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; }
+      .stocktake-list-toolbar .button { margin-left: auto; }
+      .stocktake-list, .stocktake-item-list { overflow: hidden; border: 1px solid #dce4df; border-radius: 8px; background: var(--surface); }
+      .stocktake-batch-row { width: 100%; min-height: 82px; display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(170px, .9fr) auto 40px; align-items: center; gap: 16px; padding: 13px 12px 13px 17px; border: 0; border-bottom: 1px solid #e6ebe8; color: var(--ink); background: transparent; text-align: left; }
+      .stocktake-batch-row:last-child { border-bottom: 0; }
+      .stocktake-batch-main, .stocktake-batch-progress { min-width: 0; }
+      .stocktake-batch-main strong { display: block; overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+      .stocktake-batch-main small, .stocktake-batch-progress small { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+      .stocktake-progress-track { height: 5px; overflow: hidden; border-radius: 3px; background: var(--surface-container); }
+      .stocktake-progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+      .stocktake-empty { padding: 50px 20px; color: var(--muted); text-align: center; font-size: 14px; }
+      .stocktake-detail-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; overflow: hidden; margin-bottom: 15px; border: 1px solid #dce4df; border-radius: 8px; background: #dce4df; }
+      .stocktake-detail-summary > div { min-width: 0; padding: 12px 14px; background: var(--surface); }
+      .stocktake-detail-summary span { display: block; color: var(--muted); font-size: 12px; }
+      .stocktake-detail-summary strong { display: block; margin-top: 5px; overflow-wrap: anywhere; font-size: 14px; }
+      .stocktake-detail-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(170px, 220px); gap: 10px; align-items: center; margin-bottom: 10px; }
+      .stocktake-detail-toolbar .search { width: 100%; }
+      .stocktake-item-list { max-height: min(420px, 52vh); overflow-y: auto; overscroll-behavior: contain; }
+      .stocktake-item-row { display: grid; grid-template-columns: minmax(190px, 1.8fr) minmax(82px, .55fr) minmax(82px, .55fr) minmax(105px, .7fr) 80px; grid-template-areas: "identity expected counted variance action" "note note note note action"; align-items: center; gap: 5px 12px; min-height: 76px; padding: 11px 10px 11px 15px; border-bottom: 1px solid #e6ebe8; }
+      .stocktake-item-row:last-child { border-bottom: 0; }
+      .stocktake-item-row.is-difference { box-shadow: inset 3px 0 0 var(--warning); }
+      .stocktake-item-row.is-pending { box-shadow: inset 3px 0 0 var(--line); }
+      .stocktake-item-identity { min-width: 0; grid-area: identity; }
+      .stocktake-item-identity strong { display: block; overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+      .stocktake-item-identity small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+      .stocktake-item-metric { min-width: 0; }
+      .stocktake-item-metric.expected { grid-area: expected; }
+      .stocktake-item-metric.counted { grid-area: counted; }
+      .stocktake-item-metric.variance { grid-area: variance; }
+      .stocktake-item-metric span { display: block; color: var(--muted); font-size: 12px; }
+      .stocktake-item-metric strong { display: block; margin-top: 3px; font-size: 14px; overflow-wrap: anywhere; }
+      .stocktake-item-metric.variance strong.difference { color: var(--warning); }
+      .stocktake-item-action { display: flex; grid-area: action; justify-content: flex-end; gap: 0; }
+      .stocktake-item-note { grid-area: note; min-width: 0; color: var(--muted); font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+      .stocktake-readiness { display: flex; align-items: flex-start; gap: 9px; margin-top: 12px; padding: 11px 12px; border-radius: 8px; color: var(--primary-deep); background: var(--primary-soft); font-size: 12px; line-height: 1.5; }
+      .stocktake-readiness.warning { color: #684100; background: var(--warning-soft); }
+      .stocktake-readiness svg { flex: 0 0 auto; margin-top: 1px; }
+      .stocktake-detail-footer { align-items: center; }
+      .stocktake-detail-footer [data-stocktake-cancel] { margin-right: auto; }
+      .stocktake-count-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; overflow: hidden; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--line); }
+      .stocktake-count-summary > div { min-width: 0; padding: 11px 12px; background: var(--surface); }
+      .stocktake-count-summary span { display: block; color: var(--muted); font-size: 12px; }
+      .stocktake-count-summary strong { display: block; margin-top: 4px; font-size: 14px; overflow-wrap: anywhere; }
+      .stocktake-subdialog { z-index: 60; }
+      .stocktake-subdialog .modal { width: min(560px, 100%); }
+      .field-heading { min-height: 24px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .field-heading label { margin: 0; }
+      .field-inline-action { min-height: 32px; padding: 0 10px; border: 0; border-radius: 16px; color: var(--primary); background: transparent; font-size: 12px; font-weight: 700; }
+      .scanner-modal { width: min(620px, 100%); }
+      .scanner-viewport { position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 8px; color: white; background: #17201c; }
+      .scanner-viewport video { width: 100%; height: 100%; display: block; object-fit: cover; }
+      .scanner-placeholder { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 24px; color: #d6ded9; text-align: center; }
+      .scanner-placeholder p { max-width: 360px; margin: 0; font-size: 12px; line-height: 1.6; }
+      .scanner-viewport.camera-active .scanner-placeholder { display: none; }
+      .scanner-guide { position: absolute; top: 50%; left: 50%; width: min(58%, 260px); aspect-ratio: 1; border: 2px solid rgba(255,255,255,.9); border-radius: 8px; box-shadow: 0 0 0 999px rgba(0,0,0,.22); transform: translate(-50%, -50%); pointer-events: none; }
+      .scanner-viewport:not(.camera-active) .scanner-guide { display: none; }
+      .scanner-status { min-height: 21px; margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+      .scanner-status.error { color: var(--danger); }
+      .scanner-source-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+      .scanner-source-actions input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+      .qr-modal { width: min(660px, 100%); }
+      .qr-label-preview-shell { display: grid; place-items: center; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); }
+      .qr-label-preview { width: min(100%, var(--label-preview-natural-width, 540px)); aspect-ratio: var(--label-aspect, 86 / 54); display: grid; place-items: center; overflow: hidden; background: white; box-shadow: var(--shadow-1); }
+      .qr-label-preview img { width: 100%; height: 100%; display: block; object-fit: contain; }
+      .qr-label-preview > span { padding: 16px; color: var(--muted); font-size: 12px; text-align: center; }
+      .qr-guidance { display: flex; align-items: flex-start; gap: 9px; margin-top: 14px; padding: 11px 12px; border-radius: 8px; color: var(--primary-deep); background: var(--primary-soft); font-size: 12px; line-height: 1.55; }
+      .qr-guidance svg { flex: 0 0 auto; margin-top: 1px; }
+      .qr-output-options { display: grid; grid-template-columns: minmax(190px, 240px) minmax(0, 1fr); gap: 16px; align-items: end; margin-top: 16px; }
+      .qr-output-note { margin: 0 0 3px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+      .qr-output-note.warning { color: var(--warning); }
+      .qr-custom-size { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding-top: 2px; }
+      .qr-custom-size[hidden] { display: none; }
+      .qr-sheet-options { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(150px, 190px) minmax(0, 1fr); gap: 14px; align-items: end; }
+      .qr-sheet-options[hidden] { display: none; }
+      .qr-sheet-status { margin: 0 0 3px; color: var(--primary-deep); font-size: 12px; line-height: 1.55; }
+      .qr-sheet-options .qr-sheet-status { grid-column: 1 / -1; }
+      .qr-sheet-status.warning { color: var(--danger); }
+      .qr-output-actions { flex-wrap: wrap; }
+      .label-cut-option { display: flex; align-items: center; gap: 9px; min-height: 40px; color: var(--text); font-size: 12px; font-weight: 650; cursor: pointer; }
+      .label-cut-option input, .batch-label-row input { width: 18px; height: 18px; flex: 0 0 18px; margin: 0; accent-color: var(--primary); }
+      .batch-label-modal { width: min(760px, 100%); }
+      .batch-label-toolbar { display: flex; align-items: center; gap: 8px; }
+      .batch-label-toolbar .search { min-width: 190px; flex: 1; }
+      .batch-label-summary { display: flex; justify-content: space-between; gap: 12px; margin: 12px 0 8px; color: var(--muted); font-size: 12px; }
+      .batch-label-list { max-height: 260px; overflow-y: auto; overscroll-behavior: contain; border-block: 1px solid var(--line); }
+      .batch-label-row { min-height: 58px; display: flex; align-items: center; gap: 12px; padding: 9px 5px; border-bottom: 1px solid var(--line); cursor: pointer; }
+      .batch-label-row:last-child { border-bottom: 0; }
+      .batch-label-row:hover { background: var(--surface-soft); }
+      .batch-label-row > span { min-width: 0; display: grid; gap: 3px; }
+      .batch-label-row strong { overflow: hidden; color: var(--text); font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+      .batch-label-row small { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+      .batch-label-empty { margin: 0; padding: 24px; color: var(--muted); text-align: center; }
+      .batch-label-options { display: grid; grid-template-columns: minmax(190px, 1fr) minmax(150px, .7fr); gap: 14px; align-items: end; margin-top: 17px; }
+      .batch-label-options .qr-custom-size, .batch-label-options .label-cut-option, .batch-label-options .qr-sheet-status { grid-column: 1 / -1; }
+      .material-label-print-root { display: none; }
+      .material-qr-action { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; padding-top: 17px; border-top: 1px solid var(--line); }
+      .material-qr-action > div { min-width: 0; }
+      .material-qr-action h3 { margin: 0; font-size: 12px; }
+      .material-qr-action p { margin: 5px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+      .settings-modal { width: min(620px, 100%); }
+      .settings-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 22px; }
+      .settings-tabs.owner-view { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .settings-tabs.member-only { grid-template-columns: 1fr; }
+      .settings-panel[hidden] { display: none; }
+      .settings-section-heading { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+      .settings-section-icon { width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; border-radius: 12px; color: var(--primary-deep); background: var(--primary-soft); }
+      .settings-section-heading h3 { margin: 1px 0 4px; font-size: 15px; }
+      .settings-section-heading p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+      .brand-upload { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 14px; margin-top: 14px; }
+      .brand-upload-preview { width: 64px; height: 64px; display: grid; place-items: center; overflow: hidden; border-radius: 16px; color: white; background: var(--primary); box-shadow: var(--shadow-1); }
+      .brand-upload-preview img { width: 100%; height: 100%; object-fit: cover; }
+      .brand-upload-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+      .brand-upload-actions input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+      .brand-upload-actions p { width: 100%; margin: 0; color: var(--muted); font-size: 10px; }
+      .organization-settings-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 18px; }
+      .organization-settings-tabs .segment { min-width: 0; white-space: nowrap; }
+      .organization-settings-tab-count { min-width: 22px; height: 22px; display: inline-grid; place-items: center; padding: 0 6px; border-radius: 11px; color: var(--muted); background: var(--surface-soft); font-size: 10px; font-variant-numeric: tabular-nums; }
+      .organization-settings-tabs .segment.active .organization-settings-tab-count { color: var(--primary-deep); background: var(--primary-soft); }
+      .organization-settings-panel[hidden] { display: none; }
+      .settings-list-scroll { max-height: min(320px, 38dvh); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: #9aaba2 transparent; -webkit-overflow-scrolling: touch; }
+      .settings-list-scroll::-webkit-scrollbar { width: 6px; }
+      .settings-list-scroll::-webkit-scrollbar-track { background: transparent; }
+      .settings-list-scroll::-webkit-scrollbar-thumb { border-radius: 3px; background: #9aaba2; }
+      .settings-list-scroll::-webkit-scrollbar-button { width: 0; height: 0; display: none; }
+      .group-list { display: grid; gap: 8px; margin-bottom: 18px; padding-right: 4px; }
+      .group-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 64px; padding: 8px 9px 8px 13px; border-radius: 8px; background: var(--surface-soft); }
+      .group-row-main { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 9px; }
+      .group-row input { width: 100%; height: 36px; padding: 0 10px; border: 1px solid transparent; border-radius: 4px; color: var(--ink); background: transparent; font-size: 13px; font-weight: 650; }
+      .group-row input:focus { border-color: var(--primary); background: var(--surface); outline: none; }
+      .settings-subheading { margin-bottom: 12px; }
+      .settings-subheading h4 { margin: 0; font-size: 13px; }
+      .settings-subheading p { margin: 4px 0 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
+      .tag-list { display: grid; gap: 8px; margin-bottom: 14px; padding-right: 4px; }
+      .tag-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 56px; padding: 8px 9px 8px 13px; border-radius: 8px; background: var(--surface-soft); }
+      .tag-row-main { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 9px; }
+      .tag-row input { width: 100%; height: 36px; padding: 0 10px; border: 1px solid transparent; border-radius: 4px; color: var(--ink); background: transparent; font-size: 13px; font-weight: 650; }
+      .tag-row input:focus { border-color: var(--primary); background: var(--surface); outline: none; }
+      .tag-row small { color: var(--muted); font-size: 10px; white-space: nowrap; }
+      .tag-row-actions { display: flex; gap: 2px; }
+      .add-tag-form { display: flex; align-items: end; gap: 10px; }
+      .add-tag-form .field { flex: 1; }
+      .tag-picker { min-height: 48px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 7px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); }
+      .tag-picker-empty { width: 100%; align-self: center; color: var(--muted); font-size: 10px; text-align: center; }
+      .tag-choice { position: relative; max-width: 100%; cursor: pointer; }
+      .tag-choice input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; pointer-events: none; }
+      .tag-choice span { min-height: 32px; max-width: 100%; display: inline-flex; align-items: center; padding: 5px 11px; border: 1px solid #b9c9c1; border-radius: 16px; color: var(--muted); background: var(--surface); font-size: 11px; font-weight: 650; overflow-wrap: anywhere; transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease; }
+      .tag-choice input:checked + span { border-color: var(--primary); color: var(--primary-deep); background: var(--primary-soft); }
+      .tag-choice:hover span { border-color: #91aa9f; background: var(--surface-tint); }
+      .tag-choice input:focus-visible + span { box-shadow: 0 0 0 3px rgba(18,107,89,.14); }
+      .group-row small { grid-column: 1 / -1; color: var(--muted); font-size: 10px; }
+      .group-row-actions { display: flex; align-items: center; gap: 2px; }
+      .group-row-actions .icon-button { width: 36px; height: 36px; }
+      .add-group-form { display: flex; align-items: flex-end; gap: 9px; padding-top: 16px; border-top: 1px solid var(--line); }
+      .add-group-form .field { flex: 1; }
+      .current-stock-note { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin-bottom: 16px; padding: 0 13px; border-left: 3px solid var(--primary); border-radius: 0 6px 6px 0; background: var(--surface-tint); font-size: 11px; }
+      .current-stock-note strong { color: var(--primary-deep); }
+      .material-lifecycle { display: grid; gap: 11px; margin-top: 19px; padding-top: 17px; border-top: 1px solid var(--line); }
+      .material-lifecycle h3 { margin: 0; font-size: 12px; }
+      .material-lifecycle p { margin: -5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+      .material-lifecycle-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+      .material-lifecycle-actions .button { justify-content: center; }
+      .tracking-modal { width: min(940px, 100%); }
+      .tracking-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 16px; }
+      .tracking-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: var(--line); }
+      .tracking-summary > div { min-width: 0; padding: 12px 14px; background: var(--surface); }
+      .tracking-summary span { display: block; color: var(--muted); font-size: 12px; }
+      .tracking-summary strong { display: block; margin-top: 4px; font-size: 18px; }
+      .tracking-toolbar { display: flex; align-items: center; gap: 10px; margin: 16px 0 12px; }
+      .tracking-toolbar .search { flex: 1 1 260px; }
+      [data-tracking-panel="units"] { display: flex; flex-direction: column; }
+      [data-tracking-panel="units"] > .tracking-summary, [data-tracking-panel="units"] > .tracking-toolbar { order: 0; }
+      [data-unit-create-form] { order: 1; margin: 0 0 14px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); }
+      [data-tracking-unit-list] { order: 2; }
+      .tracking-unit-list { display: grid; gap: 10px; }
+      .tracking-unit { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+      .tracking-unit.archived { opacity: .72; }
+      .tracking-unit-header { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 8px 12px; }
+      .tracking-unit.expanded .tracking-unit-header { border-bottom: 1px solid var(--line); }
+      .tracking-unit-toggle { min-width: 0; min-height: 44px; flex: 1; display: flex; align-items: center; gap: 10px; padding: 0; border: 0; color: var(--ink); background: transparent; text-align: left; }
+      .tracking-unit-toggle:focus-visible { border-radius: 4px; outline: 2px solid var(--primary); outline-offset: 2px; }
+      .tracking-unit-chevron { width: 20px; height: 20px; flex: 0 0 auto; display: grid; place-items: center; color: var(--muted); transition: transform .2s cubic-bezier(.2, 0, 0, 1); }
+      .tracking-unit.expanded .tracking-unit-chevron { transform: rotate(90deg); }
+      .tracking-unit-copy { min-width: 0; display: block; }
+      .tracking-unit-header strong { display: block; overflow-wrap: anywhere; }
+      .tracking-unit-header small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+      .tracking-unit-details[hidden] { display: none; }
+      .tracking-unit-actions { display: flex; align-items: center; gap: 6px; }
+      .tracking-unit-actions .button { min-height: 40px; }
+      .tracking-unit-actions .icon-button { width: 40px; height: 40px; }
+      .tracking-balance-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      .tracking-balance-table th, .tracking-balance-table td { padding: 9px 12px; border-bottom: 1px solid var(--line); font-size: 14px; text-align: left; vertical-align: middle; }
+      .tracking-balance-table tr:last-child td { border-bottom: 0; }
+      .tracking-balance-table th { color: var(--muted); background: var(--surface-soft); font-size: 12px; }
+      .tracking-balance-table th:nth-child(1) { width: 27%; }
+      .tracking-balance-table th:nth-child(2) { width: 16%; }
+      .tracking-balance-table th:nth-child(3) { width: 20%; }
+      .tracking-balance-table th:nth-child(4) { width: 12%; }
+      .tracking-balance-table th:nth-child(5) { width: 25%; text-align: right; }
+      .tracking-balance-table td:last-child { text-align: right; }
+      .tracking-balance-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; max-width: 100%; }
+      .tracking-use-button { min-width: 100px; padding-inline: 10px; gap: 6px; }
+      .tracking-manage-button { flex: 0 0 auto; width: 40px; height: 40px; }
+      .tracking-restricted-action { display: inline-block; color: var(--muted); font-size: 12px; white-space: nowrap; }
+      .tracking-scope { min-width: 0; max-width: 100%; display: inline-flex; align-items: center; gap: 3px; vertical-align: middle; }
+      .tracking-scope-chip { min-height: 24px; flex: 0 0 auto; display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 12px; color: #294f7c; background: var(--info-soft); font-size: 12px; font-weight: 700; line-height: 18px; }
+      .tracking-scope-owner { min-width: 0; overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+      .tracking-balance-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; color: var(--muted); background: var(--surface-soft); font-size: 12px; font-weight: 700; }
+      .tracking-unavailable { border-top: 1px solid var(--line); }
+      .tracking-unavailable summary { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 12px; color: var(--muted); background: var(--surface-soft); cursor: pointer; font-size: 12px; font-weight: 700; }
+      .tracking-unavailable summary:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+      .tracking-unavailable summary::-webkit-details-marker { display: none; }
+      .tracking-create-form { margin-top: 14px; padding-top: 16px; border-top: 1px solid var(--line); }
+      .tracking-create-form[hidden] { display: none; }
+      .tracking-status-list { display: grid; gap: 8px; }
+      .tracking-status-row { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(150px, 210px) auto; gap: 12px; align-items: end; padding: 12px 0; border-bottom: 1px solid var(--line); }
+      .tracking-status-row .field { min-width: 0; }
+      .tracking-status-row .icon-button { width: 44px; height: 44px; align-self: end; }
+      .tracking-status-row:last-child { border-bottom: 0; }
+      .tracking-event-list { display: grid; gap: 0; }
+      .tracking-event { display: grid; grid-template-columns: 120px minmax(150px, 1fr) minmax(180px, 1.5fr) minmax(100px, .7fr); gap: 12px; padding: 11px 4px; border-bottom: 1px solid var(--line); align-items: start; }
+      .tracking-event span, .tracking-event small { color: var(--muted); font-size: 12px; }
+      .tracking-event strong { font-size: 14px; }
+      .tracking-event p { margin: 3px 0 0; font-size: 12px; line-height: 1.45; }
+      .inventory-anomaly-panel { margin: 14px 0; padding: 12px; border: 1px solid #e7b86b; border-left: 4px solid var(--warning); border-radius: 8px; background: var(--warning-soft); }
+      .inventory-anomaly-heading strong { display: inline-flex; align-items: center; gap: 6px; }
+      .inventory-anomaly-heading p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+      .inventory-anomaly-list { display: grid; gap: 8px; margin-top: 10px; }
+      .inventory-anomaly-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid rgba(154,98,0,.25); }
+      .inventory-anomaly-item strong, .inventory-anomaly-item p { display: block; }
+      .inventory-anomaly-item p { margin: 3px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+      .inventory-anomaly-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+      .inventory-anomaly-actions > span { color: var(--muted); font-size: 12px; }
+      .operation-source { margin-bottom: 15px; padding: 11px 12px; border-left: 3px solid var(--primary); background: var(--surface-tint); }
+      .operation-source strong { display: block; }
+      .operation-source span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+      [data-inventory-operation-form] .form-grid { align-items: start; }
+      [data-inventory-operation-form] .field { min-width: 0; align-content: start; align-self: start; }
+      [data-inventory-operation-form] .field > label { min-height: 18px; display: flex; align-items: flex-end; }
+      .correction-modal { width: min(500px, 100%); }
+      .correction-summary { margin-bottom: 16px; padding: 12px 14px; border-left: 3px solid var(--warning); background: var(--warning-soft); }
+      .correction-summary strong, .correction-summary span { display: block; }
+      .correction-summary span { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+      .correction-impact { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: start; gap: 10px; margin-top: 14px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+      .correction-impact > span:first-child { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: var(--warning); background: var(--warning-soft); }
+      .settings-account { display: flex; align-items: center; gap: 11px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+      .settings-account .avatar { width: 40px; height: 40px; }
+      .settings-account strong, .settings-account small { display: block; }
+      .settings-account strong { font-size: 13px; }
+      .settings-account small { margin-top: 3px; color: var(--muted); font-size: 11px; }
+      [data-profile-form] { padding-bottom: 19px; }
+      [data-password-form] { padding-top: 19px; border-top: 1px solid var(--line); }
+      .settings-session { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 19px; padding-top: 19px; border-top: 1px solid var(--line); }
+      .settings-session h3 { margin: 0 0 4px; font-size: 13px; }
+      .settings-session p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+      .settings-session .button { flex: 0 0 auto; }
+      .database-backup-panel { margin-top: 0; padding-top: 0; border-top: 0; }
+      .database-backup-actions { display: grid; gap: 16px; margin-top: 16px; }
+      .database-backup-actions > .button { justify-self: start; }
+      .database-restore-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 16px; border-top: 1px solid var(--line); }
+      .database-restore-buttons, .database-restore-form > .field-hint { grid-column: 1 / -1; }
+      .database-restore-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      .import-drop { display: grid; justify-items: center; gap: 9px; padding: 25px 14px; border: 1px dashed #aac8bd; border-radius: 7px; background: #f8fcfa; color: var(--muted); text-align: center; }
+      .import-drop svg { color: var(--primary); }
+      .import-drop strong { color: var(--ink); font-size: 12px; }
+      .import-drop span { font-size: 10px; }
+      .import-file-control { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 4px; }
+      .import-file-control input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+      .import-file-name { max-width: 230px; overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+      .import-warning { display: flex; align-items: flex-start; gap: 9px; margin-top: 12px; padding: 11px 12px; border-left: 3px solid var(--warning); border-radius: 0 6px 6px 0; color: #674000; background: var(--warning-soft); font-size: 10px; line-height: 1.55; }
+      .import-warning svg { flex: 0 0 auto; margin-top: 1px; }
+      .toast { position: fixed; left: 50%; bottom: 24px; z-index: 60; display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 15px; border-radius: 6px; color: #fff; background: #24312b; box-shadow: var(--shadow-2); font-size: 12px; transform: translate(-50%, 90px); opacity: 0; pointer-events: none; transition: transform .25s, opacity .25s; }
+      .notification-list { display: grid; gap: 8px; }
+      .notification-item { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 11px; min-height: 62px; padding: 10px 12px; border-radius: 8px; background: var(--surface-soft); }
+      .notification-item > span:first-child { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--danger); background: var(--danger-soft); font-size: 11px; font-weight: 750; }
+      .notification-item strong { display: block; font-size: 13px; }
+      .notification-item small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+      .notification-item > b { color: var(--danger); font-size: 12px; }
+      .confirm-modal { width: min(420px, 100%); }
+      .confirm-content { display: grid; grid-template-columns: 42px minmax(0, 1fr); align-items: start; gap: 13px; }
+      .confirm-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; color: var(--danger); background: var(--danger-soft); }
+      .confirm-copy strong { display: block; margin: 2px 0 6px; font-size: 14px; }
+      .confirm-copy p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
+      .toast.show { transform: translate(-50%, 0); opacity: 1; }
+      .mobile-nav { display: none; }
+      .drawer-scrim { display: none; }
+      .startup-loader { position: fixed; inset: 0; z-index: 100; display: none; place-items: center; padding: 24px; background: var(--surface); }
+      body.auth-checking .startup-loader, body.workspace-loading .startup-loader { display: grid; opacity: 0; animation: startup-reveal .18s ease-out .2s forwards; }
+      .startup-loader-content { width: min(320px, 100%); }
+      .startup-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
+      .startup-brand > span:last-child { min-width: 0; }
+      .startup-title { margin: 0 0 13px; font-size: 16px; font-weight: 700; }
+      .startup-status { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+      .startup-status.slow, .startup-retry { display: none; }
+      body.startup-slow .startup-status.default { display: none; }
+      body.startup-slow .startup-status.slow { display: block; }
+      body.startup-slow .startup-retry { display: inline-flex; margin-top: 15px; }
+      .m3-linear-progress { position: relative; width: 100%; height: 4px; overflow: hidden; border-radius: 2px; background: var(--primary-soft); }
+      .m3-linear-progress::before, .m3-linear-progress::after { position: absolute; top: 0; bottom: 0; background: var(--primary); content: ""; transform-origin: left center; }
+      .m3-linear-progress::before { left: -35%; width: 35%; animation: progress-long 1.6s infinite cubic-bezier(.65, 0, .35, 1); }
+      .m3-linear-progress::after { left: -55%; width: 22%; animation: progress-short 1.6s .55s infinite cubic-bezier(.65, 0, .35, 1); }
+      .records-load-state { display: grid; gap: 10px; padding: 15px 20px; border-bottom: 1px solid var(--line); background: var(--surface-soft); }
+      .record-pagination { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 64px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--surface-soft); }
+      .record-pagination[hidden] { display: none; }
+      .record-pagination-summary { min-width: 180px; display: grid; gap: 2px; color: var(--muted); text-align: center; font-size: 12px; }
+      .record-pagination-summary strong { color: var(--ink); font-size: 13px; font-weight: 700; }
+      .record-pagination .icon-button:disabled { opacity: .38; }
+      .records-load-state[hidden] { display: none; }
+      .records-load-copy { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; }
+      .records-load-state.is-slow, .records-load-state.has-error { background: var(--warning-soft); }
+      .records-load-state.has-error .m3-linear-progress { display: none; }
+      .records-load-state .button { min-height: 36px; flex: 0 0 auto; }
+      .audit-table { table-layout: fixed; }
+      .audit-table th:nth-child(1) { width: 15%; }
+      .audit-table th:nth-child(2) { width: 16%; }
+      .audit-table th:nth-child(3) { width: 27%; }
+      .audit-table th:nth-child(4) { width: 21%; }
+      .audit-table th:nth-child(5) { width: 15%; }
+      .audit-table th:nth-child(6) { width: 6%; }
+      .audit-row td { min-width: 0; }
+      .audit-primary, .audit-secondary { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .audit-primary { color: var(--ink); font-weight: 650; }
+      .audit-secondary { margin-top: 3px; color: var(--muted); font-size: 12px; }
+      .audit-detail-modal { width: min(760px, 100%); }
+      .audit-detail-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; margin: 0 0 20px; }
+      .audit-detail-meta > div { min-width: 0; }
+      .audit-detail-meta .full { grid-column: 1 / -1; }
+      .audit-detail-meta dt { margin: 0 0 4px; color: var(--muted); font-size: 12px; font-weight: 650; }
+      .audit-detail-meta dd { margin: 0; overflow-wrap: anywhere; font-size: 14px; line-height: 1.5; }
+      .audit-change-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+      .audit-change-grid > section { min-width: 0; border-top: 1px solid var(--line); padding-top: 14px; }
+      .audit-change-grid h3 { margin: 0 0 10px; font-size: 14px; }
+      .audit-snapshot { display: grid; gap: 7px; }
+      .audit-snapshot-row { display: grid; grid-template-columns: minmax(96px, .8fr) minmax(0, 1.2fr); gap: 10px; padding: 8px 10px; border-radius: 6px; background: var(--surface-soft); font-size: 12px; line-height: 1.45; }
+      .audit-snapshot-row span:first-child { color: var(--muted); }
+      .audit-snapshot-row strong { min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+      .button.is-loading { cursor: progress; }
+      .button.is-loading::after { width: 14px; height: 14px; flex: 0 0 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; content: ""; animation: loading-spin .75s linear infinite; }
+      @keyframes startup-reveal { to { opacity: 1; } }
+      @keyframes progress-long { 0% { transform: translateX(0) scaleX(.55); } 55% { transform: translateX(275%) scaleX(1); } 100% { transform: translateX(410%) scaleX(.65); } }
+      @keyframes progress-short { 0% { transform: translateX(0) scaleX(.7); } 65% { transform: translateX(520%) scaleX(1); } 100% { transform: translateX(680%) scaleX(.7); } }
+      @keyframes loading-spin { to { transform: rotate(360deg); } }
+      :is(button, input, select, textarea, a):focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+      .is-hidden { display: none !important; }
+      body.auth-checking .app-shell, body.auth-checking .mobile-nav { visibility: hidden; }
+      body.auth-login .app-shell, body.auth-login .mobile-nav { display: none !important; }
+      .login-screen { min-height: 100vh; display: none; grid-template-columns: minmax(300px, 460px) minmax(0, 1fr); background: var(--surface); }
+      body.auth-login .login-screen { display: grid; }
+      .login-main { display: flex; flex-direction: column; justify-content: center; padding: 48px 64px; border-right: 1px solid var(--line); }
+      .login-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 56px; }
+      .login-brand .brand-mark { width: 40px; height: 40px; }
+      .login-main h1 { margin: 0; font-size: 27px; letter-spacing: 0; }
+      .login-main > p { margin: 9px 0 27px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+      .login-form { display: grid; gap: 15px; }
+      .login-form .field input { min-height: 44px; }
+      .login-form .button { min-height: 44px; margin-top: 3px; }
+      .login-error { min-height: 18px; margin: 0; color: var(--danger); font-size: 11px; }
+      .login-aside { display: grid; place-items: center; padding: 70px; background: var(--surface-soft); }
+      .login-visual { width: min(560px, 100%); }
+      .login-visual-kicker { color: var(--primary); font-size: 11px; font-weight: 760; letter-spacing: .08em; }
+      .login-visual h2 { max-width: 480px; margin: 14px 0 12px; font-size: 32px; line-height: 1.25; letter-spacing: 0; }
+      .login-visual > p { max-width: 480px; color: var(--muted); font-size: 13px; line-height: 1.8; }
+      .login-preview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 34px; }
+      .login-preview-item { min-height: 105px; padding: 15px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); box-shadow: var(--shadow-1); }
+      .login-preview-item span { color: var(--muted); font-size: 10px; }
+      .login-preview-item strong { display: block; margin-top: 20px; color: var(--ink); font-size: 22px; }
+      @media (max-width: 760px) {
+        .login-screen { grid-template-columns: 1fr; background: var(--surface); }
+        .login-main { min-height: 100vh; padding: 34px 24px; border: 0; }
+        .login-brand { margin-bottom: 45px; }
+        .login-aside { display: none; }
+      }
+      @media (max-width: 1080px) {
+        .sidebar { width: 214px; flex-basis: 214px; }
+        .topbar { padding-inline: 24px; }
+        .content { padding-inline: 24px; }
+        .summary-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+        .section-row { grid-template-columns: 1fr; }
+        .permission-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (min-width: 1081px) and (max-width: 1280px) {
+        .records-panel .data-table { table-layout: fixed; }
+        .records-panel .data-table :is(th, td) { padding-inline: 10px; }
+        .records-panel .data-table :is(th, td):nth-child(1) { width: 10%; }
+        .records-panel .data-table :is(th, td):nth-child(2) { width: 10%; }
+        .records-panel .data-table :is(th, td):nth-child(3) { width: 25%; }
+        .records-panel .data-table :is(th, td):nth-child(4) { width: 9%; }
+        .records-panel .data-table :is(th, td):nth-child(5) { width: 12%; }
+        .records-panel .data-table :is(th, td):nth-child(6) { width: 17%; }
+        .records-panel .data-table :is(th, td):nth-child(7) { width: 17%; }
+        .records-panel .record-material-wrap { min-width: 0; }
+        .records-panel .record-material-copy strong { overflow-wrap: anywhere; }
+        .records-panel .record-context { overflow-wrap: anywhere; }
+      }
+      @media (min-width: 761px) and (max-width: 1080px) {
+        [data-view="transactions"] .view-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        [data-view="transactions"] .record-scope,
+        [data-view="transactions"] .view-toolbar .search,
+        [data-view="transactions"] .view-toolbar > .m3-select { width: 100%; min-width: 0; }
+        [data-view="transactions"] .record-scope { flex-basis: auto; }
+        [data-view="transactions"] .toolbar-spacer { display: none; }
+        .records-panel { border: 0; background: transparent; overflow: visible; }
+        .records-panel .table-scroll { overflow: visible; }
+        .records-panel table, .records-panel tbody { display: block; width: 100%; }
+        .records-panel thead { display: none; }
+        .records-panel tbody { display: grid; gap: 10px; }
+        .records-panel .record-row { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; grid-template-areas: "type material quantity" "type time user" "type context context" "type note note"; gap: 5px 10px; min-height: 116px; padding: 14px; border: 1px solid #dce4df; border-radius: 8px; background: var(--surface); }
+        .records-panel .record-row > td { display: flex; align-items: center; height: auto; min-width: 0; padding: 0; border: 0; }
+        .records-panel .record-type { grid-area: type; align-self: stretch; justify-content: center; border-right: 1px solid #e7ece9 !important; }
+        .records-panel .record-type .type-chip { align-self: flex-start; justify-content: center; width: 46px; min-height: 30px; }
+        .records-panel .record-material { grid-area: material; }
+        .records-panel .record-material-wrap { min-width: 0; gap: 8px; }
+        .records-panel .record-material-wrap strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .records-panel .record-material-icon { display: none; }
+        .records-panel .record-quantity { grid-area: quantity; justify-self: end; font-size: 13px; }
+        .records-panel .record-time { grid-area: time; font-size: 12px; }
+        .records-panel .record-user { grid-area: user; justify-self: end; color: var(--muted); font-size: 12px; }
+        .records-panel .record-user .mini-avatar { width: 20px; height: 20px; }
+        .records-panel .record-context { grid-area: context; padding-top: 3px !important; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+        .records-panel .record-context-label { display: inline; color: var(--muted); font-weight: 700; }
+        .records-panel .record-note { grid-area: note; color: var(--ink); font-size: 12px; }
+        [data-view="audit"] .page-heading { align-items: flex-start; }
+        [data-view="audit"] .heading-actions, [data-view="audit"] .heading-actions .button { width: 100%; }
+        .audit-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .audit-toolbar .search { grid-column: 1 / -1; width: 100%; }
+        .audit-toolbar > .m3-select { width: 100%; min-width: 0; }
+        .audit-toolbar .toolbar-spacer { display: none; }
+        .audit-panel { border: 0; background: transparent; overflow: visible; }
+        .audit-panel .table-scroll { overflow: visible; }
+        .audit-table, .audit-table tbody { display: block; width: 100%; }
+        .audit-table thead { display: none; }
+        .audit-table tbody { display: grid; gap: 8px; }
+        .audit-table .audit-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "action detail" "target detail" "actor source"; gap: 6px 10px; min-height: 96px; padding: 12px 10px 12px 14px; border: 1px solid #dce4df; border-radius: 8px; background: var(--surface); }
+        .audit-table .audit-row > td { display: block; width: auto; height: auto; min-width: 0; padding: 0; border: 0; }
+        .audit-cell-action { grid-area: action; }
+        .audit-cell-target { grid-area: target; }
+        .audit-cell-actor { grid-area: actor; }
+        .audit-cell-source { grid-area: source; justify-self: end; text-align: right; }
+        .audit-cell-time { grid-area: source; align-self: end; justify-self: end; padding-top: 22px !important; color: var(--muted); font-size: 12px; }
+        .audit-cell-detail { grid-area: detail; align-self: center; }
+        .audit-secondary { font-size: 12px; }
+        .audit-detail-meta, .audit-change-grid { grid-template-columns: 1fr; }
+        .audit-detail-meta .full { grid-column: auto; }
+      }
+      @media (max-width: 760px) {
+        html.drawer-open { overflow: hidden; overscroll-behavior: none; }
+        body.drawer-open { position: fixed; right: 0; left: 0; width: 100%; overflow: hidden; overscroll-behavior: none; }
+        html.modal-page-locked { overflow: hidden; overscroll-behavior: none; }
+        body.modal-page-locked { position: fixed; right: 0; left: 0; width: 100%; overflow: hidden; overscroll-behavior: none; }
+        .app-shell { display: block; }
+        .sidebar { position: fixed; top: var(--mobile-viewport-offset-top, 0px); bottom: auto; left: 0; z-index: 42; display: flex; width: min(310px, calc(100vw - 46px)); height: var(--mobile-drawer-height, 100dvh); padding-top: max(20px, env(safe-area-inset-top)); padding-bottom: max(14px, env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; visibility: hidden; opacity: .98; pointer-events: none; transform: translateX(calc(-100% - 18px)); transition: transform .3s cubic-bezier(.2, 0, 0, 1), opacity .2s linear, visibility 0s linear .3s; -webkit-overflow-scrolling: touch; will-change: transform; box-shadow: 0 8px 28px rgba(20,30,25,.22); }
+        .sidebar.mobile-open { visibility: visible; opacity: 1; pointer-events: auto; transform: translateX(0); transition-delay: 0s; }
+        .sidebar.mobile-open :is(.brand, .nav-label, .nav-item, .sidebar-note, .sidebar-version, .user-card) { animation: drawer-content-in .24s cubic-bezier(.2, 0, 0, 1) both; }
+        .drawer-scrim { position: fixed; top: var(--mobile-viewport-offset-top, 0px); right: 0; bottom: auto; left: 0; z-index: 41; display: block; width: 100%; height: var(--mobile-drawer-height, 100dvh); padding: 0; border: 0; visibility: hidden; opacity: 0; pointer-events: none; background: rgba(20,30,25,.32); transition: opacity .25s linear, visibility 0s linear .25s; touch-action: none; }
+        .drawer-scrim.open { visibility: visible; opacity: 1; pointer-events: auto; transition-delay: 0s; }
+        .topbar { height: 62px; gap: 10px; padding: 0 16px; }
+        .mobile-menu { display: grid; }
+        .search { flex: 1; width: auto; }
+        .topbar-link { display: none; }
+        .topbar .avatar { display: none; }
+        .content { padding: 22px 16px 93px; }
+        .page-heading { align-items: flex-start; flex-direction: column; gap: 16px; margin-bottom: 20px; }
+        .page-heading h1 { font-size: 22px; }
+        .heading-actions { width: 100%; }
+        .heading-actions .button { flex: 1; }
+        .heading-actions [data-open-scanner] { width: 44px; flex: 0 0 44px; padding: 0; }
+        .heading-actions .scan-button-label { display: none; }
+        .inventory-heading-actions { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 9px; }
+        .inventory-heading-actions > [data-open-scanner] { grid-column: 1; }
+        .inventory-heading-actions > [data-open-modal] { grid-column: 2; min-width: 0; }
+        .inventory-overflow { grid-column: 3; }
+        .inventory-overflow > .icon-button { width: 44px; height: 40px; }
+        .inventory-command-menu { width: min(260px, calc(100vw - 32px)); }
+        .records-heading-actions { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 9px; }
+        .records-heading-actions > [data-open-modal] { grid-column: 1 / -1; grid-row: 1; min-width: 0; }
+        .records-heading-actions > [data-open-scanner] { grid-column: 1; grid-row: 2; }
+        .records-heading-actions > [data-download-records] { grid-column: 2; grid-row: 2; min-width: 0; }
+        .summary-grid { gap: 9px; margin-bottom: 16px; }
+        .summary-card { min-height: 116px; padding: 13px; }
+        .summary-card-top { font-size: 10px; }
+        .summary-value { margin-top: 13px; font-size: 22px; }
+        .summary-meta { margin-top: 6px; font-size: 9px; }
+        .panel-header { min-height: 55px; padding-inline: 14px; }
+        .stock-table th, .stock-table td, .transaction-table th, .transaction-table td, .data-table th, .data-table td { padding: 11px 13px; }
+        .inventory-panel .data-table { table-layout: fixed; }
+        .inventory-panel .table-scroll { overflow-x: hidden; }
+        .inventory-panel .data-table th, .inventory-panel .data-table td { height: 62px; padding: 9px 6px; }
+        .inventory-panel .data-table :is(th, td):nth-child(2), .inventory-panel .data-table :is(th, td):nth-child(5), .inventory-panel .data-table :is(th, td):nth-child(6) { display: none; }
+        .inventory-panel .data-table thead th { height: 54px; line-height: 1.25; white-space: normal; overflow-wrap: break-word; }
+        .inventory-header-full { display: none; }
+        .inventory-header-mobile { display: inline; }
+        .inventory-panel .data-table :is(th, td):nth-child(1) { width: 39%; padding-left: 12px; }
+        .inventory-panel .data-table :is(th, td):nth-child(3) { width: 16%; text-align: center; }
+        .inventory-panel .data-table :is(th, td):nth-child(4) { width: 14%; text-align: center; }
+        .inventory-panel .data-table tbody :is(td:nth-child(3), td:nth-child(4)) { white-space: nowrap; }
+        .inventory-panel .data-table :is(th, td):nth-child(7) { width: 19%; text-align: center; white-space: nowrap; }
+        .inventory-panel .data-table :is(th, td):nth-child(8) { width: 12% !important; text-align: center; }
+        .inventory-panel .stock-item { min-width: 0; gap: 7px; }
+        .inventory-panel .stock-item > span:last-child { min-width: 0; }
+        .inventory-panel .stock-item strong { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.25; max-height: 2.5em; }
+        .inventory-panel .stock-item .item-avatar { width: 27px; height: 27px; flex: 0 0 27px; }
+        .inventory-panel [data-inventory-spec], .inventory-panel [data-inventory-tracking] { display: none !important; }
+        .inventory-panel [data-inventory-quantity]::after, .inventory-panel [data-inventory-safety]::after { content: " " attr(data-unit); color: var(--muted); font-size: 9px; }
+        .inventory-panel .status-chip { padding-inline: 5px; font-size: 9px; white-space: nowrap; }
+        .inventory-panel [data-inventory-detail], .inventory-panel [data-material-qr], .inventory-panel [data-material-action] { display: none !important; }
+        .inventory-panel .material-info-action { width: 36px; height: 36px; display: grid; }
+        .inventory-panel .material-row-actions { gap: 0; }
+        .material-info-list { grid-template-columns: 1fr; column-gap: 0; }
+        .material-info-actions { gap: 6px; }
+        .material-info-actions .button { gap: 5px; padding-inline: 5px; }
+        .low-stock-panel .panel-header > div { min-width: 0; }
+        .low-stock-panel .stock-table { table-layout: fixed; }
+        .low-stock-panel .stock-table :is(th, td):nth-child(1) { width: 49%; }
+        .low-stock-panel .stock-table :is(th, td):nth-child(2) { width: 23%; white-space: nowrap; }
+        .low-stock-panel .stock-table :is(th, td):nth-child(4) { width: 28%; white-space: nowrap; }
+        .stock-table th:nth-child(3), .stock-table td:nth-child(3) { display: none; }
+        .low-stock-panel .table-scroll { max-height: 304px; overflow-y: auto; }
+        .low-stock-panel .stock-table th:nth-child(4), .low-stock-panel .stock-table td:nth-child(4) { text-align: right; }
+        .records-panel, .recent-records-panel { border: 0; background: transparent; overflow: visible; }
+        .records-panel .table-scroll, .recent-records-panel .table-scroll { overflow: visible; }
+        .records-panel table, .recent-records-panel table, .records-panel tbody, .recent-records-panel tbody { display: block; width: 100%; }
+        .records-panel thead, .recent-records-panel thead { display: none; }
+        .records-panel tbody, .recent-records-panel tbody { display: grid; gap: 10px; }
+        .records-panel .record-row, .recent-records-panel .record-row { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; grid-template-areas: "type material quantity" "type time user" "type context context" "type note note"; gap: 5px 10px; min-height: 116px; padding: 14px; border: 1px solid #dce4df; border-radius: 8px; background: var(--surface); }
+        .recent-records-panel .record-row { grid-template-areas: "type material quantity" "type time user" "type note note"; min-height: 94px; }
+        .records-panel .record-row > td, .recent-records-panel .record-row > td { display: flex; align-items: center; height: auto; min-width: 0; padding: 0; border: 0; }
+        .record-type { grid-area: type; align-self: stretch; justify-content: center; border-right: 1px solid #e7ece9 !important; }
+        .record-type .type-chip { align-self: flex-start; justify-content: center; width: 46px; min-height: 30px; }
+        .record-material { grid-area: material; }
+        .record-material-wrap { min-width: 0; gap: 8px; }
+        .record-material-wrap strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .record-material-icon { display: none; }
+        .record-quantity { grid-area: quantity; justify-self: end; font-size: 13px; }
+        .record-time { grid-area: time; font-size: 11px !important; }
+        .record-user { grid-area: user; justify-self: end; color: var(--muted); font-size: 11px !important; }
+        .record-user .mini-avatar { width: 20px; height: 20px; }
+        .record-context { grid-area: context; padding-top: 3px !important; color: var(--muted); font-size: 11px !important; }
+        .record-context-label { display: inline; color: var(--muted); font-weight: 700; }
+        .record-note { grid-area: note; color: var(--ink); font-size: 12px !important; }
+        [data-view="audit"] .page-heading { align-items: flex-start; }
+        [data-view="audit"] .heading-actions, [data-view="audit"] .heading-actions .button { width: 100%; }
+        .audit-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .audit-toolbar .search { grid-column: 1 / -1; width: 100%; }
+        .audit-toolbar > .m3-select { width: 100%; min-width: 0; }
+        .audit-toolbar > .m3-select:last-of-type { grid-column: 1 / -1; }
+        .audit-toolbar .toolbar-spacer { display: none; }
+        .audit-panel { border: 0; background: transparent; overflow: visible; }
+        .audit-panel .table-scroll { overflow: visible; }
+        .audit-table, .audit-table tbody { display: block; width: 100%; }
+        .audit-table thead { display: none; }
+        .audit-table tbody { display: grid; gap: 8px; }
+        .audit-table .audit-row { display: grid; grid-template-columns: minmax(0, 1fr) 40px; grid-template-areas: "action detail" "target detail" "actor detail" "time source"; gap: 5px 10px; min-height: 112px; padding: 12px 10px 12px 14px; border: 1px solid #dce4df; border-radius: 8px; background: var(--surface); }
+        .audit-table .audit-row > td { display: block; width: auto; height: auto; min-width: 0; padding: 0; border: 0; }
+        .audit-cell-action { grid-area: action; }
+        .audit-cell-target { grid-area: target; }
+        .audit-cell-actor { grid-area: actor; }
+        .audit-cell-source { grid-area: source; align-self: end; justify-self: end; text-align: right; }
+        .audit-cell-time { grid-area: time; align-self: end; color: var(--muted); font-size: 12px; }
+        .audit-cell-detail { grid-area: detail; align-self: center; }
+        .audit-cell-source .audit-primary { display: none; }
+        .audit-secondary { font-size: 12px; }
+        .audit-detail-meta, .audit-change-grid { grid-template-columns: 1fr; }
+        .audit-detail-meta .full { grid-column: auto; }
+        .audit-snapshot-row { grid-template-columns: minmax(112px, .8fr) minmax(0, 1.2fr); }
+        .members-panel { border: 0; background: transparent; overflow: visible; }
+        .members-panel .panel-header { min-height: 64px; margin-bottom: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+        .members-panel .table-scroll { overflow: visible; }
+        .members-panel table, .members-panel tbody { display: block; width: 100%; }
+        .members-panel thead { display: none; }
+        .members-panel tbody { display: grid; gap: 10px; }
+        .members-panel tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto 44px; grid-template-areas: "member status action" "username role action" "group group action"; gap: 5px 10px; min-height: 104px; padding: 13px 10px 13px 14px; border: 1px solid #dce4df; border-radius: 8px; background: var(--surface); }
+        .members-panel tbody td { display: flex; align-items: center; min-width: 0; height: auto; padding: 0; border: 0; font-size: 11px; }
+        .members-panel tbody td:nth-child(1) { grid-area: member; }
+        .members-panel tbody td:nth-child(2) { grid-area: username; color: var(--muted); }
+        .members-panel tbody td:nth-child(3) { grid-area: role; }
+        .permission-grid { grid-template-columns: 1fr; gap: 8px; }
+        .permission-role { padding: 13px; background: var(--surface-soft); }
+        .directory-grid { grid-template-columns: 1fr; padding-inline: 0; }
+        .directory-panel { border: 0; background: transparent; overflow: visible; }
+        .directory-panel .panel-header { min-height: 64px; margin-bottom: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+        .member-directory-toolbar .toolbar-count { width: 100%; }
+        .member-directory-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; }
+        .member-directory-toolbar .search { grid-column: 1 / -1; }
+        .member-directory-toolbar .m3-select { width: 100%; }
+        .member-directory-toolbar > .m3-select:last-of-type { grid-column: 1 / -1; }
+        .member-directory-toolbar .toolbar-count { grid-column: 1 / -1; order: 2; }
+        .directory-person-actions .member-action-button { width: 40px; height: 40px; }
+        .view-toolbar { flex-wrap: wrap; }
+        .record-scope { width: 100%; flex-basis: 100%; order: -1; }
+        .view-toolbar .search { flex: 0 0 100%; width: 100%; order: 0; }
+        .view-toolbar .toolbar-select { flex: 1 1 128px; order: 1; }
+        .toolbar-spacer { display: none; }
+        .view-toolbar .button { margin-left: auto; }
+        .toolbar-actions { width: 100%; justify-content: flex-end; order: 2; }
+        .toolbar-actions .button { margin-left: 0; }
+        .toolbar-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .toolbar-actions .button { width: 100%; min-width: 0; padding-inline: 10px; font-size: 11px; }
+        .toolbar-actions .button:last-child { grid-column: 1 / -1; }
+        .form-grid { grid-template-columns: 1fr; gap: 12px; }
+        .field.full { grid-column: auto; }
+        .new-material-fields { grid-template-columns: 1fr; }
+        .new-material-fields > p { grid-column: auto; }
+        .brand-upload { grid-template-columns: 54px minmax(0, 1fr); }
+        .brand-upload-preview { width: 54px; height: 54px; border-radius: 14px; }
+        .settings-list-scroll { max-height: min(224px, 28dvh); }
+        .group-row { grid-template-columns: minmax(0, 1fr); }
+        .group-row-actions { justify-content: flex-end; }
+        .add-group-form { align-items: stretch; flex-direction: column; }
+        .add-tag-form { align-items: stretch; flex-direction: column; }
+        .tag-row { grid-template-columns: minmax(0, 1fr) auto; }
+        .tag-row-main { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+        .tag-row small { padding-left: 10px; }
+        .settings-tabs, .settings-tabs.owner-view { display: flex; grid-template-columns: none; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .settings-tabs::-webkit-scrollbar { display: none; }
+        .settings-tabs .segment { min-width: 116px; flex: 0 0 116px; padding-inline: 12px; white-space: nowrap; }
+        .settings-tabs.member-only .segment { min-width: 100%; flex-basis: 100%; }
+        .modal-backdrop { top: var(--mobile-viewport-offset-top, 0px); right: 0; bottom: auto; left: 0; height: var(--mobile-viewport-height, 100dvh); padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); align-items: flex-end; overflow: hidden; touch-action: none; }
+        .modal { max-height: 100%; border-radius: 24px; }
+        html.mobile-keyboard-open .modal-backdrop.open { padding-bottom: 0; }
+        html.mobile-keyboard-open .modal-backdrop.open > .modal { border-bottom-right-radius: 0; border-bottom-left-radius: 0; }
+        .modal-header { padding: 17px 18px 14px; }
+        .modal-body { padding: 17px 18px 20px; -webkit-overflow-scrolling: touch; }
+        .stocktake-status-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .stocktake-list-toolbar { align-items: stretch; flex-direction: column; }
+        .stocktake-list-toolbar .button { width: 100%; margin-left: 0; }
+        .stocktake-batch-row { grid-template-columns: minmax(0, 1fr) auto 36px; grid-template-areas: "main status action" "progress progress action"; gap: 8px 10px; min-height: 100px; padding: 12px 8px 12px 13px; }
+        .stocktake-batch-main { grid-area: main; }
+        .stocktake-batch-progress { grid-area: progress; }
+        .stocktake-batch-row > .status-chip { grid-area: status; }
+        .stocktake-batch-row > .icon-button { grid-area: action; }
+        .stocktake-detail-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .stocktake-detail-toolbar { grid-template-columns: 1fr; }
+        .stocktake-item-list { max-height: min(390px, 48dvh); }
+        .stocktake-item-row { grid-template-columns: repeat(3, minmax(0, 1fr)) 76px; grid-template-areas: "identity identity identity action" "expected counted variance action" "note note note note"; gap: 8px 10px; min-height: 112px; padding: 12px 8px 12px 13px; }
+        .stocktake-item-metric { display: inline-grid; grid-template-columns: auto auto; gap: 5px; align-items: baseline; }
+        .stocktake-item-metric.expected { justify-self: start; }
+        .stocktake-item-metric.counted { justify-self: center; }
+        .stocktake-item-metric.variance { justify-self: end; }
+        .stocktake-item-metric strong { margin-top: 0; }
+        .stocktake-detail-footer { display: grid; grid-template-columns: 1fr 1fr; }
+        .stocktake-detail-footer [data-stocktake-cancel] { grid-column: 1 / -1; width: 100%; margin: 0; }
+        .stocktake-detail-footer .button { width: 100%; min-width: 0; padding-inline: 10px; }
+        .stocktake-count-summary { grid-template-columns: 1fr 1fr; }
+        .stocktake-count-summary > div:last-child { grid-column: 1 / -1; }
+        .qr-label-preview-shell { padding: 8px; }
+        .batch-label-toolbar { align-items: stretch; flex-wrap: wrap; }
+        .batch-label-toolbar .search { width: 100%; flex-basis: 100%; }
+        .batch-label-toolbar .button { flex: 1; }
+        .batch-label-list { max-height: min(250px, 32dvh); }
+        .batch-label-options { grid-template-columns: 1fr; }
+        .batch-label-options .qr-custom-size { grid-template-columns: 1fr 1fr; }
+        .qr-output-options { grid-template-columns: 1fr; gap: 8px; }
+        .qr-custom-size { grid-template-columns: 1fr 1fr; gap: 8px; }
+        .qr-sheet-options { grid-template-columns: 1fr; gap: 8px; }
+        .qr-output-actions { display: grid; grid-template-columns: 1fr 1fr; }
+        .qr-output-actions .button { min-width: 0; padding-inline: 10px; }
+        .qr-output-actions [data-print-material-qr] { grid-column: 1 / -1; }
+        .scanner-source-actions { display: grid; grid-template-columns: 1fr 1fr; }
+        .scanner-source-actions .button { min-width: 0; padding-inline: 10px; }
+        .material-qr-action { align-items: stretch; flex-direction: column; }
+        .material-qr-action .button { width: 100%; }
+        .tracking-summary { grid-template-columns: 1fr 1fr; }
+        .tracking-toolbar { align-items: stretch; flex-wrap: wrap; }
+        .tracking-toolbar .search { flex-basis: 100%; }
+        .tracking-toolbar .button { flex: 1 1 140px; justify-content: center; }
+        .tracking-unit-header { align-items: flex-start; flex-wrap: wrap; }
+        .tracking-unit-toggle { width: 100%; flex-basis: 100%; }
+        .tracking-unit-actions { width: 100%; justify-content: flex-end; }
+        .tracking-balance-table, .tracking-balance-table tbody { display: block; }
+        .tracking-balance-table thead { display: none; }
+        .tracking-balance-table tr { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "code code quantity" "status scope action"; gap: 6px 8px; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+        .tracking-balance-table tr:last-child { border-bottom: 0; }
+        .tracking-balance-table td { display: block; padding: 0; border: 0; }
+        .tracking-balance-table td:nth-child(1) { min-width: 0; grid-area: code; font-weight: 650; overflow-wrap: anywhere; }
+        .tracking-balance-table td:nth-child(2) { grid-area: status; align-self: center; }
+        .tracking-balance-table td:nth-child(2) .status-chip { font-size: 12px; }
+        .tracking-balance-table td:nth-child(3) { min-width: 0; grid-area: scope; align-self: center; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+        .tracking-balance-table td:nth-child(4) { grid-area: quantity; justify-self: end; text-align: right; white-space: nowrap; }
+        .tracking-balance-table td:nth-child(5) { grid-area: action; align-self: center; justify-self: end; }
+        .tracking-balance-actions { align-items: center; flex-direction: row; }
+        .tracking-use-button { min-width: 96px; min-height: 40px; padding-inline: 8px; }
+        .tracking-manage-button { width: 40px; height: 40px; }
+        .tracking-status-row { grid-template-columns: 1fr; }
+        .tracking-status-row .icon-button { justify-self: end; }
+        .tracking-event { grid-template-columns: 82px minmax(0, 1fr); }
+        .tracking-event > :nth-child(3), .tracking-event > :nth-child(4) { grid-column: 2; }
+        .inventory-anomaly-item { align-items: stretch; flex-direction: column; }
+        .inventory-anomaly-actions { justify-content: stretch; }
+        .inventory-anomaly-actions .button { width: 100%; justify-content: center; }
+        .mobile-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(4, 1fr); padding: 7px 7px calc(7px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgba(255,255,255,.96); box-shadow: 0 -4px 14px rgba(23,33,29,.08); }
+        .mobile-nav.without-members { grid-template-columns: repeat(3, 1fr); }
+        .mobile-nav button { display: grid; justify-items: center; gap: 4px; min-height: 44px; padding: 4px; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font-size: 9px; font-weight: 650; }
+        .mobile-nav button.active { color: var(--primary); background: var(--primary-soft); }
+      }
+      @keyframes drawer-content-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+      @media print {
+        @page { margin: 0; }
+        html, body { width: auto; min-width: 0; min-height: 0; margin: 0 !important; padding: 0 !important; background: white !important; }
+        body.printing-material-label > :not(.material-label-print-root) { display: none !important; }
+        body.printing-material-label > .material-label-print-root { display: block !important; margin: 0; }
+        .material-label-print-root[data-print-layout="single"] { width: var(--print-label-width); height: var(--print-label-height); }
+        .print-material-label-image, .print-material-sheet-label { width: 100%; height: 100%; display: block; object-fit: contain; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+        .material-label-print-root[data-print-layout="single"] .print-material-label-image { width: var(--print-label-width); height: var(--print-label-height); }
+        .print-material-sheet { width: 190mm; height: 277mm; display: grid; grid-template-columns: repeat(var(--print-sheet-columns), var(--print-label-width)); grid-auto-rows: var(--print-label-height); align-content: start; justify-content: start; gap: var(--print-sheet-gap); overflow: hidden; break-after: page; page-break-after: always; }
+        .print-material-sheet-cell { position: relative; width: var(--print-label-width); height: var(--print-label-height); }
+        .material-label-print-root[data-cut-lines="true"] .print-material-sheet-cell::after { position: absolute; inset: 0; border: .2mm solid #b9c1bd; content: ""; pointer-events: none; }
+        .print-material-sheet:last-child { break-after: auto; page-break-after: auto; }
+      }
+      /* Material 3 readability floor: body 14px, supporting labels 12px. */
+      body { font-size: 14px; line-height: 1.45; }
+      .nav-badge, .sidebar-version, .sidebar-note strong, .sidebar-note span, .user-meta span,
+      .summary-meta, .panel-header p, .stock-item > span:last-child > span,
+      .quick-action > span:not(.quick-action-icon), .notice, .chart-legend, .bar-label,
+      .type-chip, .status-chip, .member-action-summary small, .member-action-section > p,
+      .permission-role strong, .permission-role p, .member-directory-toolbar .toolbar-count,
+      .directory-person-name span, .directory-person-admin-meta, .member-tag, .directory-person p,
+      .m3-select-option, .m3-autocomplete-option strong, .m3-autocomplete-option small,
+      .modal-header p, .field label, .field-hint, .new-material-fields > p,
+      .settings-section-heading p, .brand-upload-actions p, .organization-settings-tab-count,
+      .settings-subheading p, .tag-row small, .tag-picker-empty, .tag-choice span,
+      .group-row small, .current-stock-note, .material-lifecycle p, .settings-account small,
+      .import-drop span, .import-warning, .notification-item small, .login-error,
+      .login-visual-kicker, .login-preview-item span { font-size: 12px; }
+      .button, .search input, .field input, .field select, .field textarea,
+      .field-select .m3-select-trigger, .stock-table td, .transaction-table td, .data-table td { font-size: 14px; }
+      .stock-table th, .transaction-table th, .data-table th { font-size: 12px; }
+      .user-meta strong, .stock-item strong, .quick-action strong, .directory-person-name strong { font-size: 14px; }
+      .topbar-link, .page-heading p, .filter-select, .toolbar-select .m3-select-trigger { font-size: 13px; }
+      .item-avatar, .mini-avatar, .record-material-icon, .notification-item > span:first-child { font-size: 11px; }
+      :is(.page-heading, .panel-header, .summary-card-top, .quick-action, .notification-item, .directory-person-top) > * { min-width: 0; }
+      :is(.button, .text-button, .quick-action) > svg { flex: 0 0 auto; }
+      .records-load-copy > span, .startup-status { overflow-wrap: anywhere; }
+      @media (max-width: 760px) {
+        .summary-card-top, .summary-meta { font-size: 12px; }
+        .inventory-panel [data-inventory-quantity], .inventory-panel [data-inventory-safety] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .inventory-panel [data-inventory-quantity]::after, .inventory-panel [data-inventory-safety]::after { font-size: 11px; }
+        .inventory-panel .status-chip { max-width: 100%; padding-inline: 5px; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .record-time, .record-user, .record-context, .record-note, .members-panel tbody td { font-size: 12px !important; }
+        .toolbar-actions .button { min-height: 44px; padding-inline: 8px; font-size: 12px; line-height: 1.25; white-space: normal; }
+        .mobile-nav button { font-size: 11px; }
+        .records-load-state { padding-inline: 14px; }
+        .record-pagination { justify-content: space-between; padding-inline: 10px; }
+        .record-pagination-summary { min-width: 0; }
+        .settings-session { align-items: stretch; flex-direction: column; gap: 12px; }
+        .settings-session .button { width: 100%; }
+      }
+      @media (max-width: 350px) {
+        .material-info-actions .button { gap: 4px; padding-inline: 3px; font-size: 12px; }
+        .tracking-balance-table tr { grid-template-areas: "code code quantity" "status scope scope" "action action action"; gap: 4px 8px; padding-block: 8px; }
+        .tracking-balance-table td:nth-child(5) { width: 100%; justify-self: stretch; }
+        .tracking-balance-actions { width: 100%; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .mobile-nav button),
+        :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .mobile-nav button)::before { transition-duration: .01ms !important; }
+        .m3-ripple { animation-duration: .01ms !important; }
+        .modal-backdrop.open, .modal { animation-duration: .01ms !important; }
+        .sidebar, .drawer-scrim { transition-duration: .01ms !important; }
+        .sidebar.mobile-open :is(.brand, .nav-label, .nav-item, .sidebar-note, .sidebar-version, .user-card) { animation-duration: .01ms !important; }
+        .startup-loader, .m3-linear-progress::before, .m3-linear-progress::after, .button.is-loading::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+      }
+    </style>
+  </head>
+  <body class="auth-checking">
+    <div class="startup-loader" data-startup-loader role="status" aria-live="polite">
+      <div class="startup-loader-content">
+        <div class="startup-brand"><span class="brand-mark"><Boxes data-default-brand-icon size={20} strokeWidth={2.2} /><img data-brand-icon alt="" hidden /></span><span><span class="brand-name" data-app-name>OpenLabStock</span><span class="brand-sub" data-lab-name>实验室耗材管理系统</span></span></div>
+        <p class="startup-title">正在打开工作台</p>
+        <div class="m3-linear-progress" aria-hidden="true"></div>
+        <p class="startup-status default">正在读取库存与账号信息</p>
+        <p class="startup-status slow">连接时间较长，请检查当前网络后重试。</p>
+        <button class="button startup-retry" type="button" data-retry-startup>重新加载</button>
+      </div>
+    </div>
+    <section class="login-screen" data-login-screen>
+      <div class="login-main">
+        <div class="login-brand"><span class="brand-mark"><Boxes data-default-brand-icon size={20} strokeWidth={2.2} /><img data-brand-icon alt="" hidden /></span><span><span class="brand-name" data-app-name>OpenLabStock</span><span class="brand-sub" data-lab-name>实验室耗材管理系统</span></span></div>
+        <h1>登录内部工作台</h1>
+        <p>入库、出库、库存预警和流水查询统一在一个工作台完成。使用组内账号登录，无需邮箱。</p>
+        <form class="login-form" data-login-form>
+          <div class="field"><label for="login-username">账号</label><input id="login-username" name="username" autocomplete="username" required /></div>
+          <div class="field"><label for="login-password">密码</label><input id="login-password" name="password" type="password" autocomplete="current-password" required /></div>
+          <p class="login-error" data-login-error></p>
+          <button class="button primary" type="submit">登录</button>
+        </form>
+      </div>
+      <aside class="login-aside"><div class="login-visual"><span class="login-visual-kicker">MATERIAL INVENTORY</span><h2>让每一次入库与领用都有清楚记录</h2><p>库存、流水和成员权限在同一个安静的工作台里，适合实验室日常反复使用。</p><div class="login-preview"><div class="login-preview-item"><span>登录方式</span><strong>组内账号</strong></div><div class="login-preview-item"><span>库存更新</span><strong>实时保存</strong></div><div class="login-preview-item"><span>记录范围</span><strong>完整流水</strong></div></div></div></aside>
+    </section>
+    <div class="app-shell">
+      <aside class="sidebar" id="primary-navigation" aria-label="主导航">
+        <div class="brand">
+          <span class="brand-mark"><Boxes data-default-brand-icon size={18} strokeWidth={2.2} /><img data-brand-icon alt="" hidden /></span>
+          <span><span class="brand-name" data-app-name>OpenLabStock</span><span class="brand-sub">实验室耗材台账</span></span>
+        </div>
+        <div class="workspace-switcher"><span><i class="workspace-dot"></i><span class="workspace-name" data-lab-name>实验室耗材管理系统</span></span></div>
+        <div class="nav-label">工作台</div>
+        <nav class="nav">
+          <button class="nav-item active" type="button" data-view-target="dashboard"><LayoutDashboard size={17} />总览</button>
+          <button class="nav-item" type="button" data-view-target="inventory"><Package size={17} />库存管理<span class="nav-badge" data-low-stock-count>0</span></button>
+          <button class="nav-item" type="button" data-view-target="transactions"><ClipboardList size={17} />库存活动</button>
+          <button class="nav-item" type="button" data-view-target="members"><Users size={17} />成员管理</button>
+        </nav>
+        <div class="nav-label" style="margin-top:24px">系统</div>
+        <nav class="nav"><button class="nav-item" type="button" data-view-target="audit" data-system-admin-only><History size={17} />系统审计</button><button class="nav-item" type="button" data-open-settings><Settings size={17} />系统设置</button></nav>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-note"><strong>库存提醒</strong><span data-sidebar-stock-note>正在读取库存状态。</span></div>
+        <div class="sidebar-version" title="当前系统版本">版本 <span data-app-version>正在读取</span></div>
+        <div class="user-card"><span class="avatar" data-current-avatar>用</span><span class="user-meta"><strong data-current-name>当前用户</strong><span data-current-role>已登录</span></span><button class="icon-button" type="button" title="退出登录" data-logout><LogOut size={17} /></button></div>
+      </aside>
+
+      <div class="main">
+        <header class="topbar">
+          <button class="icon-button mobile-menu" type="button" title="打开导航" aria-label="打开导航" aria-controls="primary-navigation" aria-expanded="false" data-menu-toggle><Menu size={20} /></button>
+          <div class="search"><Search size={16} /><label class="sr-only" for="global-search">搜索耗材或记录</label><input id="global-search" data-global-search placeholder="搜索耗材或记录" autocomplete="off" /></div>
+          <div class="topbar-spacer"></div><button class="icon-button notification" type="button" title="库存通知" data-open-notifications><Bell size={18} /><i class="notification-dot is-hidden" data-notification-dot></i></button><button class="avatar account-avatar" type="button" title="打开账号安全" aria-label="打开账号安全" data-open-account-settings data-current-avatar>林</button>
+        </header>
+
+        <main class="content">
+          <section class="view active" data-view="dashboard">
+            <div class="page-heading"><div><h1>库存总览</h1><p data-dashboard-greeting>这里是实验室耗材管理系统的实时库存情况。</p></div><div class="heading-actions"><button class="button" type="button" data-open-scanner aria-label="扫码登记" title="扫码登记"><ScanLine size={16} /><span class="scan-button-label">扫码登记</span></button><button class="button primary" type="button" data-open-modal="out"><ArrowUpFromLine size={16} />领用 / 使用登记</button></div></div>
+            <div class="summary-grid">
+              <article class="summary-card"><div class="summary-card-top"><span>耗材种类</span><span class="summary-icon"><Package size={16} /></span></div><div class="summary-value" data-stat-items>0</div><div class="summary-meta" data-stat-items-meta>0 个分类</div></article>
+              <article class="summary-card"><div class="summary-card-top"><span>库存预警</span><span class="summary-icon"><AlertTriangle size={16} /></span></div><div class="summary-value" data-stat-low>0</div><div class="summary-meta warning" data-stat-low-meta>0 种库存正常</div></article>
+              <article class="summary-card"><div class="summary-card-top"><span>本月入库</span><span class="summary-icon"><ArrowDownToLine size={16} /></span></div><div class="summary-value" data-stat-in>0</div><div class="summary-meta positive" data-stat-in-meta>涉及 0 种耗材</div></article>
+              <article class="summary-card"><div class="summary-card-top"><span>本月出库</span><span class="summary-icon"><ArrowUpFromLine size={16} /></span></div><div class="summary-value" data-stat-out>0</div><div class="summary-meta" data-stat-out-meta>涉及 0 种耗材</div></article>
+            </div>
+            <div class="section-row">
+              <section class="panel low-stock-panel"><div class="panel-header"><div><h2>库存预警</h2><p data-low-stock-panel-subtitle>需要及时补货的耗材</p></div><button class="text-button" type="button" data-go-view="inventory" data-show-low-stock>在库存中查看</button></div><div class="table-scroll"><table class="stock-table"><thead><tr><th>耗材名称</th><th>当前库存</th><th>安全库存</th><th>库存状态</th></tr></thead><tbody data-low-stock-body><tr><td colspan="4" class="empty-note">正在读取库存预警</td></tr></tbody></table></div></section>
+              <section class="panel quick-panel"><div class="panel-header"><div><h2>快捷操作</h2><p>常用的库存管理动作</p></div></div><div class="quick-list"><button class="quick-action out" type="button" data-open-modal="out"><span class="quick-action-icon"><ArrowUpFromLine size={16} /></span><span><strong>领用 / 使用登记</strong><span>领取普通耗材，或登记探针等单元状态</span></span><ChevronRight size={15} /></button><button class="quick-action" type="button" data-open-modal="in"><span class="quick-action-icon"><ArrowDownToLine size={16} /></span><span><strong>入库登记</strong><span>采购、归还或调拨入库</span></span><ChevronRight size={15} /></button><button class="quick-action records" type="button" data-go-my-records><span class="quick-action-icon"><ClipboardList size={16} /></span><span><strong>我的记录</strong><span>查看我登记的领用、入库和状态变更</span></span><ChevronRight size={15} /></button><button class="quick-action import" type="button" data-go-view="inventory"><span class="quick-action-icon"><Package size={16} /></span><span><strong>库存管理</strong><span>搜索耗材并查看安全库存</span></span><ChevronRight size={15} /></button></div><div class="notice"><AlertTriangle size={14} /><span data-low-stock-notice>当前库存预警会在这里显示。</span></div></section>
+            </div>
+            <section class="panel" style="margin-bottom:18px"><div class="panel-header"><div><h2>出入库趋势</h2><p>根据真实流水汇总的最近 6 个月记录笔数</p></div><span class="status-chip ok">近 6 个月</span></div><div class="chart"><div class="chart-legend"><span><i class="legend-dot"></i>入库</span><span><i class="legend-dot out"></i>出库</span></div><div class="bars" data-trend-bars></div></div></section>
+            <section class="panel recent-records-panel"><div class="panel-header"><div><h2 data-recent-heading>最近动态</h2><p data-recent-description>团队成员最近的库存活动</p></div><button class="text-button" type="button" data-go-all-records data-all-records-label>全部记录</button></div><div class="table-scroll"><table class="transaction-table"><thead><tr><th>时间</th><th>类型</th><th>耗材</th><th>数量</th><th>操作人</th><th>备注</th></tr></thead><tbody data-recent-body></tbody></table></div></section>
+          </section>
+
+          <section class="view" data-view="inventory">
+            <div class="page-heading"><div><h1>库存管理</h1><p>维护耗材基础信息，实时掌握可用数量。</p></div><div class="heading-actions inventory-heading-actions"><button class="button" type="button" data-open-scanner aria-label="扫码登记" title="扫码登记"><ScanLine size={16} /><span class="scan-button-label">扫码登记</span></button><button class="button primary" type="button" data-open-modal="out"><ArrowUpFromLine size={16} />领用 / 使用登记</button><div class="inventory-overflow" data-inventory-overflow><button class="icon-button" type="button" title="更多库存操作" aria-label="更多库存操作" aria-haspopup="menu" aria-expanded="false" aria-controls="inventory-command-menu" data-inventory-more><MoreVertical size={19} /></button><button class="inventory-command-scrim" type="button" aria-label="关闭更多库存操作" tabindex="-1" data-inventory-more-scrim></button><div class="inventory-command-menu" id="inventory-command-menu" role="menu" aria-hidden="true" data-inventory-command-menu><button class="inventory-command-item" type="button" role="menuitem" data-inventory-action="batch"><Printer size={18} />批量打印标签</button><button class="inventory-command-item" type="button" role="menuitem" data-inventory-action="export"><FileSpreadsheet size={18} />导出库存统计</button><div class="inventory-command-divider" role="separator" data-inventory-admin-only></div><button class="inventory-command-item" type="button" role="menuitem" data-inventory-action="stocktake" data-inventory-admin-only><ClipboardCheck size={18} />盘点任务</button><button class="inventory-command-item" type="button" role="menuitem" data-inventory-action="add" data-inventory-admin-only><Package size={18} />新增耗材</button><button class="inventory-command-item" type="button" role="menuitem" data-inventory-action="import" data-inventory-admin-only><Upload size={18} />导入库存</button><button class="inventory-command-item" type="button" role="menuitem" data-inventory-action="template" data-inventory-admin-only><Download size={18} />下载导入模板</button></div></div><div class="inventory-action-proxies" aria-hidden="true"><button type="button" tabindex="-1" data-open-batch-labels></button><button type="button" tabindex="-1" data-add-material data-inventory-admin-only></button><button type="button" tabindex="-1" data-open-import data-inventory-admin-only></button><button type="button" tabindex="-1" data-download-template data-inventory-admin-only></button><button type="button" tabindex="-1" data-download-inventory></button></div></div></div>
+            <div class="view-toolbar"><div class="search"><Search size={16} /><label class="sr-only" for="inventory-search">搜索库存</label><input id="inventory-search" placeholder="搜索耗材名称或分类" data-filter="inventory" /></div><select class="filter-select" data-filter-select="stock"><option value="active">全部在用</option><option value="low">库存预警</option><option value="ok">库存正常</option><option value="archived" data-material-admin-filter>已归档</option></select><button class="icon-button" type="button" title="查看耗材状态说明" aria-label="查看耗材状态说明" data-open-material-guide><Info size={17} /></button><span class="toolbar-spacer"></span></div>
+            <section class="panel inventory-panel"><div class="table-scroll"><table class="data-table"><thead><tr><th>耗材名称</th><th>分类</th><th><span class="inventory-header-full">开放可用 / 总数</span><span class="inventory-header-mobile">可用</span></th><th><span class="inventory-header-full">安全库存</span><span class="inventory-header-mobile">安全</span></th><th>单位</th><th>最近更新</th><th>状态</th><th class="member-actions"><span class="sr-only">库存明细、二维码与管理操作</span></th></tr></thead><tbody data-inventory-body></tbody></table></div></section>
+          </section>
+
+          <section class="view" data-view="transactions">
+            <div class="page-heading"><div><h1>库存活动记录</h1><p data-records-description>查看全部或仅自己的流水；普通耗材记录领用去向，探针等库存单元记录使用状态。</p></div><div class="heading-actions records-heading-actions"><button class="button" type="button" data-open-scanner aria-label="扫码登记" title="扫码登记"><ScanLine size={16} /><span class="scan-button-label">扫码登记</span></button><button class="button" type="button" data-download-records><Download size={15} />导出记录</button><button class="button primary" type="button" data-open-modal="out"><ArrowUpFromLine size={16} />领用 / 使用登记</button></div></div>
+            <div class="view-toolbar"><div class="segmented record-scope" role="group" aria-label="记录范围"><button class="segment active" type="button" data-record-scope="all" aria-pressed="true">全部记录</button><button class="segment" type="button" data-record-scope="mine" aria-pressed="false">我的记录</button></div><div class="search"><Search size={16} /><label class="sr-only" for="record-search">搜索记录</label><input id="record-search" placeholder="搜索耗材、操作人、盒号、位置或备注" data-filter="records" /></div><select class="filter-select" data-record-type><option value="all">全部类型</option><option value="in">入库</option><option value="out">领出库存</option><option value="use">使用登记</option><option value="inventory_event">状态 / 归属变更</option></select><select class="filter-select" data-record-range><option value="30">近 30 天</option><option value="90">近 90 天</option><option value="year">今年以来</option><option value="all">全部时间</option></select><span class="toolbar-spacer"></span></div>
+            <section class="panel records-panel"><div class="records-load-state" data-records-loading hidden><div class="m3-linear-progress" aria-hidden="true"></div><div class="records-load-copy"><span data-records-loading-label>正在加载完整流水</span><button class="button" type="button" data-retry-records hidden>重试</button></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>时间</th><th>类型</th><th>耗材</th><th>数量</th><th>操作人</th><th title="入库为供应商，领用 / 使用为房间号、领用人或项目">来源 / 去向</th><th>备注</th></tr></thead><tbody data-records-body></tbody></table></div><nav class="record-pagination" data-record-pagination hidden aria-label="库存活动记录分页"><button class="icon-button" type="button" data-record-page-previous title="上一页" aria-label="上一页"><ChevronLeft size={18} /></button><span class="record-pagination-summary"><span data-record-page-range>第 0–0 条，共 0 条</span><strong data-record-page-label>第 1 / 1 页</strong></span><button class="icon-button" type="button" data-record-page-next title="下一页" aria-label="下一页"><ChevronRight size={18} /></button></nav></section>
+          </section>
+
+          <section class="view" data-view="members">
+            <div class="page-heading"><div><h1 data-members-page-title>成员管理</h1><p data-members-page-description>组内成员使用账号登录，无需邮箱；权限按身份分级管理。</p></div><div class="heading-actions"><button class="button tonal" type="button" data-open-permissions><ShieldCheck size={16} />身份与权限</button><button class="button primary" type="button" data-add-member><Plus size={16} />添加成员</button></div></div>
+            <div class="view-toolbar member-directory-toolbar"><div class="search"><Search size={16} /><label class="sr-only" for="member-search">搜索成员</label><input id="member-search" placeholder="搜索姓名、职责、分组或标签" data-filter="members" /></div><select class="filter-select" data-member-role-filter aria-label="按身份筛选"><option value="all">全部身份</option><option value="admin">系统所有者 / 系统管理员</option><option value="inventory">库存管理员</option><option value="member">普通成员</option></select><select class="filter-select" data-member-group-filter aria-label="按组织分组筛选"><option value="all">全部分组</option></select><select class="filter-select" data-member-tag-filter aria-label="按成员标签筛选"><option value="all">全部标签</option></select><span class="toolbar-spacer"></span><span class="toolbar-count" data-member-filter-count>0 / 0 位</span></div>
+            <section class="panel directory-panel"><div class="panel-header"><div><h2>成员目录</h2><p data-directory-description>所有启用中的成员都可以查看负责范围和联系方式。</p></div><span class="toolbar-count" data-directory-count></span></div><div class="directory-grid" data-directory-body></div><p class="empty-note is-hidden" data-directory-empty>没有符合条件的成员</p></section>
+          </section>
+
+          <section class="view" data-view="audit">
+            <div class="page-heading"><div><h1>系统审计</h1><p>查看账号、权限、组织、设置和库存配置的管理员操作。</p></div><div class="heading-actions"><button class="button" type="button" data-download-audit><Download size={15} />导出审计记录</button></div></div>
+            <div class="view-toolbar audit-toolbar"><div class="search"><Search size={16} /><label class="sr-only" for="audit-search">搜索审计记录</label><input id="audit-search" placeholder="搜索操作者、对象、动作或请求编号" data-filter="audit" /></div><select class="filter-select" data-audit-type aria-label="按对象类型筛选"><option value="all">全部对象</option><option value="user">成员与权限</option><option value="settings">实验室设置</option><option value="group">组织分组</option><option value="tag">成员标签</option><option value="material">耗材档案</option><option value="inventory_status">库存状态</option><option value="inventory_unit">库存单元</option><option value="inventory_anomaly">异常修复</option><option value="stocktake">盘点任务</option><option value="database">数据库</option></select><select class="filter-select" data-audit-range aria-label="按时间筛选"><option value="30">近 30 天</option><option value="90">近 90 天</option><option value="year">今年以来</option><option value="all">全部时间</option></select><select class="filter-select" data-audit-actor aria-label="按操作者筛选"><option value="all">全部操作者</option></select><span class="toolbar-spacer"></span></div>
+            <section class="panel audit-panel"><div class="records-load-state" data-audit-loading hidden><div class="m3-linear-progress" aria-hidden="true"></div><div class="records-load-copy"><span data-audit-loading-label>正在读取系统审计记录</span><button class="button" type="button" data-retry-audit hidden>重试</button></div></div><div class="table-scroll"><table class="data-table audit-table"><thead><tr><th>时间</th><th>操作者</th><th>操作</th><th>对象</th><th>来源</th><th><span class="sr-only">查看详情</span></th></tr></thead><tbody data-audit-body><tr><td colspan="6" class="empty-note">打开后读取系统审计记录</td></tr></tbody></table></div><nav class="record-pagination" data-audit-pagination hidden aria-label="系统审计记录分页"><button class="icon-button" type="button" data-audit-page-previous title="上一页" aria-label="上一页"><ChevronLeft size={18} /></button><span class="record-pagination-summary"><span data-audit-page-range>第 0–0 条，共 0 条</span><strong data-audit-page-label>第 1 / 1 页</strong></span><button class="icon-button" type="button" data-audit-page-next title="下一页" aria-label="下一页"><ChevronRight size={18} /></button></nav></section>
+          </section>
+        </main>
+      </div>
+    </div>
+    <button class="drawer-scrim" type="button" aria-label="关闭导航" data-drawer-scrim></button>
+
+    <nav class="mobile-nav" aria-label="移动端导航"><button class="active" type="button" data-view-target="dashboard"><LayoutDashboard size={18} />总览</button><button type="button" data-view-target="inventory"><Package size={18} />库存</button><button type="button" data-view-target="transactions"><ClipboardList size={18} />记录</button><button type="button" data-view-target="members"><Users size={18} />成员</button></nav>
+
+    <template data-inventory-row-template><tr><td><button class="stock-item material-info-trigger" type="button" title="查看耗材详情" data-material-info><span class="item-avatar" data-inventory-initial>耗</span><span><strong data-inventory-name>耗材</strong><span data-inventory-spec>规格、型号：未填写</span><span class="tracking-mode-label" data-inventory-tracking hidden>按状态统计</span></span></button></td><td data-inventory-category></td><td><div class="inventory-quantity-stack"><strong class="stock-number" data-inventory-quantity></strong><small data-inventory-total hidden></small></div></td><td data-inventory-safety></td><td data-inventory-unit></td><td data-inventory-updated></td><td><span class="status-chip" data-inventory-status></span></td><td class="member-actions"><span class="material-row-actions"><button class="icon-button member-action-button material-info-action" type="button" title="查看耗材详情" aria-label="查看耗材详情" data-material-info><Info size={18} /></button><button class="icon-button member-action-button" type="button" title="查看库存明细" data-inventory-detail><ClipboardList size={18} /></button><button class="icon-button member-action-button" type="button" title="查看二维码标签" data-material-qr><QrCode size={18} /></button><button class="icon-button member-action-button" type="button" title="管理耗材" data-material-action><MoreVertical size={18} /></button></span></td></tr></template>
+    <template data-member-action-icon-template><MoreVertical size={18} /></template>
+    <template data-inventory-register-icon-template><ClipboardList size={16} /></template>
+    <template data-inventory-more-icon-template><MoreVertical size={18} /></template>
+    <template data-inventory-in-icon-template><ArrowDownToLine size={16} /></template>
+    <template data-inventory-qr-icon-template><QrCode size={18} /></template>
+    <template data-inventory-archive-icon-template><Archive size={18} /></template>
+    <template data-inventory-restore-icon-template><RotateCcw size={18} /></template>
+    <template data-inventory-save-icon-template><Check size={18} /></template>
+    <template data-inventory-settings-icon-template><Settings size={16} /></template>
+    <template data-close-icon-template><X size={18} /></template>
+    <template data-transaction-next-icon-template><ChevronRight size={18} /></template>
+    <template data-transaction-save-icon-template><Check size={15} /></template>
+    <template data-correction-icon-template><RotateCcwKey size={14} /></template>
+    <template data-audit-detail-icon-template><ChevronRight size={18} /></template>
+    <template data-stocktake-count-icon-template><ClipboardCheck size={18} /></template>
+    <template data-group-row-template><div class="group-row"><div class="group-row-main"><input data-group-name maxlength="40" aria-label="分组名称" /><span class="status-chip ok is-hidden" data-group-default-chip>默认</span><small data-group-meta>0 位成员</small></div><div class="group-row-actions"><button class="icon-button" type="button" title="保存组名" data-save-group><Check size={16} /></button><button class="icon-button" type="button" title="设为默认组" data-set-default-group><Star size={16} /></button><button class="icon-button" type="button" title="删除分组" data-delete-group><Trash2 size={16} /></button></div></div></template>
+    <template data-tag-row-template><div class="tag-row"><div class="tag-row-main"><input data-tag-name maxlength="24" aria-label="标签名称" /><small data-tag-meta>0 位成员</small></div><div class="tag-row-actions"><button class="icon-button" type="button" title="保存标签名称" data-save-tag><Check size={16} /></button><button class="icon-button" type="button" title="删除标签" data-delete-tag><Trash2 size={16} /></button></div></div></template>
+
+    <div class="modal-backdrop" data-modal="transaction"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="transaction-title"><div class="modal-header"><div><h2 id="transaction-title">领用 / 使用登记</h2><p data-transaction-subtitle>普通耗材登记数量，探针等耗材进入具体盒子或位置</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="segmented" role="group" aria-label="登记类型"><button class="segment" type="button" data-transaction-type="in" aria-pressed="false"><ArrowDownToLine size={14} /> 入库</button><button class="segment active" type="button" data-transaction-type="out" aria-pressed="true"><ArrowUpFromLine size={14} /> 领用 / 使用</button></div><form data-transaction-form><div class="form-grid"><div class="field full"><div class="field-heading"><label for="material-name">搜索或填写耗材名称</label><button class="field-inline-action" type="button" data-open-scanner-from-transaction><ScanLine size={14} />扫描二维码</button></div><input id="material-name" list="material-options" placeholder="输入名称或从候选项选择" autocomplete="off" required /><datalist id="material-options" data-material-options></datalist><span class="field-hint" data-material-hint>选择已有耗材；探针等耗材会进入具体盒子或位置</span></div><div class="new-material-fields" data-new-material-fields hidden><p>这是一个新耗材，请补充基础信息</p><div class="field"><label for="material-category">分类</label><input id="material-category" placeholder="例如：化学试剂" /></div><div class="field"><label for="material-spec">规格</label><input id="material-spec" placeholder="例如：500 mL/瓶" /></div><div class="field"><label for="material-safety-stock">安全库存</label><input id="material-safety-stock" type="number" min="0" value="0" /></div></div><div class="field" data-transaction-direct-field><label for="material-quantity">数量</label><input id="material-quantity" type="number" min="1" placeholder="0" required /></div><div class="field" data-transaction-direct-field><label for="material-unit">单位</label><input id="material-unit" list="material-unit-options" value="件" required /><datalist id="material-unit-options"><option value="盒"></option><option value="瓶"></option><option value="个"></option><option value="件"></option><option value="支"></option><option value="包"></option><option value="卷"></option><option value="套"></option></datalist></div><div class="field" data-transaction-direct-field><label for="material-person" data-person-label>去向（房间号 / 领用人 / 项目）</label><input id="material-person" placeholder="填写房间号、领用人或项目" /><span class="field-hint" data-person-hint>记录耗材实际流向，房间号、领用人或项目可任选其一填写。</span></div><div class="field" data-transaction-direct-field><label for="material-date">发生时间</label><input id="material-date" type="datetime-local" /></div><div class="field full" data-transaction-direct-field><label for="material-note">备注</label><textarea id="material-note" placeholder="可填写采购单号、项目名称等信息"></textarea></div></div><div class="modal-footer"><button class="button" type="button" data-close-modal>取消</button><button class="button primary" type="submit"><span data-transaction-submit-icon><Check size={15} /></span><span data-transaction-submit-label>保存记录</span></button></div></form></div></section></div>
+
+    <div class="modal-backdrop" data-modal="scanner"><section class="modal scanner-modal" role="dialog" aria-modal="true" aria-labelledby="scanner-title"><div class="modal-header"><div><h2 id="scanner-title">扫描耗材二维码</h2><p>识别后进入登记表单，不会直接改变库存</p></div><button class="icon-button" type="button" data-close-scanner title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="segmented" role="group" aria-label="扫码登记类型"><button class="segment" type="button" data-scan-transaction-type="in" aria-pressed="false"><ArrowDownToLine size={14} /> 入库</button><button class="segment active" type="button" data-scan-transaction-type="out" aria-pressed="true"><ArrowUpFromLine size={14} /> 领用 / 使用</button></div><div class="scanner-viewport" data-scanner-viewport><video data-scanner-video muted playsinline></video><div class="scanner-placeholder"><ScanLine size={42} /><p>将耗材标签放入取景框；也可以选择手机中的二维码图片。</p></div><span class="scanner-guide" aria-hidden="true"></span></div><p class="scanner-status" role="status" data-scanner-status>准备扫描耗材二维码</p><div class="scanner-source-actions"><button class="button primary" type="button" data-start-scanner><Camera size={16} /><span data-start-scanner-label>打开摄像头</span></button><label class="button tonal" for="scanner-image-file"><ImageUp size={16} />识别二维码图片</label><input id="scanner-image-file" type="file" accept="image/png,image/jpeg,image/webp" data-scanner-image /></div><div class="modal-footer"><button class="button" type="button" data-close-scanner>取消</button></div></div></section></div>
+
+    <div class="modal-backdrop" data-modal="material-qr"><section class="modal qr-modal" role="dialog" aria-modal="true" aria-labelledby="material-qr-title"><div class="modal-header"><div><h2 id="material-qr-title">耗材标签输出</h2><p>预览、下载与打印使用同一版式，可选择预设或自定义尺寸</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="qr-label-preview-shell"><div class="qr-label-preview" data-material-label-preview data-label-size="86x54"><img data-material-label-preview-image alt="耗材标签预览" hidden /><span data-material-label-preview-loading>正在生成标签预览</span></div></div><div class="qr-output-options"><div class="field"><label for="material-label-size">标签尺寸</label><select id="material-label-size" data-material-label-size><option value="40x25">40 × 25 mm（小标签）</option><option value="50x30">50 × 30 mm</option><option value="70x40">70 × 40 mm</option><option value="86x54" selected>86 × 54 mm</option><option value="custom">自定义尺寸</option></select></div><div class="field"><label for="material-print-layout">打印排版</label><select id="material-print-layout" data-material-print-layout><option value="single">标签机 / 单张标签纸</option><option value="a4">A4 自动排版（多标签）</option></select></div><div class="qr-custom-size" data-custom-label-size hidden><div class="field"><label for="custom-label-width">宽度（mm）</label><input id="custom-label-width" type="number" min="35" max="120" step="0.5" value="50" inputmode="decimal" data-custom-label-width /></div><div class="field"><label for="custom-label-height">高度（mm）</label><input id="custom-label-height" type="number" min="22" max="80" step="0.5" value="30" inputmode="decimal" data-custom-label-height /></div></div><div class="qr-sheet-options" data-material-sheet-options hidden><div class="field"><label for="material-print-copies">打印份数</label><input id="material-print-copies" type="number" min="1" max="100" step="1" value="8" inputmode="numeric" data-material-print-copies /></div><label class="label-cut-option"><input type="checkbox" checked data-material-cut-lines />显示裁切辅助线</label><p class="qr-sheet-status" role="status" data-material-sheet-status></p></div><p class="qr-output-note" role="status" data-material-label-status>内容会按标签尺寸自动缩放。打印时选择“实际大小”或 100%，并关闭页眉和页脚。</p></div><div class="qr-guidance"><Info size={17} /><span>完整标签不包含会变化的库存数量。二维码只选择耗材，数量、来源或去向仍由登录成员确认后写入流水；A4 模式会重复排版当前耗材，更小标签可下载纯二维码。</span></div><div class="modal-footer qr-output-actions"><button class="button" type="button" data-download-material-qr><QrCode size={16} />下载二维码</button><button class="button tonal" type="button" data-download-material-label><ImageDown size={16} />下载标签</button><button class="button primary" type="button" data-print-material-qr><Printer size={16} />打印标签</button></div></div></section></div>
+
+    <div class="modal-backdrop" data-modal="batch-labels"><section class="modal batch-label-modal" role="dialog" aria-modal="true" aria-labelledby="batch-label-title"><div class="modal-header"><div><h2 id="batch-label-title">A4 批量打印标签</h2><p>选择多个不同耗材，按选择顺序自动混排和分页</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="batch-label-toolbar"><div class="search"><Search size={16} /><label class="sr-only" for="batch-label-search">搜索耗材</label><input id="batch-label-search" placeholder="搜索名称、分类或规格" autocomplete="off" data-batch-label-search /></div><button class="button tonal" type="button" data-batch-select-visible>全选当前结果</button><button class="button" type="button" data-batch-clear-labels>清空</button></div><p class="batch-label-summary"><span data-batch-label-visible-count>0 种可选耗材</span><strong data-batch-label-selected-count>已选 0 种</strong></p><div class="batch-label-list" role="group" aria-label="选择要打印的耗材" data-batch-label-list></div><div class="batch-label-options"><div class="field"><label for="batch-label-size">标签尺寸</label><select id="batch-label-size" data-batch-label-size><option value="40x25">40 × 25 mm（小标签）</option><option value="50x30" selected>50 × 30 mm</option><option value="70x40">70 × 40 mm</option><option value="86x54">86 × 54 mm</option><option value="custom">自定义尺寸</option></select></div><div class="field"><label for="batch-label-copies">每种打印份数</label><input id="batch-label-copies" type="number" min="1" max="10" step="1" value="1" inputmode="numeric" data-batch-label-copies /></div><div class="qr-custom-size" data-batch-custom-label-size hidden><div class="field"><label for="batch-label-width">宽度（mm）</label><input id="batch-label-width" type="number" min="35" max="120" step="0.5" value="50" inputmode="decimal" data-batch-label-width /></div><div class="field"><label for="batch-label-height">高度（mm）</label><input id="batch-label-height" type="number" min="22" max="80" step="0.5" value="30" inputmode="decimal" data-batch-label-height /></div></div><label class="label-cut-option"><input type="checkbox" checked data-batch-cut-lines />显示裁切辅助线</label><p class="qr-sheet-status" role="status" data-batch-label-status>请选择至少一种耗材。</p></div><div class="qr-guidance"><Info size={17} /><span>标签不写入会变化的库存数量。打印时选择“实际大小”或 100%，关闭页眉页脚；一批最多生成 100 张标签。</span></div><div class="modal-footer"><button class="button" type="button" data-close-modal>取消</button><button class="button primary" type="button" data-print-batch-labels disabled><Printer size={16} /><span data-print-batch-labels-text>打印所选标签</span></button></div></div></section></div>
+
+    <div class="material-label-print-root" aria-hidden="true" data-material-label-print-root><img data-print-material-label-image alt="" /></div>
+    <style data-material-print-page-style></style>
+
+    <div class="modal-backdrop" data-modal="import"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="import-title"><div class="modal-header"><div><h2 id="import-title">导入当前库存</h2><p>支持导入模板和系统导出的库存统计工作簿</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="import-drop"><FileSpreadsheet size={28} /><strong>选择 Excel 或 CSV 文件</strong><span>优先读取“可导入库存”，兼容“逐耗材统计”；单次最多 500 行</span><div class="import-file-control"><input id="import-file" type="file" accept=".xlsx,.xls,.csv" data-import-file /><button class="button tonal" type="button" data-choose-import-file><Upload size={15} />选择文件</button><span class="import-file-name" data-import-file-name>尚未选择文件</span></div></div><div class="import-warning"><AlertTriangle size={16} /><span>表格中的“当前库存”代表导入后的实际数量。同名耗材会更新基础信息，并自动生成差额出入库流水；累计入库、累计出库等统计列不会回导。</span></div><button class="button ghost" type="button" data-download-template style="margin-top:10px"><Download size={14} />下载导入模板</button><div class="modal-footer"><button class="button" type="button" data-close-modal>取消</button><button class="button primary" type="button" data-confirm-import disabled><Upload size={15} />校验并导入</button></div></div></section></div>
+
+    <div class="modal-backdrop" data-modal="stocktakes"><section class="modal stocktake-modal" role="dialog" aria-modal="true" aria-labelledby="stocktake-title"><div class="modal-header stocktake-modal-header"><button class="icon-button stocktake-header-back" type="button" data-stocktake-back title="返回盘点批次" aria-label="返回盘点批次" hidden><ChevronLeft size={19} /></button><div class="stocktake-modal-title"><h2 id="stocktake-title" data-stocktake-title>盘点任务</h2><p data-stocktake-subtitle>按批次复核账面库存与实盘数量</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div data-stocktake-list-view><div class="stocktake-list-toolbar"><div class="segmented stocktake-status-filter" role="group" aria-label="盘点任务状态"><button class="segment active" type="button" data-stocktake-filter="open" aria-pressed="true">未完成</button><button class="segment" type="button" data-stocktake-filter="completed" aria-pressed="false">已完成</button><button class="segment" type="button" data-stocktake-filter="cancelled" aria-pressed="false">已取消</button><button class="segment" type="button" data-stocktake-filter="all" aria-pressed="false">全部</button></div><button class="button primary" type="button" data-stocktake-create-open><Plus size={16} />新建盘点</button></div><div class="stocktake-list" data-stocktake-list aria-live="polite"><p class="stocktake-empty">正在读取盘点任务</p></div></div><div data-stocktake-detail-view hidden><div class="stocktake-detail-summary"><div><span>任务状态</span><strong data-stocktake-detail-status>-</strong></div><div><span>盘点进度</span><strong data-stocktake-detail-progress>-</strong></div><div><span>差异项目</span><strong data-stocktake-detail-differences>-</strong></div><div><span>创建信息</span><strong data-stocktake-detail-created>-</strong></div></div><div class="stocktake-detail-toolbar"><div class="search"><Search size={16} /><label class="sr-only" for="stocktake-item-search">搜索盘点明细</label><input id="stocktake-item-search" placeholder="搜索耗材或盒号" autocomplete="off" data-stocktake-item-search /></div><select data-stocktake-item-filter aria-label="筛选盘点明细"><option value="all">全部明细</option><option value="pending">仅未盘</option><option value="difference">仅有差异</option><option value="tracked">仅库存单元</option></select></div><div class="stocktake-item-list" data-stocktake-item-list aria-live="polite"></div><div class="stocktake-readiness" data-stocktake-readiness><Info size={17} /><span>读取盘点完成条件</span></div><div class="modal-footer stocktake-detail-footer"><button class="button danger" type="button" data-stocktake-cancel>取消任务</button><button class="button" type="button" data-stocktake-refresh><RotateCcw size={16} />刷新</button><button class="button primary" type="button" data-stocktake-complete><Check size={16} />完成盘点</button></div></div></div></section></div>
+
+    <div class="modal-backdrop stocktake-subdialog" data-modal="stocktake-create"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="stocktake-create-title"><div class="modal-header"><div><h2 id="stocktake-create-title">新建盘点任务</h2><p>创建时固定本批次的账面数量快照</p></div><button class="icon-button" type="button" data-close-stocktake-subdialog title="关闭"><X size={18} /></button></div><div class="modal-body"><form data-stocktake-create-form><div class="form-grid"><div class="field full"><label for="stocktake-create-name">盘点批次名称</label><input id="stocktake-create-name" maxlength="80" autocomplete="off" required /></div><div class="field full"><label>盘点范围</label><div class="segmented stocktake-create-scope-mode" role="group" aria-label="盘点范围"><button class="segment active" type="button" data-stocktake-scope-mode="all" aria-pressed="true">全部耗材</button><button class="segment" type="button" data-stocktake-scope-mode="category" aria-pressed="false">按分类</button><button class="segment" type="button" data-stocktake-scope-mode="material" aria-pressed="false">单项耗材</button></div><span class="field-hint">大批盘点可选全部或分类；临时抽盘和差异复核可搜索单项耗材。</span></div><div class="field full stocktake-create-scope-field" data-stocktake-category-field hidden><label for="stocktake-create-category">耗材分类</label><select id="stocktake-create-category" data-stocktake-create-category disabled><option value="">请选择分类</option></select></div><div class="field full stocktake-create-scope-field" data-stocktake-material-field hidden><label for="stocktake-create-material">单项耗材</label><input id="stocktake-create-material" list="stocktake-create-material-options" placeholder="搜索名称、分类或规格" autocomplete="off" disabled /><datalist id="stocktake-create-material-options" data-stocktake-create-material-options></datalist><span class="field-hint">选择一种耗材；探针等追踪耗材会包含该耗材下的全部在用盒子。</span></div></div><div class="modal-footer"><button class="button" type="button" data-close-stocktake-subdialog>取消</button><button class="button primary" type="submit"><Plus size={16} />创建任务</button></div></form></div></section></div>
+
+    <div class="modal-backdrop stocktake-subdialog" data-modal="stocktake-count"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="stocktake-count-title"><div class="modal-header"><div><h2 id="stocktake-count-title" data-stocktake-count-title>登记实盘数量</h2><p data-stocktake-count-subtitle>填写现场清点结果</p></div><button class="icon-button" type="button" data-close-stocktake-subdialog title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="stocktake-count-summary"><div><span>账面快照</span><strong data-stocktake-count-expected>-</strong></div><div><span>当前系统</span><strong data-stocktake-count-current>-</strong></div><div><span>盘点对象</span><strong data-stocktake-count-scope>-</strong></div></div><form data-stocktake-count-form><div class="form-grid"><div class="field full"><label for="stocktake-counted-quantity">实盘数量</label><input id="stocktake-counted-quantity" type="number" min="0" step="any" inputmode="decimal" required /></div><div class="field full" data-stocktake-reason-field hidden><label for="stocktake-difference-reason">差异原因</label><textarea id="stocktake-difference-reason" maxlength="300" placeholder="例如：领用漏登、破损未登记或上次盘点误差"></textarea></div><div class="field full"><label for="stocktake-resolution-note" data-stocktake-resolution-label>处理说明（选填）</label><textarea id="stocktake-resolution-note" maxlength="500" placeholder="记录已经采取或计划采取的处理"></textarea></div></div><div class="stocktake-readiness warning" data-stocktake-tracked-guidance hidden><AlertTriangle size={17} /><span>按盒追踪耗材不会自动增减数量。发现差异后，请先打开该盒库存明细，逐根修正状态或位置，再完成盘点。</span></div><div class="modal-footer"><button class="button tonal" type="button" data-stocktake-open-inventory-detail hidden><ClipboardList size={16} />打开库存明细</button><button class="button" type="button" data-close-stocktake-subdialog>取消</button><button class="button primary" type="submit"><Check size={16} />保存实盘</button></div></form></div></section></div>
+
+    <div class="modal-backdrop stocktake-subdialog" data-modal="stocktake-cancel"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="stocktake-cancel-title"><div class="modal-header"><div><h2 id="stocktake-cancel-title">取消盘点任务</h2><p>任务及已登记结果会保留在审计记录中</p></div><button class="icon-button" type="button" data-close-stocktake-subdialog title="关闭"><X size={18} /></button></div><div class="modal-body"><form data-stocktake-cancel-form><div class="field"><label for="stocktake-cancel-reason">取消原因</label><textarea id="stocktake-cancel-reason" maxlength="300" placeholder="例如：盘点期间库存发生变化，需要重新建立快照" required></textarea></div><div class="modal-footer"><button class="button" type="button" data-close-stocktake-subdialog>返回</button><button class="button danger-filled" type="submit"><X size={16} />确认取消</button></div></form></div></section></div>
+
+    <div class="modal-backdrop" data-modal="member"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="member-title"><div class="modal-header"><div><h2 id="member-title">添加组内成员</h2><p>创建一个不需要邮箱的登录账号</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><form data-member-form><div class="form-grid"><div class="field"><label for="member-name">姓名</label><input id="member-name" required /></div><div class="field"><label for="member-username">登录账号</label><input id="member-username" autocomplete="off" required /></div><div class="field"><label for="member-password">初始密码</label><input id="member-password" type="password" minlength="8" autocomplete="new-password" required /></div><div class="field"><label for="member-role">身份</label><select id="member-role"><option value="member">普通成员</option><option value="inventory">库存管理员</option><option value="admin">系统管理员</option></select></div><div class="field full"><label for="member-group">所属组织分组</label><select id="member-group" data-group-select required></select><span class="field-hint">每位成员只属于一个组织分组，出库消耗按发生时分组统计。</span></div><div class="field full"><label>成员标签（可多选）</label><div class="tag-picker" data-tag-picker="member"></div><span class="field-hint">标签用于职责说明和检索，不作为消耗核算维度。</span></div><div class="field full"><label for="member-note">成员备注（选填）</label><textarea id="member-note" maxlength="300" placeholder="例如：负责光刻耗材；联系方式或值班安排"></textarea><span class="field-hint">启用账号的成员都能在成员目录看到这段内容。</span></div></div><div class="modal-footer"><button class="button" type="button" data-close-modal>取消</button><button class="button primary" type="submit"><Check size={15} />创建账号</button></div></form></div></section></div>
+
+    <div class="modal-backdrop" data-modal="member-action"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="member-action-title"><div class="modal-header"><div><h2 id="member-action-title">管理成员</h2><p>成员信息、账号安全与登录状态</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="member-action-summary"><span class="avatar" data-member-action-avatar>员</span><span><strong data-member-action-name>成员</strong><small data-member-action-username>登录账号</small></span></div><div class="member-action-list"><section class="member-action-section"><h3>成员信息</h3><p>登录账号可修改，系统内部 ID 与历史流水保持不变。</p><form id="member-info-form" data-member-info-form><div class="member-info-grid"><div class="field"><label for="member-action-name">姓名</label><input id="member-action-name" maxlength="40" required /></div><div class="field"><label for="member-action-login">登录账号</label><input id="member-action-login" minlength="3" maxlength="32" pattern="[A-Za-z0-9._-]+" autocomplete="off" required /><span class="field-hint">3-32 位字母、数字、点、下划线或短横线</span></div><div class="field"><label for="member-action-role">身份</label><select id="member-action-role" required><option value="member">普通成员</option><option value="inventory">库存管理员</option><option value="admin">系统管理员</option></select></div><div class="field"><label for="member-action-group">所属组织分组</label><select id="member-action-group" data-group-select required></select></div><div class="field full"><label>成员标签（可多选）</label><div class="tag-picker" data-tag-picker="member-action"></div><span class="field-hint">可多选职责标签；消耗统计仍只使用唯一组织分组。</span></div><div class="field full"><label for="member-action-note">成员备注（选填）</label><textarea id="member-action-note" maxlength="300" placeholder="例如：负责光刻耗材；联系方式或值班安排"></textarea><span class="field-hint">成员目录会向启用中的成员显示。</span></div></div></form></section><section class="member-action-section"><h3>重置密码</h3><p>设置后，该成员已登录的会话将失效。</p><form data-reset-member-password><div class="field"><label for="member-reset-password">新密码</label><input id="member-reset-password" type="password" minlength="8" autocomplete="new-password" placeholder="至少 8 位" required /></div><button class="button tonal" type="submit"><KeyRound size={16} />重置密码</button></form></section><section class="member-action-section"><h3>账号状态</h3><button class="button" type="button" data-toggle-member-status><span data-status-icon="disable"><UserX size={16} /></span><span class="is-hidden" data-status-icon="enable"><UserCheck size={16} /></span><span data-toggle-member-status-label>停用账号</span></button><button class="button danger" type="button" data-delete-member><Trash2 size={16} />删除账号</button></section><section class="member-action-section owner-transfer-section" data-owner-transfer-section hidden><h3>转移系统所有者</h3><p>转移后你将保留系统管理员身份，但只有新所有者能任命系统管理员或再次转移所有权。</p><form data-owner-transfer-form><div class="field"><label for="owner-transfer-password">你的当前密码</label><input id="owner-transfer-password" type="password" autocomplete="current-password" required /></div><button class="button danger" type="submit"><ShieldCheck size={16} />转移所有权</button></form></section></div><div class="modal-footer"><button class="button" type="button" data-close-modal>取消</button><button class="button primary" type="submit" form="member-info-form" data-save-member-info><Check size={15} />保存成员信息</button></div></div></section></div>
+
+    <div class="modal-backdrop" data-modal="material-action"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="material-action-title"><div class="modal-header"><div><h2 id="material-action-title" data-material-action-title>管理耗材</h2><p data-material-action-subtitle>维护基础信息与安全库存线</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="current-stock-note"><span data-material-stock-label>当前库存只能通过出入库记录变更</span><strong data-edit-material-current-stock>0 件</strong></div><form data-material-action-form><div class="form-grid material-form-grid" data-material-fields><div class="field full"><label for="edit-material-name">耗材名称</label><input id="edit-material-name" maxlength="120" required /><span class="field-hint">不同规格需要分别管理库存时，请在名称中写明规格</span></div><div class="field"><label for="edit-material-category">分类</label><input id="edit-material-category" maxlength="80" required /></div><div class="field"><label for="edit-material-unit">单位</label><input id="edit-material-unit" list="material-unit-options" maxlength="20" required /><span class="field-hint">可自定义；有库存时不能直接更换单位，避免混淆历史流水</span></div><div class="field"><label for="edit-material-spec">规格、型号</label><input id="edit-material-spec" maxlength="120" /><span class="field-hint">用于区分容量、纯度、包装或型号，不参与库存计算</span></div><div class="field"><label for="edit-material-safety-stock">安全库存</label><input id="edit-material-safety-stock" type="number" min="0" step="1" required /><span class="field-hint">开放且可用数量小于或等于此数值时触发预警</span></div><div class="field full"><label for="edit-material-tracking-mode">库存管理方式</label><select id="edit-material-tracking-mode" required><option value="quantity">普通数量</option><option value="stateful">按状态统计</option><option value="tracked">按库存单元追踪</option></select><span class="field-hint">盒、批次、序列号或位置需要独立查询时选择“按库存单元追踪”</span></div><div class="field full" data-material-registration-guidance hidden><label for="edit-material-position-help">格位编号填写说明</label><textarea id="edit-material-position-help" maxlength="200" placeholder="例如：1-1 表示第一行第一个"></textarea><span class="field-hint">显示在格位编号输入框下方；短示例仍保留在输入框内。</span></div><div class="field full" data-material-registration-guidance hidden><label for="edit-material-usage-help">用途 / 实验项目填写说明</label><textarea id="edit-material-usage-help" maxlength="200" placeholder="例如：填写项目名称、实验批次或样品编号"></textarea><span class="field-hint">显示在使用登记中，不改变流水字段和导出结构。</span></div></div><section class="material-qr-action" data-material-action-qr-section hidden><div><h3>耗材二维码</h3><p>查看、下载或打印绑定当前耗材 UUID 的标签。</p></div><button class="button tonal" type="button" data-material-action-qr><QrCode size={16} />查看二维码标签</button></section><section class="material-lifecycle" data-material-lifecycle hidden><h3>耗材档案状态</h3><p data-material-lifecycle-hint>归档或永久删除不会改变已有出入库流水。</p><div class="material-lifecycle-actions"><button class="button tonal" type="button" data-toggle-material-status><Archive size={16} /><span data-toggle-material-status-label>归档耗材</span></button><button class="button" type="button" data-restore-material hidden><RotateCcw size={16} />恢复使用</button><button class="button danger" type="button" data-delete-material><Trash2 size={16} /><span data-delete-material-label>永久删除</span></button></div></section><div class="modal-footer"><button class="button" type="button" data-close-modal>取消</button><button class="button primary" type="submit" data-save-material><Check size={15} /><span data-material-submit-label>保存耗材信息</span></button></div></form></div></section></div>
+
+    <div class="modal-backdrop" data-modal="material-info"><section class="modal material-info-modal" role="dialog" aria-modal="true" aria-labelledby="material-info-title"><div class="modal-header"><div><h2 id="material-info-title" data-material-info-title>耗材详情</h2><p data-material-info-subtitle>查看完整信息与后续操作</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="material-info-actions"><button class="button tonal" type="button" data-material-info-detail hidden><ClipboardList size={16} />库存明细</button><button class="button tonal" type="button" data-material-info-qr><QrCode size={16} />二维码标签</button><button class="button" type="button" data-material-info-manage hidden><Settings size={16} />管理耗材</button></div><div class="material-info-list"><div class="material-info-item"><span>耗材名称</span><strong data-material-info-name>-</strong></div><div class="material-info-item"><span>分类</span><strong data-material-info-category>-</strong></div><div class="material-info-item"><span>规格 / 型号</span><strong data-material-info-spec>-</strong></div><div class="material-info-item"><span>当前库存</span><strong data-material-info-stock>-</strong></div><div class="material-info-item"><span>安全库存</span><strong data-material-info-safety>-</strong></div><div class="material-info-item"><span>管理方式</span><strong data-material-info-tracking>-</strong></div><div class="material-info-item"><span>档案状态</span><strong data-material-info-lifecycle>-</strong></div><div class="material-info-item"><span>最近更新</span><strong data-material-info-updated>-</strong></div></div><div class="modal-footer"><button class="button primary" type="button" data-close-modal>关闭</button></div></div></section></div>
+
+    <div class="modal-backdrop" data-modal="inventory-detail"><section class="modal tracking-modal" role="dialog" aria-modal="true" aria-labelledby="inventory-detail-title"><div class="modal-header"><div><h2 id="inventory-detail-title" data-inventory-detail-title>库存明细</h2><p data-inventory-detail-subtitle>状态、使用范围与库存单元</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="segmented tracking-tabs" role="tablist" aria-label="库存明细分类"><button class="segment active" type="button" role="tab" aria-selected="true" data-tracking-tab="units"><Package size={15} />库存明细</button><button class="segment" type="button" role="tab" aria-selected="false" data-tracking-tab="statuses"><Info size={15} />状态设置</button><button class="segment" type="button" role="tab" aria-selected="false" data-tracking-tab="events"><ClipboardList size={15} />操作记录</button></div><div data-tracking-panel="units"><div class="tracking-summary"><div><span>开放可用</span><strong data-tracking-shared>0</strong></div><div><span>成员自用</span><strong data-tracking-reserved>0</strong></div><div><span>不可用</span><strong data-tracking-unavailable>0</strong></div><div><span>库存总数</span><strong data-tracking-total>0</strong></div></div><div class="tracking-toolbar"><div class="search"><Search size={16} /><label class="sr-only" for="tracking-search">搜索库存单元</label><input id="tracking-search" placeholder="搜索盒号、完整编号、格位、状态或成员" data-tracking-search /></div><button class="button primary" type="button" data-show-unit-create><Plus size={16} />新增库存单元</button></div><div class="tracking-unit-list" data-tracking-unit-list><p class="empty-note">正在读取库存明细</p></div><form class="tracking-create-form" data-unit-create-form hidden><div class="form-grid"><div class="field"><label for="unit-type">单元类型</label><select id="unit-type"><option value="container">盒 / 容器</option><option value="lot">批次</option><option value="position">序列 / 单件</option></select></div><div class="field"><label for="unit-label">盒号 / 批次 / 序列号</label><input id="unit-label" maxlength="80" required /></div><div class="field"><label for="unit-capacity">容量（0 表示不限）</label><input id="unit-capacity" type="number" min="0" step="any" value="0" /></div><div class="field"><label for="unit-quantity">初始数量（未填写格位时）</label><input id="unit-quantity" type="number" min="0.000001" step="any" value="1" required /></div><div class="field"><label for="unit-status">初始状态</label><select id="unit-status" required></select></div><div class="field"><label for="unit-access">使用范围</label><select id="unit-access"><option value="shared">开放使用</option><option value="user">成员自用</option></select></div><div class="field" data-unit-owner-field hidden><label for="unit-owner">自用成员</label><select id="unit-owner"></select></div><div class="field full"><label for="unit-position-codes">格位编号（选填，每行一个，每个格位数量为 1）</label><textarea id="unit-position-codes" maxlength="2000" placeholder="例如：1-1&#10;1-2&#10;2-1"></textarea></div><div class="field"><label for="unit-counterparty">来源（供应商）</label><input id="unit-counterparty" maxlength="120" /></div><div class="field"><label for="unit-date">发生时间</label><input id="unit-date" type="datetime-local" /></div><div class="field full"><label for="unit-note">备注</label><textarea id="unit-note" maxlength="500"></textarea></div></div><div class="modal-footer"><button class="button" type="button" data-hide-unit-create>取消</button><button class="button primary" type="submit"><Check size={15} />创建并入库</button></div></form></div><div data-tracking-panel="statuses" hidden><div class="tracking-status-list" data-tracking-status-list></div><form class="tracking-create-form" data-status-create-form><div class="form-grid"><div class="field"><label for="new-inventory-status">新状态名称</label><input id="new-inventory-status" maxlength="30" required /></div><div class="field"><label for="new-inventory-status-kind">状态语义</label><select id="new-inventory-status-kind"><option value="usable">可用</option><option value="pending">暂不可用</option><option value="terminal">终止不可用</option></select></div></div><div class="modal-footer"><button class="button primary" type="submit"><Plus size={15} />添加状态</button></div></form></div><div data-tracking-panel="events" hidden><p class="field-hint" data-tracking-event-meta>打开后读取操作记录</p><div class="tracking-event-list" data-tracking-event-list><p class="empty-note">打开后读取操作记录</p></div></div><div class="modal-footer"><button class="button primary" type="button" data-close-modal>关闭</button></div></div></section></div>
+
+    <div class="modal-backdrop" data-modal="inventory-operation"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="inventory-operation-title"><div class="modal-header"><div><h2 id="inventory-operation-title" data-inventory-operation-title>登记使用</h2><p data-inventory-operation-subtitle>记录使用，不改变当前库存数量</p></div><button class="icon-button" type="button" data-close-inventory-operation title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="operation-source" data-operation-source><strong>库存明细</strong><span>请选择操作</span></div><form data-inventory-operation-form><div class="form-grid"><div class="field full" data-operation-type-field><label for="inventory-operation-type">维护操作</label><select id="inventory-operation-type" required><option value="state_change">变更状态</option></select></div><div class="field"><label for="inventory-operation-quantity">数量</label><input id="inventory-operation-quantity" type="number" min="0.000001" step="any" value="1" required /></div><div class="field" data-operation-status-field><label for="inventory-operation-status">目标状态</label><select id="inventory-operation-status"></select></div><div class="field" data-operation-access-field><label for="inventory-operation-access">目标使用范围</label><select id="inventory-operation-access"><option value="shared">开放使用</option><option value="user">成员自用</option></select></div><div class="field" data-operation-owner-field hidden><label for="inventory-operation-owner">自用成员</label><select id="inventory-operation-owner"></select></div><div class="field" data-operation-position-field><label for="inventory-operation-position" data-operation-position-label>格位 / 单件编号</label><input id="inventory-operation-position" maxlength="40" placeholder="例如：2-3" /><span class="field-hint" data-operation-position-hint></span></div><div class="field" data-operation-context-field><label for="inventory-operation-counterparty" data-operation-counterparty-label>用途 / 实验项目</label><input id="inventory-operation-counterparty" maxlength="120" placeholder="例如：项目名称" /><span class="field-hint" data-operation-context-hint></span></div><div class="field"><label for="inventory-operation-date">发生时间</label><input id="inventory-operation-date" type="datetime-local" /></div><div class="field full"><label for="inventory-operation-note">备注</label><textarea id="inventory-operation-note" maxlength="500"></textarea></div></div><div class="modal-footer"><button class="button" type="button" data-close-inventory-operation>取消</button><button class="button primary" type="submit"><Check size={15} /><span data-inventory-operation-submit-label>保存使用登记</span></button></div></form></div></section></div>
+
+    <div class="modal-backdrop" data-modal="settings"><section class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title"><div class="modal-header"><div><h2 id="settings-title">系统设置</h2><p data-settings-subtitle>管理实验室、组织、标签与当前账号安全</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="segmented settings-tabs" role="tablist" aria-label="设置分类"><button class="segment active" type="button" role="tab" aria-selected="true" data-settings-tab="lab"><Building2 size={15} />实验室信息</button><button class="segment" type="button" role="tab" aria-selected="false" data-settings-tab="groups"><Users size={15} />组织与标签</button><button class="segment" type="button" role="tab" aria-selected="false" data-settings-tab="account"><ShieldCheck size={15} />账号安全</button></div><div data-settings-panel="lab"><div class="settings-section-heading"><span class="settings-section-icon"><Building2 size={19} /></span><div><h3>实验室与品牌</h3><p>用于工作台内的组织标识，仅系统管理员可以修改。</p></div></div><form data-lab-settings-form><div class="form-grid"><div class="field full"><label for="settings-app-name">左上角显示名称</label><input id="settings-app-name" maxlength="30" placeholder="OpenLabStock" required /><span class="field-hint">建议使用简短名称，避免在侧栏中截断</span></div><div class="field full"><label for="settings-lab-name">实验室名称</label><input id="settings-lab-name" maxlength="100" autocomplete="organization" required /></div></div><div class="brand-upload"><span class="brand-upload-preview"><Boxes data-brand-preview-default size={25} /><img data-brand-preview-image alt="图标预览" hidden /></span><div class="brand-upload-actions"><label class="button" for="settings-brand-file"><Upload size={15} />选择自定义图标</label><input id="settings-brand-file" type="file" accept="image/png,image/jpeg,image/webp" /><button class="button" type="button" data-remove-brand><Trash2 size={15} />恢复默认</button><p>支持 PNG、JPG、WebP，建议使用正方形图片，最大 512 KB。</p></div></div><div class="modal-footer"><button class="button" type="button" data-close-modal>取消</button><button class="button primary" type="submit"><Check size={15} />保存实验室信息</button></div></form></div><div data-settings-panel="groups" hidden><div class="settings-section-heading"><span class="settings-section-icon"><Tags size={19} /></span><div><h3>组织与标签</h3><p>组织分组用于唯一归属和消耗核算；标签用于可多选职责和成员检索。</p></div></div><section class="organization-settings-section"><div class="settings-subheading"><h4>组织分组</h4><p>适用于课题组、公共平台等内部组织。每位成员只能属于一个分组，所有分组共享同一库存。</p></div><div class="group-list" data-groups-settings-list></div><form class="add-group-form" data-add-group-form><div class="field"><label for="new-group-name">新组织分组</label><input id="new-group-name" maxlength="40" placeholder="例如：课题组 A" required /></div><button class="button primary" type="submit"><Plus size={15} />添加分组</button></form></section><section class="organization-settings-section"><div class="settings-subheading"><h4>成员标签</h4><p>适用于采购负责人、危化品、光刻等交叉职责，可为一人选择多个；不参与库存消耗相加。</p></div><div class="tag-list" data-tags-settings-list></div><form class="add-tag-form" data-add-tag-form><div class="field"><label for="new-tag-name">新成员标签</label><input id="new-tag-name" maxlength="24" placeholder="例如：采购负责人" required /></div><button class="button tonal" type="submit"><Plus size={15} />添加标签</button></form></section></div><div data-settings-panel="account" hidden><div class="settings-section-heading"><span class="settings-section-icon"><ShieldCheck size={19} /></span><div><h3>我的资料与账号安全</h3><p>所有成员都可以维护自己的显示信息；密码修改会让其他设备重新登录。</p></div></div><div class="settings-account"><span class="avatar" data-settings-account-avatar>员</span><span><strong data-settings-account-name>当前用户</strong><small data-settings-account-meta>登录账号</small></span></div><form data-profile-form><div class="form-grid"><div class="field full"><label for="profile-name">显示姓名</label><input id="profile-name" maxlength="40" required /></div><div class="field full" data-profile-group-field hidden><label for="profile-group">所属组织分组</label><select id="profile-group" data-group-select></select><span class="field-hint">系统管理员可维护自己的组织归属；变更只影响之后登记的流水。</span></div><div class="field full"><label for="profile-note">成员备注（选填）</label><textarea id="profile-note" maxlength="300" placeholder="例如：负责光刻耗材；联系方式或值班安排"></textarea><span class="field-hint">启用账号的成员都能在成员目录看到这段内容。</span></div><div class="field full"><label>我的职责标签（可多选）</label><div class="tag-picker" data-tag-picker="profile"></div><span class="field-hint">可从管理员维护的标签中选择；标签会显示在成员目录。</span></div></div><div class="modal-footer"><button class="button" type="button" data-close-modal>取消</button><button class="button primary" type="submit"><Check size={15} />保存个人资料</button></div></form><form data-password-form><div class="form-grid"><div class="field full"><label for="current-password">当前密码</label><input id="current-password" type="password" autocomplete="current-password" required /></div><div class="field full"><label for="new-password">新密码</label><input id="new-password" type="password" minlength="8" autocomplete="new-password" required /><span class="field-hint">至少 8 位，建议不要与其他网站共用密码</span></div></div><div class="modal-footer"><button class="button" type="button" data-close-modal>取消</button><button class="button primary" type="submit"><Check size={15} />更新密码</button></div></form></div></div></section></div>
+
+    <div class="modal-backdrop" data-modal="notifications"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="notifications-title"><div class="modal-header"><div><h2 id="notifications-title">库存通知</h2><p>需要关注的低库存耗材</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="notification-list" data-notification-list></div><div class="modal-footer"><button class="button primary" type="button" data-notifications-inventory>查看库存</button></div></div></section></div>
+
+    <div class="modal-backdrop" data-modal="permissions"><section class="modal permission-modal" role="dialog" aria-modal="true" aria-labelledby="permission-guide-title"><div class="modal-header"><div><h2 id="permission-guide-title">身份与权限</h2><p>不同身份可按实验室分工设置</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="permission-grid"><article class="permission-role owner"><div class="permission-role-heading"><span class="permission-role-icon"><Star size={16} /></span><strong>系统所有者</strong></div><p>唯一身份。任命和管理系统管理员、转移所有权，并拥有全部系统与库存权限。</p></article><article class="permission-role admin"><div class="permission-role-heading"><span class="permission-role-icon"><ShieldCheck size={16} /></span><strong>系统管理员</strong></div><p>可设置多人。管理品牌、分组、库存管理员和普通成员，并拥有完整库存权限。</p></article><article class="permission-role inventory"><div class="permission-role-heading"><span class="permission-role-icon"><Package size={16} /></span><strong>库存管理员</strong></div><p>可设置多人。维护耗材与安全库存、批量导入，并查看和导出完整库存与流水。</p></article><article class="permission-role member"><div class="permission-role-heading"><span class="permission-role-icon"><Users size={16} /></span><strong>普通成员</strong></div><p>登记入库和领用 / 使用，并查看和导出完整库存与库存活动流水。</p></article></div><div class="modal-footer"><button class="button primary" type="button" data-close-modal>知道了</button></div></div></section></div>
+
+    <div class="modal-backdrop" data-modal="material-guide"><section class="modal permission-modal" role="dialog" aria-modal="true" aria-labelledby="material-guide-title"><div class="modal-header"><div><h2 id="material-guide-title">耗材状态说明</h2><p>耗材档案的使用、归档与清理规则</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="permission-grid"><article class="permission-role inventory"><div class="permission-role-heading"><span class="permission-role-icon"><Package size={16} /></span><strong>使用中</strong></div><p>正常参与库存统计、库存预警和出入库登记。</p></article><article class="permission-role member"><div class="permission-role-heading"><span class="permission-role-icon"><Archive size={16} /></span><strong>已归档</strong></div><p>默认隐藏，可由库存管理员筛选查看和恢复，不参与日常库存。</p></article><article class="permission-role admin"><div class="permission-role-heading"><span class="permission-role-icon"><Trash2 size={16} /></span><strong>永久删除</strong></div><p>系统所有者或系统管理员可对库存为 0 的耗材执行；档案不可恢复，但历史流水保留。</p></article></div><div class="modal-footer"><button class="button primary" type="button" data-close-modal>知道了</button></div></div></section></div>
+
+    <div class="modal-backdrop" data-modal="transaction-correction"><section class="modal correction-modal" role="dialog" aria-modal="true" aria-labelledby="correction-title" aria-describedby="correction-impact"><div class="modal-header"><div><h2 id="correction-title">更正登记</h2><p>保留原记录，并新增一笔反向冲销流水</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="correction-summary" data-correction-summary><strong>原登记</strong><span>请选择要更正的记录</span></div><form data-correction-form><div class="form-grid"><div class="field full"><label for="correction-quantity">冲销数量</label><input id="correction-quantity" type="number" min="0.000001" step="any" required /><span class="field-hint" data-correction-quantity-hint></span></div><div class="field full"><label for="correction-reason">更正原因</label><textarea id="correction-reason" maxlength="300" placeholder="例如：数量误填、选错耗材或重复登记" required></textarea><span class="field-hint">原因会写入新流水，便于其他成员理解变更。</span></div></div><div class="correction-impact" id="correction-impact"><span><Info size={17} /></span><span data-correction-impact>系统不会修改或删除原始流水。</span></div><div class="modal-footer"><button class="button" type="button" data-close-modal>取消</button><button class="button primary" type="submit"><RotateCcwKey size={16} /><span>确认更正</span></button></div></form></div></section></div>
+
+    <div class="modal-backdrop" data-modal="confirm"><section class="modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message"><div class="modal-header"><div><h2 id="confirm-title" data-confirm-title>确认操作</h2><p>请确认是否继续</p></div><button class="icon-button" type="button" data-confirm-cancel title="关闭"><X size={18} /></button></div><div class="modal-body"><div class="confirm-content"><span class="confirm-icon"><AlertTriangle size={20} /></span><div class="confirm-copy"><strong>此操作无法自动撤销</strong><p id="confirm-message" data-confirm-message></p></div></div><div class="modal-footer"><button class="button" type="button" data-confirm-cancel>取消</button><button class="button danger-filled" type="button" data-confirm-submit>确认</button></div></div></section></div>
+
+    <div class="modal-backdrop" data-modal="audit-detail"><section class="modal audit-detail-modal" role="dialog" aria-modal="true" aria-labelledby="audit-detail-title"><div class="modal-header"><div><h2 id="audit-detail-title" data-audit-detail-title>审计详情</h2><p data-audit-detail-subtitle>管理员操作的不可变记录</p></div><button class="icon-button" type="button" data-close-modal title="关闭"><X size={18} /></button></div><div class="modal-body"><dl class="audit-detail-meta"><div><dt>时间</dt><dd data-audit-detail-time>-</dd></div><div><dt>操作者</dt><dd data-audit-detail-actor>-</dd></div><div><dt>对象</dt><dd data-audit-detail-target>-</dd></div><div><dt>来源</dt><dd data-audit-detail-source>-</dd></div><div class="full"><dt>操作摘要</dt><dd data-audit-detail-summary>-</dd></div><div class="full"><dt>请求编号</dt><dd data-audit-detail-request>-</dd></div></dl><div class="audit-change-grid"><section><h3>变更前</h3><div class="audit-snapshot" data-audit-detail-before><p class="empty-note">无变更前快照</p></div></section><section><h3>变更后</h3><div class="audit-snapshot" data-audit-detail-after><p class="empty-note">无变更后快照</p></div></section></div><div class="modal-footer"><button class="button primary" type="button" data-close-modal>关闭</button></div></div></section></div>
+
+    <div class="toast" role="status" data-toast><Check size={15} /><span data-toast-message>已保存</span></div>
+    <script src="../scripts/app.ts"></script>
+  </body>
+</html>

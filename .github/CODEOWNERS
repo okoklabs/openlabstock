@@ -1,0 +1,16 @@
+# Keep an individual maintainer until the okoklabs maintainer teams and least-privilege roles exist.
+* @hcl-okoklab
+
+# License, security, governance, releases, and permission-sensitive code require owner review.
+/LICENSE @hcl-okoklab
+/NOTICE @hcl-okoklab
+/CLA.md @hcl-okoklab
+/COMMERCIAL.md @hcl-okoklab
+/SECURITY.md @hcl-okoklab
+/GOVERNANCE.md @hcl-okoklab
+/TRADEMARKS.md @hcl-okoklab
+/.github/ @hcl-okoklab
+/server.mjs @hcl-okoklab
+/storage.mjs @hcl-okoklab
+/password.mjs @hcl-okoklab
+/deploy/ @hcl-okoklab

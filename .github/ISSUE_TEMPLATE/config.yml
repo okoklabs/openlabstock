@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/okoklabs/openlabstock/security/advisories/new
+    about: 请私下报告漏洞，不要创建公开 Issue。
+  - name: Usage and deployment questions
+    url: https://github.com/okoklabs/openlabstock/discussions
+    about: 一般使用和部署问题请使用 Discussions。

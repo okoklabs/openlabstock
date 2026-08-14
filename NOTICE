@@ -1,0 +1,17 @@
+OpenLabStock
+Copyright (C) 2026 OpenLabStock contributors
+
+The original OpenLabStock source code is licensed under the GNU Affero
+General Public License, version 3 only (AGPL-3.0-only). See LICENSE.
+
+Third-party components remain subject to their respective licenses and
+copyright notices. See THIRD_PARTY_NOTICES.md and the dependency metadata in
+pnpm-lock.yaml. Nothing in the OpenLabStock license changes those terms.
+
+Alternative commercial licenses may be offered for portions of OpenLabStock
+for which the relevant copyright holders have sufficient licensing rights.
+This notice does not itself grant a commercial license. See COMMERCIAL.md.
+
+The AGPL license does not grant permission to use OpenLabStock names, logos,
+or other project identifiers to imply endorsement or official status. See
+TRADEMARKS.md.

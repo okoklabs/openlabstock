@@ -1,0 +1,17 @@
+.git
+.gitignore
+.astro
+.tmp*
+.release*
+backup-exports
+data
+dist
+node_modules
+.env
+.env.*
+!.env.docker.example
+*.log
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.tar.gz
