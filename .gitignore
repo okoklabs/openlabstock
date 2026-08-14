@@ -14,5 +14,7 @@ backups/
 *.tar.gz
 *.manifest.txt
 *.log
+playwright-report/
+test-results/
 .openlabstock-verification.json
 TODO.private.md

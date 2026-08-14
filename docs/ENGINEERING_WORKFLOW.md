@@ -45,6 +45,8 @@
 
 `verify:quick` 不生成发布凭据；它用于日常反馈。只有完整 `verify` 能授权当前代码制作正式包。
 
+GitHub `Quality` 在完整验证后运行 `pnpm run test:e2e`，以桌面和 `390 x 844` 手机视口检查登录、二维码定位、确认登记及库存只写入一次。首次在本机运行前执行 `pnpm exec playwright install chromium`；测试只使用系统临时目录中的隔离数据库，失败截图、trace 和 HTML 报告位于被 Git 忽略的 Playwright 输出目录。
+
 ## 4. 正式发布
 
 发布前先完成受影响界面验收，并在打包前递增 `package.json` 版本。之后只需：

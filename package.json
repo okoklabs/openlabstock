@@ -37,6 +37,7 @@
     "preview": "pnpm run start",
     "start": "node server.mjs",
     "test": "node --test tests/*.test.mjs",
+    "test:e2e": "pnpm run build && playwright test",
     "verify:quick": "pnpm run check:docs && pnpm run check:licenses && pnpm run check && pnpm test",
     "verify": "node scripts/verify.mjs"
   },
@@ -52,6 +53,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",
+    "@playwright/test": "1.62.1",
     "@types/qrcode": "^1.5.6",
     "typescript": "5.9.3"
   }

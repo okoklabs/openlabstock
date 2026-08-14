@@ -105,6 +105,7 @@ flowchart LR
 - **pnpm 11**：本地依赖和构建管理。
 - **Astro Check + TypeScript 5.9**：检查 Astro 模板、前端 TypeScript 和组件类型；TypeScript 主版本固定，避免检查器兼容性漂移。
 - **Node Test Runner**：接口、权限、并发、生产初始化和数据库完整性测试。
+- **Playwright**：在隔离临时数据库中回归真实登录、二维码直达、登记确认和库存写入，覆盖桌面与 `390 x 844` 手机视口。
 - **`pnpm audit --prod`**：检查生产依赖的已知漏洞。
 - **浏览器响应式检查**：桌面和 `390 x 844` 手机视口检查布局、溢出和交互。
 
@@ -138,6 +139,8 @@ flowchart LR
 | `scripts/reset-owner-password.mjs` | 在服务器终端恢复系统所有者密码并清除其旧会话 |
 | `scripts/generate-pwa-icons.py` | 可重复生成普通、Apple 与 maskable PWA PNG 图标 |
 | `tests/api.test.mjs` | API、权限、并发、会话和生产初始化测试 |
+| `tests/e2e/critical-flow.spec.mjs` | 桌面与手机浏览器的登录、二维码定位和单次库存写入回归 |
+| `playwright.config.mjs` | 浏览器项目、视口和失败诊断产物配置 |
 | `public/manifest.webmanifest` | 联网型 PWA 的安装名称、范围、主题色和图标声明 |
 | `public/sw.js` | 只缓存版本化安装图标的受限 Service Worker |
 | `public/icons/` | 不包含具体实验室名称的 PWA 安装图标 |

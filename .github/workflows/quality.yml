@@ -40,3 +40,9 @@ jobs:
 
       - name: Verify release targets
         run: pnpm run verify
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run browser smoke tests
+        run: pnpm run test:e2e
