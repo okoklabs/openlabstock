@@ -55,6 +55,6 @@
     "@astrojs/check": "0.9.10",
     "@playwright/test": "1.62.1",
     "@types/qrcode": "^1.5.6",
-    "typescript": "5.9.3"
+    "typescript": "6.0.3"
   }
 }
