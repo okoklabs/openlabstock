@@ -141,7 +141,7 @@ pnpm run check:docs     # Markdown local-link validation
 
 ## Project status and license
 
-OpenLabStock is preparing its first public release. The application is functional and regression-tested, while the external contribution gate, CLA activation, and final public-release review remain in progress. Review the [roadmap](./ROADMAP.md) and [current tasks](./TODO.md) before production planning.
+OpenLabStock is publicly available as a preview. The application is functional and regression-tested, while the external-contribution gate, CLA activation, and stable-release review remain in progress. Review the [roadmap](./ROADMAP.md) and [current tasks](./TODO.md) before production planning.
 
 Source code is licensed under [GNU AGPL v3.0 only](./LICENSE), SPDX `AGPL-3.0-only`. Third-party components retain their own licenses; see [NOTICE](./NOTICE) and [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md). A separate commercial license is planned but is **not currently available**, and the draft [CLA](./CLA.md) is **not active**.
 

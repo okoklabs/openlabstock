@@ -4,7 +4,7 @@
 
 ## Now
 
-- [ ] `[PUBLIC]` 完成首次公开门禁：复核代码与品牌权利链，专业复核并定稿个人 CLA，启用并测试 CLA Assistant、分支规则和 GitHub Private Vulnerability Reporting。
+- [ ] `[PUBLIC]` 完成从公开预览转为正式发行的门禁：复核代码与品牌权利链，专业复核并定稿个人 CLA，启用并测试 CLA Assistant、分支规则和 GitHub Private Vulnerability Reporting。
 - [ ] `[PUBLIC]` 配置并测试 `conduct@okoklabs.com` 后，移除行为准则中的待启用说明。
 - [ ] `[PUBLIC]` 在全新 Linux 环境从本仓库完成安装、构建、空库启动、旧库升级、备份、恢复和回滚演练。
 - [ ] `[PUBLIC]` 在具备 Docker Engine 的 Linux 环境运行 `bash deploy/docker/openlabstock.sh smoke`，确认 Compose 不连接任何正式卷。

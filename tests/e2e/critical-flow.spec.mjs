@@ -77,6 +77,8 @@ test('登录、二维码定位与确认登记只产生一次库存写入', async
   await page.locator('[data-login-form] button[type="submit"]').click();
   await expect(page.locator('body')).toHaveClass(/auth-ready/);
   await expect(page.getByRole('heading', { name: '库存总览' })).toBeVisible();
+  await expect(page.locator('.summary-card').filter({ hasText: '库存不足' })).toBeVisible();
+  await expect(page.locator('[data-filter-select="stock"] option[value="low"]')).toHaveText('库存不足');
 
   const before = await readBootstrap(page);
   const material = before.materials.find((item) => item.active && item.trackingMode === 'quantity' && item.quantity > 0);
