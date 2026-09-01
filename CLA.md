@@ -192,7 +192,7 @@ This section is operational and is not a signature block.
 | License recipient | 郝春霖 (Hao Chunlin), individual |
 | Intended public repository | `okoklabs/openlabstock` |
 | Planned signing service | CLA Assistant hosted service |
-| Planned contact | `contact@okoklabs.com` (external delivery, forwarding and reply test passed 2026-09-01; ImprovMX forwarding) |
+| Planned contact | `contact@okoklabs.com` |
 | Governing law and forum | Draft confirmed by the Project Steward: mainland China law; competent court at the Project Steward's domicile; professional review pending |
 | Candidate freeze date | 2026-09-01 |
 | Activation date | Not set |

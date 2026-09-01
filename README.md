@@ -167,6 +167,7 @@ OpenLabStock 默认只监听 `127.0.0.1:4388`，公网访问应通过受控的 H
 pnpm run verify:quick   # 日常：文档、许可证、类型和回归测试
 pnpm run verify         # 完整构建、测试、审计和发布验证
 pnpm run check:docs     # Markdown 本地链接检查
+pnpm run check:public   # 公共仓库边界与治理文件检查
 ```
 
 修改共享行为前，请先阅读[系统架构](./docs/BUILD_ARCHITECTURE.md)、[库存追踪模型](./docs/INVENTORY_TRACKING.md)、[二维码流程](./docs/QR_CODE_WORKFLOW.md)和[工程工作流](./docs/ENGINEERING_WORKFLOW.md)。

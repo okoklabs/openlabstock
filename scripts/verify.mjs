@@ -9,6 +9,7 @@ const pnpmScript = process.env.npm_execpath ?? '';
 const pnpmCommand = pnpmScript ? process.execPath : (process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm');
 const pnpmArgs = (args) => pnpmScript ? [pnpmScript, ...args] : args;
 const commands = [
+  [pnpmCommand, pnpmArgs(['run', 'check:public'])],
   [pnpmCommand, pnpmArgs(['run', 'check:docs'])],
   [pnpmCommand, pnpmArgs(['run', 'check:licenses'])],
   [pnpmCommand, pnpmArgs(['run', 'check'])],

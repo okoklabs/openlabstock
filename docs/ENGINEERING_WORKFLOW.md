@@ -56,7 +56,7 @@ pnpm run verify
 pnpm run release -- --manifest OpenLabStock-production-<发布标签>.manifest.txt
 ```
 
-`verify` 依次执行文档链接、Astro/TypeScript、构建、API 回归和生产依赖审计，并生成未纳入 Git 的代码指纹凭据。`release` 会：
+`verify` 依次执行公共仓库边界、文档链接、Astro/TypeScript、构建、API 回归和生产依赖审计，并生成未纳入 Git 的代码指纹凭据。`release` 会：
 
 1. 拒绝缺少凭据、版本不一致或验证后代码发生变化的发布；
 2. 拒绝覆盖已有版本的压缩包或清单，要求先递增版本或选择新的输出路径；

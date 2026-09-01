@@ -4,29 +4,27 @@
 [CLA Assistant](https://cla-assistant.io/) 的操作清单。它不替代
 [`CLA.md`](../CLA.md) 的法律审查，也不保存任何签署人的个人数据。
 
-## 当前技术配置
+## 技术配置原则
 
-截至 2026-09-01，`okoklabs/openlabstock` 已由组织 Owner 账号连接到托管版
-CLA Assistant，并配置 `pull_request` 与 `merge_group` 事件监听。CLA Assistant
-的 webhook 最近一次投递成功，当前没有生产签署记录。协议 Gist 的 URL、revision
-和文件哈希只保存在受限的私有合规记录中，不写入本公共仓库。
-
-这表示技术接入已完成，不表示协议已经生效。`CLA.md` 仍必须保持
-`NOT ACTIVE`，直到专业法律复核、测试账号矩阵和分支保护复核全部完成。
+CLA Assistant 应由组织 Owner 账号按下方清单连接到公共仓库，并配置
+`pull_request` 与 `merge_group` 事件监听。协议 Gist 的 URL、revision 和文件
+哈希只保存在受限的私有合规记录中，不写入公共仓库。完成技术连接不表示协议已经
+生效；`CLA.md` 必须保持 `NOT ACTIVE`，直到专业法律复核、测试账号矩阵和分支
+保护复核全部完成。
 
 ## 1. 启用门槛
 
 以下项目必须全部完成：
 
-- [x] `contact@okoklabs.com` 已转发到可用收件箱；2026-09-01 已完成站外投递、后台
-  回复身份、垃圾邮件检查和账号恢复路径核对。实际后台收件箱不得写入 Git。
-- [x] `okoklabs/openlabstock` 已从审查后的干净工作树建立，当前为 Public Preview。
-- [x] 项目负责人确认公开身份为 `郝春霖 (Hao Chunlin)`，私有合规记录保存必要的
-  身份和权利链证据。
+- [ ] 联系地址、收件责任人和回复路径已通过站外投递、垃圾邮件检查和账号恢复
+  演练；实际收件箱不得写入 Git。
+- [ ] `okoklabs/openlabstock` 已从审查后的干净工作树建立并完成公开仓验收。
+- [ ] 项目负责人已确认公开身份为 `郝春霖 (Hao Chunlin)`，私有合规记录保存必要
+  的身份和权利链证据。
 - [ ] 熟悉中国大陆适用法律的专业人士复核个人 CLA，包括已补入的准据法和争议
   处理条款，并将候选版本冻结为正式 `1.0`。
 - [ ] CLA Assistant 当时的隐私说明、服务状态和数据导出能力已经复核。
-- [x] 组织贡献暂不接受；确有公司贡献需求时另行制定 Entity CLA。
+- [ ] 组织贡献暂不接受；确有公司贡献需求时另行制定 Entity CLA。
 
 任一项未完成时，`CLA.md` 必须保持 `NOT ACTIVE`，也不得把 CLA 状态检查设成已经
 可以接受外部贡献的象征性门禁。
