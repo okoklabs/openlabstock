@@ -1,5 +1,12 @@
 # Changelog
 
+## [2026.9.2-r60] - 2026-09-02
+
+### Added
+
+- 增加单机 systemd 原子更新脚本：更新前自动生成 SQLite 一致性备份，校验生产包和健康接口，失败自动恢复上一程序目录，并保留失败目录供排查。
+- 增加 `status`、`rollback` 和带显式确认的 `prune` 命令，避免因暂存变量为空或目录名写错导致服务进入不可用状态。
+
 本文件记录用户可感知的正式版本变化，格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。完整测试输出和发布包校验值由 CI、GitHub Release 或随包清单保存。
 
 ## [Unreleased]

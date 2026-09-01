@@ -73,6 +73,22 @@ curl --fail --show-error http://127.0.0.1:4388/api/health
 
 服务以无登录权限的 `openlabstock` 用户运行，只允许写入数据目录。
 
+### 自动更新与回滚
+
+生产包包含 [`deploy/systemd/update-openlabstock.sh`](./deploy/systemd/update-openlabstock.sh)。
+它会先生成 SQLite 一致性备份，再校验压缩包、原子切换程序目录并等待候选版本的健康检查；
+启动或健康检查失败时自动恢复上一程序目录，并保留失败目录供排查：
+
+```bash
+sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh \
+  update /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.tar.gz \
+  --sha256 PUBLISH_MANIFEST_SHA256
+sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh status
+sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh rollback
+```
+
+回滚只切换程序，不自动恢复数据库；确认稳定后可用 `prune 30 --yes` 清理超过 30 天的旧程序目录。
+
 ## HTTPS 反向代理
 
 [`deploy/Caddyfile.example`](./deploy/Caddyfile.example) 提供最小 Caddy 片段。只把片段合并到操作者自己的配置，不要用示例覆盖已有 Caddyfile：

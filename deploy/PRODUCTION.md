@@ -28,6 +28,23 @@ The generic systemd example uses:
 
 Never extract an application archive into `/var/lib/openlabstock`. Updating `/opt/openlabstock` must not move, delete or overwrite the data directory.
 
+## Atomic systemd updates
+
+Use [`deploy/systemd/update-openlabstock.sh`](./systemd/update-openlabstock.sh) for a single-host
+systemd deployment. It creates a consistent SQLite backup before stopping the service, verifies
+the archive and candidate version, switches the application directory, and restores the previous
+directory if startup or health checks fail. The database and backup directory are never moved.
+
+```bash
+sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh \
+  update /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.tar.gz \
+  --sha256 PUBLISH_MANIFEST_SHA256
+sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh rollback
+```
+
+Rollback changes only the application directory. Do not restore or delete SQLite data as part of
+an application rollback; use a verified database snapshot and the documented restore procedure.
+
 ## Release verification
 
 Before building a release, increment `package.json` version and run one complete verification:
