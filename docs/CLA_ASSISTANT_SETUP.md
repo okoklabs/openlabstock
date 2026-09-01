@@ -4,6 +4,16 @@
 [CLA Assistant](https://cla-assistant.io/) 的操作清单。它不替代
 [`CLA.md`](../CLA.md) 的法律审查，也不保存任何签署人的个人数据。
 
+## 当前技术配置
+
+截至 2026-09-01，`okoklabs/openlabstock` 已由组织 Owner 账号连接到托管版
+CLA Assistant，并配置 `pull_request` 与 `merge_group` 事件监听。CLA Assistant
+的 webhook 最近一次投递成功，当前没有生产签署记录。协议 Gist 的 URL、revision
+和文件哈希只保存在受限的私有合规记录中，不写入本公共仓库。
+
+这表示技术接入已完成，不表示协议已经生效。`CLA.md` 仍必须保持
+`NOT ACTIVE`，直到专业法律复核、测试账号矩阵和分支保护复核全部完成。
+
 ## 1. 启用门槛
 
 以下项目必须全部完成：

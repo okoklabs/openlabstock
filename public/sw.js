@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'openlabstock-pwa-assets-';
-const CACHE_NAME = `${CACHE_PREFIX}2026.8.14-r42`;
+const CACHE_NAME = `${CACHE_PREFIX}2026.9.1-r59`;
 const INSTALL_ASSETS = [
   '/icons/labstock-180-v1.png',
   '/icons/labstock-192-v1.png',

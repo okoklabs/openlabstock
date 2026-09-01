@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f4f7f4" />
+    <meta
+      name="description"
+      content="OpenLabStock 是面向实验室日常领用、库存盘点与可追溯记录的开源实验室耗材管理系统。"
+    />
+    <meta property="og:title" content="OpenLabStock · 实验室耗材管理" />
+    <meta
+      property="og:description"
+      content="微信扫一扫直达登记表单，让每一次入库、领用和盘点差异都有清楚记录。"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://openlabstock.com/" />
+    <meta property="og:image" content="https://openlabstock.com/assets/landing-desktop-preview.png" />
+    <link rel="icon" href="assets/openlabstock-icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>OpenLabStock · 实验室耗材管理</title>
+    <script>
+      document.documentElement.classList.add('js');
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+
+    <header class="site-header" data-header>
+      <div class="nav-shell">
+        <a class="brand" href="#top" aria-label="OpenLabStock 首页">
+          <img src="assets/openlabstock-icon.png" alt="" width="36" height="36" />
+          <span>OpenLabStock</span>
+        </a>
+
+        <button
+          class="menu-button"
+          type="button"
+          aria-label="打开导航"
+          aria-expanded="false"
+          aria-controls="site-navigation"
+          title="打开导航"
+          data-menu-button
+        >
+          <span></span><span></span><span></span>
+        </button>
+
+        <nav class="site-nav" id="site-navigation" aria-label="主要导航" data-menu>
+          <a href="#problems">库存难点</a>
+          <a href="#scan-flow">扫码登记</a>
+          <a href="#capabilities">产品能力</a>
+          <a href="#open-source">开源特点</a>
+          <button class="presentation-button" type="button" title="进入全屏演示" data-presentation-start>
+            <span aria-hidden="true">⛶</span><span>全屏演示</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="presentation-toolbar" role="group" aria-label="演示控制">
+      <span class="presentation-count" aria-live="polite" data-slide-count>01 / 08</span>
+      <button type="button" aria-label="上一页" title="上一页" data-slide-prev>←</button>
+      <button type="button" aria-label="下一页" title="下一页" data-slide-next>→</button>
+      <button type="button" aria-label="退出全屏演示" title="退出全屏演示" data-presentation-exit>×</button>
+    </div>
+
+    <main id="main">
+      <section class="hero" id="top" aria-labelledby="hero-title" data-slide data-slide-title="封面">
+        <div class="hero-inner">
+          <div class="hero-copy reveal">
+            <p class="eyebrow"><span></span> 开源 · 透明 · 为实验室工作流设计</p>
+            <h1 id="hero-title">OpenLabStock</h1>
+            <p class="hero-statement">让实验室库存<br /><strong>告别“差不多还有”。</strong></p>
+            <p class="hero-lede">
+              把领用、入库、盘点、预警与责任归属放进同一个安静的工作台。每一次变化都有流水，每一个数字都有来处。
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#scan-flow">看扫码登记如何工作</a>
+              <a class="button button-secondary" href="#capabilities">浏览产品能力 <span aria-hidden="true">→</span></a>
+            </div>
+            <dl class="hero-facts" aria-label="产品特性">
+              <div><dt>部署</dt><dd>自主部署 / 托管</dd></div>
+              <div><dt>许可</dt><dd>AGPL-3.0-only</dd></div>
+              <div><dt>终端</dt><dd>手机 / 平板 / 桌面</dd></div>
+            </dl>
+          </div>
+
+          <div class="hero-product reveal" data-delay="1" aria-label="OpenLabStock 产品总览截图">
+            <div class="product-window">
+              <div class="window-bar" aria-hidden="true">
+                <span></span><span></span><span></span>
+                <small>openlabstock.com</small>
+              </div>
+              <img
+                src="assets/product-dashboard-2x.png"
+                alt="OpenLabStock 库存总览，显示库存预警、快捷操作和实时数据"
+                width="2530"
+                height="1346"
+              />
+            </div>
+            <div class="stock-signal" aria-hidden="true">
+              <span class="signal-icon">!</span>
+              <span><strong>库存提醒</strong><small>3 个品类需要核对补货</small></span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-edge" aria-hidden="true">
+          <span>LAB INVENTORY, WITH A MEMORY</span>
+          <span>01</span>
+        </div>
+      </section>
+
+      <section class="problems section-dark" id="problems" aria-labelledby="problems-title" data-slide data-slide-title="库存难点">
+        <div class="section-shell">
+          <div class="section-heading reveal">
+            <p class="section-index">01 / 现实</p>
+            <h2 id="problems-title">同一间实验室，<br />常常有四份库存。</h2>
+            <p>
+              表格里的、柜子里的、刚被领走的，以及大家记忆里的。问题不在于谁不认真，而在于工具没有跟上真实工作流。
+            </p>
+          </div>
+
+          <div class="sheet-scene reveal" data-delay="1" aria-label="共享表格与真实库存出现差异的示意">
+            <div class="sheet-title">
+              <span>耗材库存_最终版_v7.xlsx</span>
+              <span class="sheet-status">3 人正在编辑</span>
+            </div>
+            <div class="sheet-row sheet-head"><span>耗材</span><span>表格</span><span>现场</span><span>状态</span></div>
+            <div class="sheet-row"><strong>移液枪头</strong><span>25 盒</span><span>18 盒</span><em>?</em></div>
+            <div class="sheet-row"><strong>无水乙醇</strong><span>10 瓶</span><span>7 瓶</span><em>?</em></div>
+            <div class="sheet-row"><strong>PE 手套</strong><span>30 盒</span><span>12 盒</span><em>!</em></div>
+            <div class="sheet-note">“昨天有人拿过，但还没来得及改表。”</div>
+          </div>
+
+          <div class="problem-list reveal">
+            <article><span>01</span><h3>领用发生在柜子前</h3><p>电脑却在办公室。登记多走一步，就容易变成“晚点再补”。</p></article>
+            <article><span>02</span><h3>盘点只留下一个结果</h3><p>数字改对了，却说不清差额何时出现、为什么出现。</p></article>
+            <article><span>03</span><h3>提醒依赖某个人记得</h3><p>安全库存没有主动露出，缺货往往在实验开始前才被发现。</p></article>
+            <article><span>04</span><h3>共享不等于可追溯</h3><p>谁领了、领到哪里、属于哪个组织，难以形成可信历史。</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="scan-flow" id="scan-flow" aria-labelledby="scan-title" data-slide data-slide-title="扫码登记">
+        <div class="section-shell scan-layout">
+          <div class="scan-visual reveal">
+            <div class="label-card" aria-label="OpenLabStock 耗材二维码标签示意">
+              <img class="label-qr" src="assets/scan-demo-qr.png" alt="" width="148" height="148" />
+              <div class="label-copy">
+                <img src="assets/openlabstock-icon.png" alt="" width="28" height="28" />
+                <strong>无水乙醇</strong>
+                <span>500 mL / 瓶</span>
+                <small>OpenLabStock · 化学试剂</small>
+              </div>
+            </div>
+
+            <div class="phone-frame">
+              <div class="phone-speaker" aria-hidden="true"></div>
+              <div class="phone-screen" role="img" aria-label="OpenLabStock 手机端领用登记表单">
+                <div class="phone-dialog-preview">
+                  <div class="phone-dialog-head">
+                    <div>
+                      <strong>领用 / 使用登记</strong>
+                      <p>普通耗材登记数量，探针等耗材进入具体盒子或位置</p>
+                    </div>
+                    <span aria-hidden="true">×</span>
+                  </div>
+
+                  <div class="phone-mode-preview" aria-hidden="true">
+                    <span>↓&nbsp; 入库</span>
+                    <strong>↑&nbsp; 领用 / 使用</strong>
+                  </div>
+
+                  <div class="phone-form-preview">
+                    <div class="phone-field phone-field-search">
+                      <div class="phone-field-label"><strong>搜索或填写耗材名称 <em>· 必填</em></strong><span>⌗ 扫描二维码</span></div>
+                      <div class="phone-input-preview">输入名称或从候选项选择</div>
+                      <small>选择已有耗材，或直接填写新耗材名称入库</small>
+                    </div>
+                    <div class="phone-field">
+                      <div class="phone-field-label"><strong>数量 <em>· 必填</em></strong></div>
+                      <div class="phone-input-preview">0</div>
+                    </div>
+                    <div class="phone-field">
+                      <div class="phone-field-label"><strong>单位 <em>· 必填</em></strong></div>
+                      <div class="phone-input-preview phone-input-value">件</div>
+                    </div>
+                    <div class="phone-field">
+                      <div class="phone-field-label"><strong>去向（房间号 / 领用人 / 项目）</strong></div>
+                      <div class="phone-input-preview">填写房间号、领用人或项目</div>
+                      <small>记录耗材实际流向，可任选一项填写</small>
+                    </div>
+                    <div class="phone-field">
+                      <div class="phone-field-label"><strong>发生时间</strong></div>
+                      <div class="phone-input-preview phone-input-value"><span>2026/08/14&nbsp; 23:14</span><b aria-hidden="true">▣</b></div>
+                    </div>
+                    <div class="phone-field phone-field-note">
+                      <div class="phone-field-label"><strong>备注</strong></div>
+                      <div class="phone-input-preview">可填写采购单号、项目名称等信息</div>
+                    </div>
+                    <div class="phone-form-actions" aria-hidden="true"><span>取消</span><strong>✓&nbsp; 保存记录</strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="scan-line-note" aria-hidden="true">微信扫一扫</div>
+          </div>
+
+          <div class="scan-copy reveal" data-delay="1">
+            <p class="section-index">02 / 柜子前的工作流</p>
+            <h2 id="scan-title">微信扫一扫，<br />一步到登记页。</h2>
+            <p class="section-lede">
+              二维码绑定耗材的不可变 ID。无需在长列表里搜索，也不必先打开电脑，扫码即可定位耗材并进入现有登记表单。
+            </p>
+
+            <ol class="flow-steps">
+              <li><span>01</span><div><h3>生成并贴上专属标签</h3><p>单张下载或批量打印，名称变化也不会让二维码失效。</p></div></li>
+              <li><span>02</span><div><h3>用微信或系统相机扫描</h3><p>同一个网址适配手机浏览器，直接找到对应耗材。</p></div></li>
+              <li><span>03</span><div><h3>确认数量、去向与时间</h3><p>保存后才生成流水，避免“扫一下就误扣库存”。</p></div></li>
+            </ol>
+
+            <aside class="safety-note">
+              <strong>快，但不草率。</strong>
+              <span>扫码只负责定位；库存变化仍由登录用户确认，并经过后端校验。</span>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="capabilities" id="capabilities" aria-labelledby="capabilities-title" data-slide data-slide-title="真实库存界面">
+        <div class="section-shell">
+          <div class="section-heading section-heading-wide reveal">
+            <p class="section-index">03 / 产品能力</p>
+            <h2 id="capabilities-title">不是一张更漂亮的表格。<br />是一套可追溯的库存秩序。</h2>
+            <p>从普通耗材到探针等可复用物品，从成员领用到组织核算，核心规则都落在系统里。</p>
+          </div>
+
+          <figure class="product-figure reveal">
+            <button class="screenshot-button" type="button" data-lightbox-open aria-label="打开库存管理大图">
+              <img
+                src="assets/product-inventory-2x.png"
+                alt="OpenLabStock 桌面端库存管理列表"
+                width="2530"
+                height="1346"
+              />
+              <span>点击查看大图</span>
+            </button>
+            <figcaption><span>真实产品界面</span><span>库存管理 / 桌面端</span></figcaption>
+          </figure>
+
+        </div>
+      </section>
+
+      <section class="feature-slide" id="feature-map" aria-labelledby="feature-map-title" data-slide data-slide-title="核心能力">
+        <div class="section-shell">
+          <div class="section-heading feature-slide-heading reveal">
+            <p class="section-index">03.2 / 核心能力</p>
+            <h2 id="feature-map-title">把库存规则，<br />变成团队的共同语言。</h2>
+            <p>从一盒手套到一支探针，六项能力共同保证数字可信、历史清楚、操作顺手。</p>
+          </div>
+
+          <div class="feature-grid reveal">
+            <article><span>01</span><h3>流水不可变</h3><p>每次入库、领用、盘点差额和纠错都形成历史事实，不用静默覆盖过去。</p></article>
+            <article><span>02</span><h3>Excel 盘点兼容</h3><p>导入“目标当前库存”，系统自动生成差额流水，保留现有盘点习惯与审计线索。</p></article>
+            <article><span>03</span><h3>安全库存预警</h3><p>逐耗材设置阈值，低库存直接出现在总览与通知入口，补货不再只靠记忆。</p></article>
+            <article><span>04</span><h3>组织消耗核算</h3><p>流水保存发生时的组织快照。成员调组、组织改名，不会改写历史归属。</p></article>
+            <article><span>05</span><h3>普通与状态化库存</h3><p>既管理“还有多少盒”，也管理探针等物品的盒、位置、状态和使用范围。</p></article>
+            <article><span>06</span><h3>清晰的权限边界</h3><p>所有者、系统管理员、库存管理员和普通成员，由后端决定各自能做什么。</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="principles" aria-labelledby="principles-title" data-slide data-slide-title="设计原则">
+        <div class="section-shell principles-layout">
+          <div class="principles-copy reveal">
+            <p class="section-index">04 / 设计原则</p>
+            <h2 id="principles-title">账要准，<br />人也要轻松。</h2>
+          </div>
+          <div class="principle-lines reveal" data-delay="1">
+            <article><strong>当前库存</strong><p>每一次变化都必须对应流水，而不是直接改掉一个数字。</p></article>
+            <article><strong>现场登记</strong><p>手机端保持紧凑，常用动作在柜子前就能顺手完成。</p></article>
+            <article><strong>历史事实</strong><p>成员、组织、耗材名称之后可以变化，旧流水仍保留当时快照。</p></article>
+            <article><strong>数据边界</strong><p>数据有清晰的导出、备份与迁移路径，选择哪种服务都能保留主动权。</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="open-source section-green" id="open-source" aria-labelledby="open-source-title" data-slide data-slide-title="开源特点">
+        <div class="section-shell open-layout">
+          <div class="open-copy reveal">
+            <p class="section-index">05 / OPEN SOURCE</p>
+            <h2 id="open-source-title">开放代码，<br />也开放选择。</h2>
+            <p>
+              OpenLabStock 采用 AGPL-3.0-only。核心代码、关键库存规则与数据边界公开可审查；团队既可自主部署，也能选择省心的托管、升级与专业支持服务。
+            </p>
+            <div class="license-row">
+              <span>AGPL-3.0-only</span><span>代码可审查</span><span>部署可选择</span><span>数据可迁移</span>
+            </div>
+          </div>
+
+          <div class="deploy-panel reveal" data-delay="1" aria-label="OpenLabStock 开源特点">
+            <div class="deploy-head"><span>OPENLABSTOCK / OPEN SOURCE</span><span class="online-dot">公开可审查</span></div>
+            <div class="open-feature-grid">
+              <article class="open-feature"><span>01 / CODE</span><strong>代码公开</strong><p>核心功能在公开许可下持续演进，技术实现可以检查。</p></article>
+              <article class="open-feature"><span>02 / RULES</span><strong>规则透明</strong><p>库存、权限与流水逻辑说得清楚，关键边界不靠黑箱。</p></article>
+              <article class="open-feature"><span>03 / CHOICE</span><strong>部署可选</strong><p>可以自主部署，也可以选择托管、升级与专业支持。</p></article>
+              <article class="open-feature"><span>04 / PORTABILITY</span><strong>数据可迁移</strong><p>保留清晰的导出与备份路径，服务选择不等于数据锁定。</p></article>
+            </div>
+            <p>开源产品，也可以有可靠、持续的专业服务。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta" id="start" aria-labelledby="start-title" data-slide data-slide-title="结语">
+        <div class="section-shell final-inner reveal">
+          <img src="assets/openlabstock-icon.png" alt="" width="64" height="64" />
+          <p class="section-index">OPENLABSTOCK</p>
+          <h2 id="start-title">让下一次盘点，<br />从可信的日常记录开始。</h2>
+          <p>为需要认真管理库存，又不想把工作流变复杂的实验室而做。</p>
+          <div class="hero-actions final-actions">
+            <a class="button button-primary" href="#top">重新认识产品</a>
+            <a class="button button-secondary" href="#open-source">查看开源特点</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="section-shell footer-inner">
+        <a class="brand footer-brand" href="#top"><img src="assets/openlabstock-icon.png" alt="" width="32" height="32" /><span>OpenLabStock</span></a>
+        <p>开源、透明、可自主部署的实验室耗材管理系统</p>
+        <span>© 2026 OpenLabStock</span>
+      </div>
+    </footer>
+
+    <dialog class="image-dialog" data-lightbox aria-labelledby="lightbox-title">
+      <div class="dialog-head">
+        <div><strong id="lightbox-title">OpenLabStock 库存管理</strong><span>真实演示数据界面</span></div>
+        <button type="button" aria-label="关闭大图" title="关闭" data-lightbox-close>×</button>
+      </div>
+      <img src="assets/product-inventory-2x.png" alt="OpenLabStock 桌面端库存管理大图" width="2530" height="1346" />
+    </dialog>
+
+    <script src="script.js"></script>
+  </body>
+</html>

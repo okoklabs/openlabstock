@@ -5,7 +5,7 @@ import { DatabaseSync } from 'node:sqlite';
 
 const DATABASE_FILE = 'labstock.sqlite';
 const LEGACY_FILE = 'store.json';
-export const CURRENT_SCHEMA_VERSION = 14;
+export const CURRENT_SCHEMA_VERSION = 16;
 const REQUIRED_TABLES = ['metadata', 'settings', 'groups', 'users', 'materials', 'transactions', 'sessions'];
 const ENHANCED_INVENTORY_TABLES = ['inventory_statuses', 'inventory_units', 'inventory_unit_balances', 'inventory_events'];
 
@@ -69,6 +69,7 @@ function createSchema(database) {
       safety_stock REAL NOT NULL CHECK (safety_stock >= 0),
       unit TEXT NOT NULL,
       spec TEXT NOT NULL DEFAULT '',
+      expiry_warning_days INTEGER NOT NULL DEFAULT 30 CHECK (expiry_warning_days >= 0),
       tracking_mode TEXT NOT NULL DEFAULT 'quantity' CHECK (tracking_mode IN ('quantity', 'stateful', 'tracked')),
       position_code_help TEXT NOT NULL DEFAULT '',
       usage_context_help TEXT NOT NULL DEFAULT '',
@@ -96,6 +97,7 @@ function createSchema(database) {
       label TEXT NOT NULL DEFAULT '',
       position_code TEXT NOT NULL DEFAULT '',
       capacity REAL NOT NULL DEFAULT 0 CHECK (capacity >= 0),
+      expiry_date TEXT NOT NULL DEFAULT '',
       note TEXT NOT NULL DEFAULT '',
       active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
       created_at TEXT NOT NULL,
@@ -313,6 +315,15 @@ function migrateSchema(database) {
   if (!materialColumns.some((column) => column.name === 'usage_context_help')) {
     database.exec("ALTER TABLE materials ADD COLUMN usage_context_help TEXT NOT NULL DEFAULT ''");
   }
+  if (!materialColumns.some((column) => column.name === 'expiry_warning_days')) {
+    database.exec("ALTER TABLE materials ADD COLUMN expiry_warning_days INTEGER NOT NULL DEFAULT 30 CHECK (expiry_warning_days >= 0)");
+  }
+  database.exec('UPDATE materials SET expiry_warning_days = 30 WHERE expiry_warning_days IS NULL OR expiry_warning_days < 0');
+  const inventoryUnitColumns = database.prepare('PRAGMA table_info(inventory_units)').all();
+  if (inventoryUnitColumns.length && !inventoryUnitColumns.some((column) => column.name === 'expiry_date')) {
+    database.exec("ALTER TABLE inventory_units ADD COLUMN expiry_date TEXT NOT NULL DEFAULT ''");
+  }
+  database.exec('CREATE INDEX IF NOT EXISTS inventory_units_expiry_date ON inventory_units(expiry_date, active)');
   const balanceColumns = database.prepare('PRAGMA table_info(inventory_unit_balances)').all();
   if (balanceColumns.length && !balanceColumns.some((column) => column.name === 'position_code')) {
     database.exec(`
@@ -459,6 +470,9 @@ function migrateSchema(database) {
     SET source_type = 'inventory_adjustment'
     WHERE counterparty = 'Excel 批量导入';
   `);
+  if (previousSchemaVersion < 12) {
+    database.prepare("UPDATE settings SET app_name = 'OpenLabStock' WHERE app_name = 'SYSULab'").run();
+  }
   database.exec(`
     CREATE TABLE IF NOT EXISTS audit_logs (
       id TEXT PRIMARY KEY,
@@ -558,6 +572,9 @@ export function validateBackupDatabase(databasePath, { clearSessions = false } =
     if (schemaVersion >= 14 && (!tables.has('stocktakes') || !tables.has('stocktake_items'))) {
       throw new Error('数据库缺少盘点任务数据表');
     }
+    if (schemaVersion >= 15 && !database.prepare('PRAGMA table_info(inventory_units)').all().some((column) => column.name === 'expiry_date')) {
+      throw new Error('数据库缺少库存单元有效期字段');
+    }
 
     const settings = database.prepare('SELECT COUNT(*) AS count FROM settings').get().count;
     const groups = database.prepare('SELECT COUNT(*) AS count FROM groups').get().count;
@@ -618,7 +635,7 @@ function rowsToStore(database, { includeHistory = true } = {}) {
       lastLoginAt: row.last_login_at,
       isOwner: row.id === ownerUserId,
     })),
-    materials: database.prepare('SELECT id, name, category, quantity, safety_stock, unit, spec, tracking_mode, position_code_help, usage_context_help, active, updated_at FROM materials').all().map((row) => ({
+    materials: database.prepare('SELECT id, name, category, quantity, safety_stock, unit, spec, expiry_warning_days, tracking_mode, position_code_help, usage_context_help, active, updated_at FROM materials').all().map((row) => ({
       id: row.id,
       name: row.name,
       category: row.category,
@@ -626,6 +643,7 @@ function rowsToStore(database, { includeHistory = true } = {}) {
       safetyStock: row.safety_stock,
       unit: row.unit,
       spec: row.spec,
+      expiryWarningDays: row.expiry_warning_days,
       trackingMode: row.tracking_mode,
       positionCodeHelp: row.position_code_help,
       usageContextHelp: row.usage_context_help,
@@ -642,13 +660,14 @@ function rowsToStore(database, { includeHistory = true } = {}) {
       active: Boolean(row.active),
       sortOrder: row.sort_order,
     })),
-    inventoryUnits: database.prepare('SELECT id, material_id, unit_type, label, position_code, capacity, note, active, created_at, updated_at FROM inventory_units').all().map((row) => ({
+    inventoryUnits: database.prepare('SELECT id, material_id, unit_type, label, position_code, capacity, expiry_date, note, active, created_at, updated_at FROM inventory_units').all().map((row) => ({
       id: row.id,
       materialId: row.material_id,
       unitType: row.unit_type,
       label: row.label,
       positionCode: row.position_code,
       capacity: row.capacity,
+      expiryDate: row.expiry_date,
       note: row.note,
       active: Boolean(row.active),
       createdAt: row.created_at,
@@ -687,6 +706,7 @@ function materialFromRow(row) {
     safetyStock: row.safety_stock,
     unit: row.unit,
     spec: row.spec,
+    expiryWarningDays: row.expiry_warning_days,
     trackingMode: row.tracking_mode,
     positionCodeHelp: row.position_code_help,
     usageContextHelp: row.usage_context_help,
@@ -697,7 +717,7 @@ function materialFromRow(row) {
 
 function rowsToMaterials(database) {
   return database.prepare(`
-    SELECT id, name, category, quantity, safety_stock, unit, spec, tracking_mode,
+    SELECT id, name, category, quantity, safety_stock, unit, spec, expiry_warning_days, tracking_mode,
       position_code_help, usage_context_help, active, updated_at
     FROM materials
   `).all().map(materialFromRow);
@@ -858,12 +878,12 @@ function recordQuantityTransaction(database, mutation) {
   if (createdMaterial) {
     database.prepare(`
       INSERT INTO materials (
-        id, name, category, quantity, safety_stock, unit, spec, tracking_mode,
+        id, name, category, quantity, safety_stock, unit, spec, expiry_warning_days, tracking_mode,
         position_code_help, usage_context_help, active, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       material.id, material.name, material.category, material.quantity, material.safetyStock,
-      material.unit, material.spec, material.trackingMode, material.positionCodeHelp ?? '',
+      material.unit, material.spec, material.expiryWarningDays ?? 30, material.trackingMode, material.positionCodeHelp ?? '',
       material.usageContextHelp ?? '', Number(material.active !== false), material.updatedAt,
     );
   } else {
@@ -886,12 +906,13 @@ function recordQuantityImport(database, mutation) {
   const materialIds = new Set();
   const upsertMaterial = database.prepare(`
     INSERT INTO materials (
-      id, name, category, quantity, safety_stock, unit, spec, tracking_mode,
+      id, name, category, quantity, safety_stock, unit, spec, expiry_warning_days, tracking_mode,
       position_code_help, usage_context_help, active, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       name = excluded.name, category = excluded.category, quantity = excluded.quantity,
       safety_stock = excluded.safety_stock, unit = excluded.unit, spec = excluded.spec,
+      expiry_warning_days = excluded.expiry_warning_days,
       position_code_help = excluded.position_code_help, usage_context_help = excluded.usage_context_help,
       updated_at = excluded.updated_at
     WHERE materials.active = 1 AND materials.tracking_mode = 'quantity'
@@ -903,7 +924,7 @@ function recordQuantityImport(database, mutation) {
     materialIds.add(material.id);
     const result = upsertMaterial.run(
       material.id, material.name, material.category, material.quantity, material.safetyStock,
-      material.unit, material.spec, material.trackingMode, material.positionCodeHelp ?? '',
+      material.unit, material.spec, material.expiryWarningDays ?? 30, material.trackingMode, material.positionCodeHelp ?? '',
       material.usageContextHelp ?? '', Number(material.active !== false), material.updatedAt,
     );
     if (result.changes !== 1) throw new Error('Quantity import material changed before it could be recorded');
@@ -1371,13 +1392,13 @@ function replaceStore(database, store) {
   }
 
   const insertMaterial = database.prepare(`
-    INSERT INTO materials (id, name, category, quantity, safety_stock, unit, spec, tracking_mode, position_code_help, usage_context_help, active, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO materials (id, name, category, quantity, safety_stock, unit, spec, expiry_warning_days, tracking_mode, position_code_help, usage_context_help, active, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   for (const material of store.materials) {
     insertMaterial.run(
       material.id, material.name, material.category, material.quantity, material.safetyStock, material.unit,
-      material.spec, material.trackingMode, material.positionCodeHelp ?? '', material.usageContextHelp ?? '',
+      material.spec, material.expiryWarningDays ?? 30, material.trackingMode, material.positionCodeHelp ?? '', material.usageContextHelp ?? '',
       Number(material.active !== false), material.updatedAt,
     );
   }
@@ -1391,11 +1412,11 @@ function replaceStore(database, store) {
   }
 
   const insertUnit = database.prepare(`
-    INSERT INTO inventory_units (id, material_id, unit_type, label, position_code, capacity, note, active, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO inventory_units (id, material_id, unit_type, label, position_code, capacity, expiry_date, note, active, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   for (const unit of store.inventoryUnits) {
-    insertUnit.run(unit.id, unit.materialId, unit.unitType, unit.label, unit.positionCode, unit.capacity ?? 0, unit.note ?? '', Number(unit.active !== false), unit.createdAt, unit.updatedAt);
+    insertUnit.run(unit.id, unit.materialId, unit.unitType, unit.label, unit.positionCode, unit.capacity ?? 0, unit.expiryDate ?? '', unit.note ?? '', Number(unit.active !== false), unit.createdAt, unit.updatedAt);
   }
 
   const insertBalance = database.prepare(`
@@ -1524,8 +1545,8 @@ function syncStore(database, before, after) {
   const oldMaterials = new Map(before.materials.map((material) => [material.id, material]));
   const nextMaterials = new Map(after.materials.map((material) => [material.id, material]));
   const upsertMaterial = database.prepare(`
-    INSERT INTO materials (id, name, category, quantity, safety_stock, unit, spec, tracking_mode, position_code_help, usage_context_help, active, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO materials (id, name, category, quantity, safety_stock, unit, spec, expiry_warning_days, tracking_mode, position_code_help, usage_context_help, active, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       name = excluded.name,
       category = excluded.category,
@@ -1533,18 +1554,19 @@ function syncStore(database, before, after) {
       safety_stock = excluded.safety_stock,
       unit = excluded.unit,
       spec = excluded.spec,
+      expiry_warning_days = excluded.expiry_warning_days,
       tracking_mode = excluded.tracking_mode,
       position_code_help = excluded.position_code_help,
       usage_context_help = excluded.usage_context_help,
       active = excluded.active,
       updated_at = excluded.updated_at
   `);
-  const materialFields = ['name', 'category', 'quantity', 'safetyStock', 'unit', 'spec', 'trackingMode', 'positionCodeHelp', 'usageContextHelp', 'active', 'updatedAt'];
+  const materialFields = ['name', 'category', 'quantity', 'safetyStock', 'unit', 'spec', 'expiryWarningDays', 'trackingMode', 'positionCodeHelp', 'usageContextHelp', 'active', 'updatedAt'];
   for (const material of after.materials) {
     if (!changed(oldMaterials.get(material.id), material, materialFields)) continue;
     upsertMaterial.run(
       material.id, material.name, material.category, material.quantity, material.safetyStock,
-      material.unit, material.spec, material.trackingMode, material.positionCodeHelp ?? '', material.usageContextHelp ?? '',
+      material.unit, material.spec, material.expiryWarningDays ?? 30, material.trackingMode, material.positionCodeHelp ?? '', material.usageContextHelp ?? '',
       Number(material.active !== false), material.updatedAt,
     );
   }
@@ -1564,11 +1586,11 @@ function syncStore(database, before, after) {
   }
 
   const insertUnit = database.prepare(`
-    INSERT INTO inventory_units (id, material_id, unit_type, label, position_code, capacity, note, active, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO inventory_units (id, material_id, unit_type, label, position_code, capacity, expiry_date, note, active, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   for (const unit of after.inventoryUnits) {
-    insertUnit.run(unit.id, unit.materialId, unit.unitType, unit.label, unit.positionCode, unit.capacity ?? 0, unit.note ?? '', Number(unit.active !== false), unit.createdAt, unit.updatedAt);
+    insertUnit.run(unit.id, unit.materialId, unit.unitType, unit.label, unit.positionCode, unit.capacity ?? 0, unit.expiryDate ?? '', unit.note ?? '', Number(unit.active !== false), unit.createdAt, unit.updatedAt);
   }
 
   const insertBalance = database.prepare(`

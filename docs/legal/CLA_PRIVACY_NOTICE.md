@@ -3,9 +3,11 @@
 **Status / 状态:** Prepared for activation; no CLA signatures are currently
 accepted. / 待启用；目前不接受 CLA 签署。
 
-- **Planned data controller / 计划中的数据负责人:** 郝春霖 (Hao Chunlin),
-  individual / 个人
-- **Contact / 联系邮箱:** `contact@okoklabs.com` (receiving verified / 已验证收件)
+**Planned data controller / 计划中的数据负责人:** 郝春霖 (Hao Chunlin),
+individual / 个人
+**Planned contact / 计划联系邮箱:** `contact@okoklabs.com` (external delivery and reply
+test completed 2026-09-01 through an ImprovMX forwarding alias / 已于 2026-09-01 通过
+ImprovMX 转发别名完成站外投递和回复测试)
 
 ## English
 
@@ -56,7 +58,9 @@ needs. Private exports must be access-controlled and protected by the same
 backup safeguards as other compliance records.
 
 After activation, signers may request access to or correction of Project-held
-signing data through `contact@okoklabs.com`. A deletion request will be assessed
+signing data through `contact@okoklabs.com`, which may be a forwarding alias
+managed through ImprovMX. Replies may be sent from the monitored destination
+mailbox rather than from the alias itself. A deletion request will be assessed
 against applicable law and the Project's need to retain minimum evidence of
 licenses already granted. Correcting or deleting contact data does not by
 itself revoke rights already granted for Contributions.
@@ -77,5 +81,6 @@ itself revoke rights already granted for Contributions.
 
 签署记录及对应协议修订会在证明贡献权利链、处理争议和履行法律义务所合理需要的
 期限内保留。启用后，签署人可通过 `contact@okoklabs.com` 请求查询或更正项目持有
-的签署信息。删除请求需要结合适用法律和保留既有授权最低证据的必要性处理；更正
+的签署信息；该地址可以是由 ImprovMX 管理的转发别名，回复可从后台受监控邮箱发出，
+不要求别名本身具备 SMTP 发信能力。删除请求需要结合适用法律和保留既有授权最低证据的必要性处理；更正
 或删除联系信息本身不会撤回已经授予的贡献许可。

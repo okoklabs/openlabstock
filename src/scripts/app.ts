@@ -1,5 +1,5 @@
 import { detectMobileKeyboard, measureMobileViewport } from './mobile-viewport.mjs';
-import { buildRecordPageUrl, createRecordPageState, DEFAULT_RECORD_PAGE_SIZE, recordRangeStart } from './record-page.mjs';
+import { DEFAULT_RECORD_PAGE_SIZE } from './record-pagination.mjs';
 import { terminalStateConfirmation } from './inventory-operation.mjs';
 import { effectiveManualOutboundTransactions, groupConsumptionRows } from './inventory-export.mjs';
 import { inventoryAnomalyEntryLabel, inventoryAnomalyResolutionBody } from './inventory-anomaly.mjs';
@@ -24,11 +24,13 @@ type UserRole = 'admin' | 'inventory' | 'member';
 type User = { id: string; username: string; name: string; note: string; role: UserRole; groupId: string; tagIds: string[]; active: boolean; lastLoginAt: string | null; isOwner: boolean };
 type DirectoryUser = { id: string; name: string; note: string; role: UserRole; groupId: string; tagIds: string[]; isOwner: boolean };
 type TrackingMode = 'quantity' | 'stateful' | 'tracked';
-type Material = { id: string; name: string; category: string; quantity: number; availableQuantity: number; safetyStock: number; unit: string; spec: string; trackingMode: TrackingMode; positionCodeHelp: string; usageContextHelp: string; active: boolean; updatedAt: string };
+type Material = { id: string; name: string; category: string; quantity: number; availableQuantity: number; safetyStock: number; unit: string; spec: string; expiryWarningDays: number; trackingMode: TrackingMode; positionCodeHelp: string; usageContextHelp: string; active: boolean; updatedAt: string };
 type InventoryStatus = { id: string; materialId: string; code: string; name: string; usable: boolean; terminal: boolean; active: boolean; sortOrder: number; quantity?: number };
-type InventoryBalance = { inventoryUnitId: string; statusId: string; statusName: string; accessScope: 'shared' | 'user'; ownerUserId: string; ownerName: string; positionCode: string; displayCode: string; quantity: number; usable: boolean; terminal: boolean };
-type InventoryUnit = { id: string; materialId: string; unitType: 'aggregate' | 'lot' | 'container' | 'position'; label: string; positionCode: string; displayLabel: string; capacity: number; note: string; active: boolean; quantity: number; balances: InventoryBalance[]; createdAt: string; updatedAt: string };
-type InventorySummary = { materialId: string; total: number; usable: number; unavailable: number; shared: number; reserved: number; sharedUsable: number; reservedUsable: number; unitCount: number; activeUnitCount: number; statuses: InventoryStatus[] };
+type ExpiryInfo = { status: 'none' | 'normal' | 'expiring' | 'expired'; daysRemaining: number | null; expiryDate: string };
+type ExpiryAlert = { materialId: string; materialName: string; inventoryUnitId: string; inventoryUnitLabel: string; expiryDate: string; status: 'expiring' | 'expired'; daysRemaining: number; quantity: number; unit: string };
+type InventoryBalance = { inventoryUnitId: string; statusId: string; statusName: string; accessScope: 'shared' | 'user'; ownerUserId: string; ownerName: string; positionCode: string; displayCode: string; quantity: number; usable: boolean; terminal: boolean; expiry?: ExpiryInfo };
+type InventoryUnit = { id: string; materialId: string; unitType: 'aggregate' | 'lot' | 'container' | 'position'; label: string; positionCode: string; displayLabel: string; capacity: number; expiryDate: string; expiry: ExpiryInfo; note: string; active: boolean; quantity: number; balances: InventoryBalance[]; createdAt: string; updatedAt: string };
+type InventorySummary = { materialId: string; total: number; usable: number; unavailable: number; shared: number; reserved: number; sharedUsable: number; reservedUsable: number; expired: number; expiring: number; expiryWarningDays: number; unitCount: number; activeUnitCount: number; statuses: InventoryStatus[] };
 type InventoryEvent = { id: string; materialId: string; materialName: string; inventoryUnitId: string; inventoryUnitLabel: string; quantity: number; eventType: 'use' | 'use_correction' | 'state_change' | 'access_change' | 'transfer' | 'dispose' | 'adjustment'; fromStatusId: string; fromStatusName: string; toStatusId: string; toStatusName: string; fromAccessScope: string; fromOwnerUserId: string; fromOwnerName: string; fromPositionCode: string; toAccessScope: string; toOwnerUserId: string; toOwnerName: string; toPositionCode: string; userId: string; userName: string; groupName: string; counterparty: string; note: string; correctionOfId: string; occurredAt: string; corrected?: boolean };
 type InventoryAnomalyEntry = { statusId: string; statusName: string; accessScope: 'shared' | 'user'; ownerUserId: string; ownerName: string; positionCode: string; displayCode: string; quantity: number; repairable: boolean };
 type InventoryAnomaly = { id: string; type: 'position_conflict' | 'capacity_exceeded' | 'material_quantity_mismatch'; materialId: string; materialName: string; materialUnit: string; inventoryUnitId: string; inventoryUnitLabel: string; positionCode: string; duplicate: boolean; invalidQuantities: boolean; totalQuantity: number; capacity?: number; storedQuantity?: number; entries: InventoryAnomalyEntry[] };
@@ -49,11 +51,23 @@ type TrendPoint = { label: string; in: number; out: number };
 type LabSettings = { appName: string; labName: string; brandIcon: string };
 type Group = { id: string; name: string; isDefault: boolean };
 type Tag = { id: string; name: string };
-type Bootstrap = { version: string; user: User; settings: LabSettings; groups: Group[]; tags: Tag[]; directory: DirectoryUser[]; members: User[]; materials: Material[]; materialStats: MaterialStats[]; inventorySummaries: InventorySummary[]; transactions: Transaction[]; transactionTotal: number; recentlyUsedMaterialIds: string[]; stats: { items: number; categories: number; lowStock: number; normalStock: number; monthInRecords: number; monthOutRecords: number; monthInMaterials: number; monthOutMaterials: number }; trend: TrendPoint[] };
-type ExportSnapshot = { exportedAt: string; settings: LabSettings; groups: Group[]; directory: DirectoryUser[]; materials: Material[]; materialStats: MaterialStats[]; transactions: Transaction[]; total: number; inventoryEvents: InventoryEvent[]; eventTotal: number };
+type Bootstrap = { version: string; user: User; settings: LabSettings; groups: Group[]; tags: Tag[]; directory: DirectoryUser[]; members: User[]; materials: Material[]; materialStats: MaterialStats[]; inventorySummaries: InventorySummary[]; expiryAlerts: ExpiryAlert[]; transactions: Transaction[]; transactionTotal: number; recentlyUsedMaterialIds: string[]; stats: { items: number; categories: number; lowStock: number; warningCount?: number; expiry?: number; normalStock: number; monthInRecords: number; monthOutRecords: number; monthInMaterials: number; monthOutMaterials: number }; trend: TrendPoint[] };
+type ExportSnapshot = { exportedAt: string; settings: LabSettings; groups: Group[]; directory: DirectoryUser[]; materials: Material[]; materialStats: MaterialStats[]; inventorySummaries: InventorySummary[]; inventoryUnits: InventoryUnit[]; expiryAlerts: ExpiryAlert[]; transactions: Transaction[]; total: number; inventoryEvents: InventoryEvent[]; eventTotal: number };
 
 const $ = <T extends Element = HTMLElement>(selector: string, root: ParentNode = document) => root.querySelector<T>(selector);
 const $$ = <T extends Element = HTMLElement>(selector: string, root: ParentNode = document) => [...root.querySelectorAll<T>(selector)];
+
+function ensureExpiryWarningField() {
+  if ($('#edit-material-expiry-warning-days')) return;
+  const trackingField = $('#edit-material-tracking-mode')?.closest<HTMLElement>('.field');
+  if (!trackingField) return;
+  const field = document.createElement('div');
+  field.className = 'field';
+  field.innerHTML = '<label for="edit-material-expiry-warning-days">临期提醒提前天数</label><input id="edit-material-expiry-warning-days" type="number" min="0" max="3650" step="1" value="30" required><span class="field-hint">每种耗材独立设置，默认 30 天；设为 0 关闭临期窗口，但过期仍会提醒。</span>';
+  trackingField.before(field);
+}
+
+ensureExpiryWarningField();
 const escapeHtml = (value: unknown) => String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character] ?? character);
 const initial = (name: string) => [...name.trim()][0] || '员';
 const formatNumber = (value: number) => new Intl.NumberFormat('zh-CN').format(value);
@@ -152,6 +166,7 @@ const memberActionModal = $('[data-modal="member-action"]');
 const materialActionModal = $('[data-modal="material-action"]');
 const materialInfoModal = $('[data-modal="material-info"]');
 const inventoryDetailModal = $('[data-modal="inventory-detail"]');
+const inventoryUnitEditModal = $('[data-modal="inventory-unit-edit"]');
 const inventoryOperationModal = $('[data-modal="inventory-operation"]');
 const settingsModal = $('[data-modal="settings"]');
 const notificationsModal = $('[data-modal="notifications"]');
@@ -178,6 +193,7 @@ let materialActionTargetId = '';
 let materialInfoTargetId = '';
 let inventoryDetailTargetId = '';
 let inventoryDetailData: InventoryDetailResponse | null = null;
+let inventoryUnitEditTarget: InventoryUnit | null = null;
 let inventoryAnomalies: InventoryAnomaly[] = [];
 let inventoryAnomalyTarget: { anomaly: InventoryAnomaly; entry: InventoryAnomalyEntry } | null = null;
 let inventoryEventsLoaded = false;
@@ -189,11 +205,18 @@ let unitQuantityFollowsCapacity = true;
 let qrMaterialTargetId = '';
 let qrInventoryUnitTarget: InventoryUnit | null = null;
 let qrMaterialDataUrl = '';
-const recordPager = createRecordPageState();
+let recordPageItems: RecordPageItem[] = [];
+let recordTotal = 0;
+let recordHasMore = false;
+let recordNextCursor = '';
+let recordCursorHistory = [''];
+let recordFrom = '';
 let recordPageLoadController: AbortController | null = null;
 let recordPageLoadSequence = 0;
 let recordSearchTimer = 0;
 let exportSnapshot: ExportSnapshot | null = null;
+let recordPage = 1;
+let recordScope: 'all' | 'mine' = 'all';
 let auditPageItems: AuditLog[] = [];
 let auditTotal = 0;
 let auditHasMore = false;
@@ -246,6 +269,7 @@ let selectMenuSequence = 0;
 let modalReturnFocus: HTMLElement | null = null;
 let confirmReturnFocus: HTMLElement | null = null;
 let confirmResolver: ((confirmed: boolean) => void) | null = null;
+let modalLayerSequence = 50;
 let mobileDrawerScrollY = 0;
 let mobileDrawerLocked = false;
 let modalPageScrollY = 0;
@@ -535,13 +559,26 @@ const closeModals = () => {
   inventoryEventCorrectionTarget = null;
   inventoryAnomalyTarget = null;
   inventoryDetailStocktakeReturn = null;
-  [transactionModal, importModal, memberModal, memberActionModal, materialActionModal, materialInfoModal, inventoryDetailModal, inventoryOperationModal, settingsModal, notificationsModal, permissionsModal, materialGuideModal, scannerModal, materialQrModal, batchLabelModal, correctionModal, auditDetailModal, stocktakeModal, stocktakeCreateModal, stocktakeCountModal, stocktakeCancelModal, confirmModal].forEach((modal) => modal?.classList.remove('open'));
-  $('[data-modal="inventory-anomaly-fix"]')?.classList.remove('open');
+  inventoryUnitEditTarget = null;
+  [transactionModal, importModal, memberModal, memberActionModal, materialActionModal, materialInfoModal, inventoryDetailModal, inventoryUnitEditModal, inventoryOperationModal, settingsModal, notificationsModal, permissionsModal, materialGuideModal, scannerModal, materialQrModal, batchLabelModal, correctionModal, auditDetailModal, stocktakeModal, stocktakeCreateModal, stocktakeCountModal, stocktakeCancelModal, confirmModal, $('[data-modal="inventory-anomaly-fix"]')].forEach((modal) => hideModal(modal));
+  modalLayerSequence = 50;
   document.body.classList.remove('modal-open');
   unlockModalPage();
   if (hadOpenModal && modalReturnFocus?.isConnected) modalReturnFocus.focus();
   modalReturnFocus = null;
 };
+
+function bringModalToFront(modal: Element | null) {
+  if (!modal) return;
+  modalLayerSequence = Math.max(50, modalLayerSequence) + 1;
+  modal.style.zIndex = String(modalLayerSequence);
+  modal.classList.add('open');
+}
+
+function hideModal(modal: Element | null) {
+  modal?.classList.remove('open');
+  modal?.style.removeProperty('z-index');
+}
 
 function lockModalPage() {
   if (!mobileDrawerMedia.matches || modalPageLocked) return;
@@ -601,7 +638,7 @@ const openModal = (modal: Element | null) => {
   modalViewportBaselineHeight = measureMobileViewport(window.visualViewport, window.innerHeight).height;
   updateMobileViewportMetrics();
   modalReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  modal?.classList.add('open');
+  bringModalToFront(modal);
   const modalBody = modal?.querySelector<HTMLElement>('.modal-body');
   if (modalBody) modalBody.scrollTop = 0;
   document.body.classList.toggle('modal-open', Boolean(modal));
@@ -622,7 +659,7 @@ const openModal = (modal: Element | null) => {
 const finishConfirmation = (confirmed: boolean) => {
   const resolve = confirmResolver;
   confirmResolver = null;
-  confirmModal?.classList.remove('open');
+  hideModal(confirmModal);
   document.body.classList.toggle('modal-open', Boolean($('.modal-backdrop.open')));
   if (!$('.modal-backdrop.open')) unlockModalPage();
   if (confirmReturnFocus?.isConnected) confirmReturnFocus.focus();
@@ -640,7 +677,7 @@ const askConfirmation = ({ title, message, confirmLabel }: { title: string; mess
   if (submit) submit.textContent = confirmLabel;
   confirmReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   updateMobileViewportMetrics();
-  confirmModal?.classList.add('open');
+  bringModalToFront(confirmModal);
   document.body.classList.add('modal-open');
   requestAnimationFrame(() => submit?.focus());
   return new Promise<boolean>((resolve) => { confirmResolver = resolve; });
@@ -712,11 +749,64 @@ document.addEventListener('pointerdown', (event) => {
 
 function stockStatus(material: Material) {
   if (!material.active) return 'archived';
+  if (material.availableQuantity === 0) return 'out';
   return material.availableQuantity <= material.safetyStock ? 'low' : 'ok';
 }
 
+function materialStatusPresentation(material: Material, expiryStatus: ReturnType<typeof materialExpiryStatus>) {
+  const summary = state?.inventorySummaries.find((candidate) => candidate.materialId === material.id);
+  if (!material.active) return { label: '已归档', className: 'archived', description: '已归档，不参与日常库存、预警或登记' };
+  if (expiryStatus === 'expired') {
+    const count = summary?.expired ? `有 ${formatNumber(summary.expired)} ${material.unit} ` : '';
+    return { label: '过期批次', className: 'low', description: `${count}已过期，不能正常领用；请登记处置` };
+  }
+  if (expiryStatus === 'expiring') {
+    const count = summary?.expiring ? `有 ${formatNumber(summary.expiring)} ${material.unit} ` : '';
+    const days = summary?.expiryWarningDays ?? 30;
+    return { label: '临期批次', className: 'warning', description: `${count}将在 ${days} 天内到期，请及时确认` };
+  }
+  const stockLevel = stockStatus(material);
+  if (stockLevel === 'out') {
+    return { label: '缺货', className: 'low', description: `开放可用数量为 0 ${material.unit}，暂无可用库存` };
+  }
+  if (stockLevel === 'low') {
+    return { label: '低库存', className: 'low', description: `开放可用数量 ${formatNumber(material.availableQuantity)} ${material.unit}，已达到或低于安全库存线 ${formatNumber(material.safetyStock)} ${material.unit}` };
+  }
+  return {
+    label: '正常',
+    className: 'ok',
+    description: material.trackingMode === 'quantity'
+      ? '库存高于安全库存线；普通数量模式未启用批次有效期'
+      : '库存高于安全库存线，当前没有临期或过期批次',
+  };
+}
+
+function lowStockPresentation(material: Material) {
+  if (material.availableQuantity === 0) {
+    return { label: '缺货', description: '开放库存为 0，暂无可用库存' };
+  }
+  return { label: '低库存', description: `开放库存 ${formatNumber(material.availableQuantity)} ${material.unit}，已达到或低于安全库存线 ${formatNumber(material.safetyStock)} ${material.unit}` };
+}
+
+function statusChipMarkup(label: string, className: string, description: string) {
+  const accessibleLabel = `${label}：${description}`;
+  return `<span class="status-chip ${className}" title="${escapeHtml(description)}" aria-label="${escapeHtml(accessibleLabel)}">${escapeHtml(label)}</span>`;
+}
+
+function materialExpiryStatus(material: Material): 'normal' | 'expiring' | 'expired' | 'none' {
+  const summary = state?.inventorySummaries.find((candidate) => candidate.materialId === material.id);
+  if (!summary || material.trackingMode === 'quantity') return 'none';
+  return summary.expired > 0 ? 'expired' : summary.expiring > 0 ? 'expiring' : 'normal';
+}
+
+function expiryDescription(expiry: ExpiryInfo) {
+  if (expiry.status === 'expired') return `已于 ${expiry.expiryDate} 过期`;
+  if (expiry.status === 'expiring') return expiry.daysRemaining === 0 ? `今日到期（${expiry.expiryDate}）` : `${expiry.expiryDate} 到期（剩 ${expiry.daysRemaining} 天）`;
+  return expiry.expiryDate ? `${expiry.expiryDate} 到期` : '未设置有效期';
+}
+
 function lowStockMaterials() {
-  return state?.materials.filter((material) => stockStatus(material) === 'low').sort((a, b) => (a.availableQuantity / Math.max(1, a.safetyStock)) - (b.availableQuantity / Math.max(1, b.safetyStock))) ?? [];
+  return state?.materials.filter((material) => ['out', 'low'].includes(stockStatus(material))).sort((a, b) => (a.availableQuantity / Math.max(1, a.safetyStock)) - (b.availableQuantity / Math.max(1, b.safetyStock))) ?? [];
 }
 
 function renderMaterialOptions(type: 'in' | 'out' = currentTransactionType()) {
@@ -749,14 +839,18 @@ function renderMaterials() {
       const row = template?.content.firstElementChild?.cloneNode(true) as HTMLTableRowElement | undefined;
       if (!row) return;
       const lifecycleStatus = stockStatus(material);
-      const low = lifecycleStatus === 'low';
+      const low = lifecycleStatus === 'out' || lifecycleStatus === 'low';
+      const expiryStatus = materialExpiryStatus(material);
+      const expirySummary = state.inventorySummaries.find((candidate) => candidate.materialId === material.id);
       row.dataset.stockStatus = lifecycleStatus;
+      row.dataset.expired = String((expirySummary?.expired ?? 0) > 0);
+      row.dataset.expiring = String((expirySummary?.expiring ?? 0) > 0);
       $('[data-inventory-initial]', row)!.textContent = initial(material.name);
       $('[data-inventory-name]', row)!.textContent = material.name;
       $('[data-inventory-spec]', row)!.textContent = material.spec ? `规格、型号：${material.spec}` : '规格、型号：未填写';
       const trackingLabel = $<HTMLElement>('[data-inventory-tracking]', row)!;
       trackingLabel.hidden = material.trackingMode === 'quantity';
-      trackingLabel.textContent = material.trackingMode === 'tracked' ? '按库存单元追踪' : '按状态统计';
+      trackingLabel.textContent = material.trackingMode === 'tracked' ? '按批次 / 单件管理' : '按状态统计';
       $$<HTMLButtonElement>('[data-material-info]', row).forEach((infoAction) => {
         infoAction.dataset.materialInfo = material.id;
         infoAction.setAttribute('aria-label', `查看 ${material.name} 的耗材详情`);
@@ -775,8 +869,12 @@ function renderMaterials() {
       $('[data-inventory-unit]', row)!.textContent = material.unit;
       $('[data-inventory-updated]', row)!.textContent = formatTime(material.updatedAt);
       const status = $('[data-inventory-status]', row)!;
-      status.classList.add(lifecycleStatus);
-      status.textContent = lifecycleStatus === 'archived' ? '已归档' : low ? '低库存' : '库存正常';
+      const statusView = materialStatusPresentation(material, expiryStatus);
+      status.classList.remove('ok', 'low', 'warning', 'archived');
+      status.classList.add(statusView.className);
+      status.textContent = statusView.label;
+      status.title = statusView.description;
+      status.setAttribute('aria-label', `${statusView.label}：${statusView.description}`);
       const action = $<HTMLButtonElement>('[data-material-action]', row)!;
       action.dataset.materialAction = material.id;
       action.setAttribute('aria-label', `管理耗材 ${material.name}`);
@@ -799,16 +897,92 @@ function renderMaterials() {
   if (lowSubtitle) lowSubtitle.textContent = lowMaterials.length ? `共 ${lowMaterials.length} 种耗材需要补货，列表可滚动查看` : '当前所有耗材均高于安全库存';
   const lowBody = $('[data-low-stock-body]');
   if (lowBody) {
-    lowBody.innerHTML = lowMaterials.length ? lowMaterials.map((material) => `<tr><td><div class="stock-item"><span class="item-avatar">${escapeHtml(initial(material.name))}</span><span><strong>${escapeHtml(material.name)}</strong><span>${escapeHtml(material.category)}${material.spec ? ` · ${escapeHtml(material.spec)}` : ''}</span></span></div></td><td class="stock-number stock-low">${formatNumber(material.availableQuantity)} ${escapeHtml(material.unit)}</td><td>${formatNumber(material.safetyStock)} ${escapeHtml(material.unit)}</td><td><span class="status-chip low">${material.availableQuantity === 0 ? '开放库存耗尽' : '低于安全线'}</span></td></tr>`).join('') : '<tr><td colspan="4" class="empty-note">当前没有低库存耗材</td></tr>';
+    lowBody.innerHTML = lowMaterials.length ? lowMaterials.map((material) => {
+      const statusView = lowStockPresentation(material);
+      return `<tr><td><div class="stock-item"><span class="item-avatar">${escapeHtml(initial(material.name))}</span><span><strong>${escapeHtml(material.name)}</strong><span>${escapeHtml(material.category)}${material.spec ? ` · ${escapeHtml(material.spec)}` : ''}</span></span></div></td><td class="stock-number stock-low">${formatNumber(material.availableQuantity)} ${escapeHtml(material.unit)}</td><td>${formatNumber(material.safetyStock)} ${escapeHtml(material.unit)}</td><td>${statusChipMarkup(statusView.label, 'low', statusView.description)}</td></tr>`;
+    }).join('') : '<tr><td colspan="4" class="empty-note">当前没有低库存耗材</td></tr>';
   }
+
+  renderExpiryAlerts();
 
   renderMaterialOptions();
 }
 
+function renderExpiryAlerts() {
+  const panel = $('[data-expiry-panel]');
+  const body = $('[data-expiry-body]');
+  if (!panel || !body) return;
+  const alerts = state?.expiryAlerts ?? [];
+  const expired = alerts.filter((alert) => alert.status === 'expired');
+  const expiring = alerts.filter((alert) => alert.status === 'expiring');
+  panel.classList.toggle('is-hidden', alerts.length === 0);
+  const subtitle = $('[data-expiry-panel-subtitle]');
+  if (subtitle) subtitle.textContent = alerts.length
+    ? `${expired.length ? `${expired.length} 个过期批次` : ''}${expired.length && expiring.length ? ' · ' : ''}${expiring.length ? `${expiring.length} 个临期批次` : ''}；临期天数按耗材独立设置`
+    : '当前没有临期或过期批次';
+  $$<HTMLButtonElement>('[data-show-expiry]').forEach((button) => {
+    const status = button.dataset.showExpiry;
+    const count = status === 'expired' ? expired.length : expiring.length;
+    button.hidden = count === 0;
+    button.textContent = status === 'expired' ? `查看过期（${count}）` : `查看临期（${count}）`;
+  });
+  body.innerHTML = alerts.length ? alerts.map((alert) => {
+    const isExpired = alert.status === 'expired';
+    const statusLabel = isExpired ? '已过期' : '临期';
+    const description = isExpired ? `已于 ${alert.expiryDate} 过期，请登记处置` : alert.daysRemaining === 0 ? `今日到期（${alert.expiryDate}）` : `${alert.expiryDate} 到期，剩 ${alert.daysRemaining} 天`;
+    return `<tr><td><div class="stock-item"><span class="item-avatar expiry-avatar ${isExpired ? 'expired' : 'expiring'}">${escapeHtml(initial(alert.materialName))}</span><span><strong>${escapeHtml(alert.materialName)}</strong><span>${escapeHtml(alert.inventoryUnitLabel)}</span></span></div></td><td>${escapeHtml(alert.expiryDate)}</td><td>${statusChipMarkup(statusLabel, isExpired ? 'low' : 'warning', description)}</td><td class="stock-number ${isExpired ? 'stock-low' : 'stock-mid'}">${formatNumber(alert.quantity)} ${escapeHtml(alert.unit)}</td></tr>`;
+  }).join('') : '<tr><td colspan="4" class="empty-note">当前没有临期或过期批次</td></tr>';
+}
+
 function materialTrackingLabel(material: Material) {
-  if (material.trackingMode === 'tracked') return '按库存单元追踪';
+  if (material.trackingMode === 'tracked') return '按批次 / 盒 / 单件管理';
   if (material.trackingMode === 'stateful') return '按状态统计';
   return '普通数量';
+}
+
+function syncMaterialTrackingGuidance(trackingMode: string, material?: Material) {
+  const select = $<HTMLSelectElement>('#edit-material-tracking-mode');
+  const labels: Record<string, string> = { quantity: '普通数量', stateful: '按状态统计', tracked: '按批次 / 盒 / 单件管理' };
+  [...(select?.options ?? [])].forEach((option) => { if (labels[option.value]) option.textContent = labels[option.value]; });
+  const guidance = $<HTMLElement>('[data-material-tracking-guidance-panel]');
+  if (guidance) guidance.hidden = trackingMode !== 'tracked';
+  const detailButton = $<HTMLButtonElement>('[data-material-action-detail]');
+  if (detailButton) detailButton.hidden = trackingMode !== 'tracked' || !material;
+}
+
+function syncInventoryUnitTypeForm() {
+  const select = $<HTMLSelectElement>('#unit-type');
+  const capacity = $<HTMLInputElement>('#unit-capacity');
+  const quantity = $<HTMLInputElement>('#unit-quantity');
+  if (!select || !capacity || !quantity) return;
+  const options: Record<string, string> = {
+    lot: '批次（试剂、耗材）',
+    container: '盒 / 容器（可选容量）',
+    position: '单件 / 序列号（数量固定 1）',
+  };
+  [...select.options].forEach((option) => { if (options[option.value]) option.textContent = options[option.value]; });
+  const type = select.value || 'lot';
+  const capacityField = capacity.closest<HTMLElement>('.field');
+  const capacityLabel = capacityField?.querySelector('label');
+  const quantityLabel = $<HTMLLabelElement>('label[for="unit-quantity"]');
+  if (capacityField) capacityField.hidden = type !== 'container';
+  if (capacityLabel) capacityLabel.textContent = '盒容量（选填）';
+  if (type !== 'container') capacity.value = '0';
+  quantity.readOnly = type === 'position';
+  if (type === 'position') quantity.value = '1';
+  if (quantityLabel) quantityLabel.textContent = type === 'position' ? '数量（固定 1）' : type === 'lot' ? '本批次初始数量' : '初始数量（未填写格位时）';
+  const hint = quantity.parentElement?.querySelector<HTMLElement>('[data-unit-quantity-hint]') ?? (() => {
+    const node = document.createElement('span');
+    node.className = 'field-hint';
+    node.dataset.unitQuantityHint = '';
+    quantity.parentElement?.append(node);
+    return node;
+  })();
+  if (hint) hint.textContent = type === 'position'
+    ? '单件 / 序列号始终按 1 件入库。'
+    : type === 'lot'
+      ? '同一批来源、同一有效期的数量放在一个批次中。'
+      : '盒 / 容器可按需要填写容量；留空或 0 表示不设上限。';
 }
 
 function openMaterialInfo(materialId: string) {
@@ -831,6 +1005,23 @@ function openMaterialInfo(materialId: string) {
     const field = $(selector);
     if (field) field.textContent = value;
   });
+  const infoList = $('.material-info-list');
+  if (infoList) {
+    let expiryNode = $('[data-material-info-expiry]', infoList);
+    if (!expiryNode) {
+      const item = document.createElement('div');
+      item.className = 'material-info-item';
+      item.innerHTML = '<span>有效期提醒</span><strong data-material-info-expiry>-</strong>';
+      infoList.append(item);
+      expiryNode = $('[data-material-info-expiry]', infoList);
+    }
+    const summary = state.inventorySummaries.find((candidate) => candidate.materialId === material.id);
+    expiryNode.textContent = material.trackingMode === 'quantity'
+      ? `普通数量模式未启用批次有效期（提醒设置 ${material.expiryWarningDays ?? 30} 天）`
+      : summary?.expired ? `有 ${formatNumber(summary.expired)} ${material.unit} 已过期`
+        : summary?.expiring ? `有 ${formatNumber(summary.expiring)} ${material.unit} 将在 ${summary.expiryWarningDays} 天内到期`
+          : `当前没有临期或过期库存（提前 ${material.expiryWarningDays ?? 30} 天提醒）`;
+  }
   const title = $('[data-material-info-title]');
   const subtitle = $('[data-material-info-subtitle]');
   if (title) title.textContent = material.name;
@@ -936,7 +1127,7 @@ function renderInventoryStatuses() {
   createForm?.toggleAttribute('hidden', !manageable);
   list.innerHTML = inventoryDetailData.statuses.map((status) => manageable
     ? `<div class="tracking-status-row" data-status-id="${escapeHtml(status.id)}"><div class="field"><label>状态名称</label><input aria-label="状态名称" maxlength="30" value="${escapeHtml(status.name)}" data-status-name /></div><div class="field"><label>状态语义</label><select aria-label="状态语义" data-status-kind><option value="usable"${inventoryStatusKind(status) === 'usable' ? ' selected' : ''}>可用</option><option value="pending"${inventoryStatusKind(status) === 'pending' ? ' selected' : ''}>暂不可用</option><option value="terminal"${inventoryStatusKind(status) === 'terminal' ? ' selected' : ''}>终止不可用</option></select></div><button class="icon-button" type="button" title="保存状态" aria-label="保存状态" data-save-inventory-status>${document.querySelector('[data-inventory-save-icon-template]')?.innerHTML ?? '保存'}</button></div>`
-    : `<div class="tracking-status-row"><strong>${escapeHtml(status.name)}</strong><span class="status-chip ${status.usable ? 'ok' : 'low'}">${inventoryStatusKindLabel(status)}</span><span>${formatNumber(status.quantity ?? 0)} ${escapeHtml(inventoryDetailData.material.unit)}</span></div>`).join('');
+    : `<div class="tracking-status-row"><strong>${escapeHtml(status.name)}</strong>${statusChipMarkup(inventoryStatusKindLabel(status), status.usable ? 'ok' : 'low', status.terminal ? '终止不可用，需要处置或管理员维护' : status.usable ? '可登记使用' : '暂不可用，需要处理后才能使用')}<span>${formatNumber(status.quantity ?? 0)} ${escapeHtml(inventoryDetailData.material.unit)}</span></div>`).join('');
   $$<HTMLSelectElement>('[data-status-kind]', list).forEach((select) => {
     enhanceM3Select(select);
     refreshM3Select(select);
@@ -990,6 +1181,8 @@ function renderInventoryUnits() {
   }
   const createButton = $<HTMLButtonElement>('[data-show-unit-create]');
   if (createButton) createButton.hidden = material.trackingMode !== 'tracked' || !material.active;
+  const entryHint = $<HTMLElement>('.tracking-entry-hint');
+  if (entryHint) entryHint.hidden = material.trackingMode !== 'tracked';
   const query = $<HTMLInputElement>('[data-tracking-search]')?.value.trim().toLocaleLowerCase('zh-CN') ?? '';
   const queryTerms = query.split(/\s+/).filter(Boolean);
   const exactBalanceMatches = new Map(inventoryDetailData.units.map((unit) => [unit.id, unit.balances.filter((balance) => [balance.positionCode, balance.displayCode]
@@ -1007,7 +1200,7 @@ function renderInventoryUnits() {
     return { ...unit, balances };
   }).filter((unit) => !queryTerms.length || unit.balances.length > 0);
   if (!units.length) {
-    list.innerHTML = `<p class="empty-note">${query ? '没有符合条件的库存明细' : material.trackingMode === 'tracked' ? '尚未建立库存单元' : '当前没有状态库存'}</p>`;
+    list.innerHTML = `<p class="empty-note">${query ? '没有符合条件的库存明细' : material.trackingMode === 'tracked' ? '尚未建立批次 / 单件' : '当前没有状态库存'}</p>`;
     return;
   }
   const statusOrder = new Map(inventoryDetailData.statuses.map((status) => [status.id, {
@@ -1021,10 +1214,14 @@ function renderInventoryUnits() {
     const balanceKey = escapeHtml(`${balance.statusId}|${balance.accessScope}|${balance.ownerUserId}|${balance.positionCode}`);
     const canRegisterUse = balance.accessScope === 'shared' || balance.ownerUserId === state!.user.id;
     const canOperate = canManageInventory(state!.user) || canRegisterUse;
+    const expiry = balance.expiry ?? unit.expiry;
+    const expiryMarkup = expiry?.status && expiry.status !== 'none' ? `<small class="tracking-expiry ${expiry.status}">${escapeHtml(expiryDescription(expiry))}</small>` : '';
     if (!canOperate) {
-      return `<tr><td>${escapeHtml(balance.displayCode)}</td><td><span class="status-chip ${balance.usable ? 'ok' : 'low'}">${escapeHtml(balance.statusName)}</span></td><td>${renderBalanceScope(balance)}</td><td>${formatNumber(balance.quantity)} ${unitLabel}</td><td><span class="tracking-restricted-action">仅限自用人</span></td></tr>`;
+      return `<tr><td>${escapeHtml(balance.displayCode)}${expiryMarkup}</td><td>${statusChipMarkup(balance.statusName, balance.usable ? 'ok' : 'low', balance.terminal ? '终止不可用，需要处置或管理员维护' : balance.usable ? '可登记使用' : '暂不可用，需要处理后才能使用')}</td><td>${renderBalanceScope(balance)}</td><td>${formatNumber(balance.quantity)} ${unitLabel}</td><td><span class="tracking-restricted-action">仅限自用人</span></td></tr>`;
     }
-    const primaryAction = balance.usable
+    const primaryAction = balance.expiry?.status === 'expired' || unit.expiry.status === 'expired'
+      ? `<button class="button tonal tracking-use-button" type="button" title="登记退货、报废或危废移交" data-unit-balance-manage data-preferred-operation="dispose" data-unit-id="${escapeHtml(unit.id)}" data-balance-key="${balanceKey}"><span>登记处置</span></button>`
+      : balance.usable
       ? canRegisterUse
         ? `<button class="button tonal tracking-use-button" type="button" data-unit-balance-use data-unit-id="${escapeHtml(unit.id)}" data-balance-key="${balanceKey}">${document.querySelector('[data-inventory-register-icon-template]')?.innerHTML ?? ''}<span>登记使用</span></button>`
         : ''
@@ -1032,7 +1229,7 @@ function renderInventoryUnits() {
     const manageAction = balance.usable
       ? `<button class="icon-button tracking-manage-button" type="button" title="更多库存操作" aria-label="更多库存操作" data-unit-balance-manage data-unit-id="${escapeHtml(unit.id)}" data-balance-key="${balanceKey}">${document.querySelector('[data-inventory-more-icon-template]')?.innerHTML ?? ''}</button>`
       : '';
-    return `<tr><td>${escapeHtml(balance.displayCode)}</td><td><span class="status-chip ${balance.usable ? 'ok' : 'low'}">${escapeHtml(balance.statusName)}</span></td><td>${renderBalanceScope(balance)}</td><td>${formatNumber(balance.quantity)} ${unitLabel}</td><td><span class="tracking-balance-actions">${primaryAction}${manageAction}</span></td></tr>`;
+    return `<tr><td>${escapeHtml(balance.displayCode)}${expiryMarkup}</td><td>${statusChipMarkup(balance.statusName, balance.usable ? 'ok' : 'low', balance.terminal ? '终止不可用，需要处置或管理员维护' : balance.usable ? '可登记使用' : '暂不可用，需要处理后才能使用')}</td><td>${renderBalanceScope(balance)}</td><td>${formatNumber(balance.quantity)} ${unitLabel}</td><td><span class="tracking-balance-actions">${primaryAction}${manageAction}</span></td></tr>`;
   }).join('');
   const renderBalanceTable = (unit: InventoryUnit, balances: InventoryBalance[]) => `<table class="tracking-balance-table"><thead><tr><th>编号 / 格位</th><th>状态</th><th>使用范围</th><th>数量</th><th><span class="sr-only">操作</span></th></tr></thead><tbody>${renderBalanceRows(unit, balances)}</tbody></table>`;
   list.innerHTML = units.map((unit) => {
@@ -1055,10 +1252,16 @@ function renderInventoryUnits() {
       ? `<details class="tracking-unavailable"${queryTerms.length ? ' open' : ''}><summary><span>不可用明细</span><span>${formatNumber(unavailableQuantity)} ${unitLabel}</span></summary>${renderBalanceTable(unit, unavailableBalances)}</details>`
       : '';
     const balances = unit.balances.length ? `${availableSection}${unavailableSection}` : '<p class="empty-note">该库存单元当前为空</p>';
+    const editAction = canManageInventory(state!.user) && unit.unitType !== 'aggregate'
+      ? `<button class="icon-button" type="button" title="${unit.label === '历史库存（未分批）' ? '补录库存单元信息' : '编辑库存单元信息'}" aria-label="${unit.label === '历史库存（未分批）' ? '补录库存单元信息' : '编辑库存单元信息'}" data-unit-edit data-unit-id="${escapeHtml(unit.id)}">${document.querySelector('[data-inventory-edit-icon-template]')?.innerHTML ?? ''}</button>`
+      : '';
     const archiveAction = canManageInventory(state!.user) && unit.unitType !== 'aggregate'
       ? `<button class="icon-button" type="button" title="${unit.active ? '归档库存单元' : '恢复库存单元'}" aria-label="${unit.active ? '归档库存单元' : '恢复库存单元'}" data-unit-status="${unit.active ? 'archived' : 'active'}" data-unit-id="${escapeHtml(unit.id)}">${document.querySelector(unit.active ? '[data-inventory-archive-icon-template]' : '[data-inventory-restore-icon-template]')?.innerHTML ?? ''}</button>`
       : '';
-    return `<section class="tracking-unit${unit.active ? '' : ' archived'}${expanded ? ' expanded' : ''}"><div class="tracking-unit-header"><button class="tracking-unit-toggle" type="button" aria-expanded="${expanded}" data-unit-toggle data-unit-id="${escapeHtml(unit.id)}"><span class="tracking-unit-chevron" aria-hidden="true">${document.querySelector('[data-transaction-next-icon-template]')?.innerHTML ?? ''}</span><span class="tracking-unit-copy"><strong>${escapeHtml(unit.displayLabel)}</strong><small>${unitTypeLabel(unit.unitType)} · ${formatNumber(unit.quantity)} ${unitLabel}${capacity}${unit.note ? ` · ${escapeHtml(unit.note)}` : ''}${unit.active ? '' : ' · 已归档'}</small></span></button><div class="tracking-unit-actions"><button class="button tonal" type="button" data-unit-in data-unit-id="${escapeHtml(unit.id)}"${unit.active && material.active ? '' : ' disabled'}>${document.querySelector('[data-inventory-in-icon-template]')?.innerHTML ?? ''}<span>入库</span></button>${unit.unitType === 'aggregate' ? '' : `<button class="icon-button" type="button" title="查看库存单元二维码" aria-label="查看库存单元二维码" data-unit-qr data-unit-id="${escapeHtml(unit.id)}">${document.querySelector('[data-inventory-qr-icon-template]')?.innerHTML ?? ''}</button>`}${archiveAction}</div></div><div class="tracking-unit-details"${expanded ? '' : ' hidden'}>${balances}</div></section>`;
+    const expiryMarkup = unit.expiry.status !== 'none' ? `<span class="tracking-unit-expiry ${unit.expiry.status}">${escapeHtml(expiryDescription(unit.expiry))}</span>` : '';
+    const inboundAllowed = unit.active && material.active && unit.expiry.status !== 'expired';
+    const inboundTitle = unit.expiry.status === 'expired' ? '已过期批次不能入库' : '入库库存单元';
+    return `<section class="tracking-unit${unit.active ? '' : ' archived'}${expanded ? ' expanded' : ''}"><div class="tracking-unit-header"><button class="tracking-unit-toggle" type="button" aria-expanded="${expanded}" data-unit-toggle data-unit-id="${escapeHtml(unit.id)}"><span class="tracking-unit-chevron" aria-hidden="true">${document.querySelector('[data-transaction-next-icon-template]')?.innerHTML ?? ''}</span><span class="tracking-unit-copy"><strong>${escapeHtml(unit.displayLabel)}</strong><small>${unitTypeLabel(unit.unitType)} · ${formatNumber(unit.quantity)} ${unitLabel}${capacity}${unit.note ? ` · ${escapeHtml(unit.note)}` : ''}${unit.active ? '' : ' · 已归档'}</small>${expiryMarkup}</span></button><div class="tracking-unit-actions"><button class="button tonal" type="button" title="${inboundTitle}" data-unit-in data-unit-id="${escapeHtml(unit.id)}"${inboundAllowed ? '' : ' disabled'}>${document.querySelector('[data-inventory-in-icon-template]')?.innerHTML ?? ''}<span>入库</span></button>${unit.unitType === 'aggregate' ? '' : `<button class="icon-button" type="button" title="查看库存单元二维码" aria-label="查看库存单元二维码" data-unit-qr data-unit-id="${escapeHtml(unit.id)}">${document.querySelector('[data-inventory-qr-icon-template]')?.innerHTML ?? ''}</button>`}${editAction}${archiveAction}</div></div><div class="tracking-unit-details"${expanded ? '' : ' hidden'}>${balances}</div></section>`;
   }).join('');
 }
 
@@ -1106,7 +1309,7 @@ function ensureInventoryAnomalyUi() {
 }
 
 function closeInventoryAnomalyFix() {
-  $('[data-modal="inventory-anomaly-fix"]')?.classList.remove('open');
+  hideModal($('[data-modal="inventory-anomaly-fix"]'));
   inventoryAnomalyTarget = null;
   document.body.classList.toggle('modal-open', Boolean($('.modal-backdrop.open')));
   const returnFocus = modalReturnFocus;
@@ -1239,7 +1442,9 @@ async function openInventoryDetail(materialId = '', unitId = '') {
     const title = $('[data-inventory-detail-title]');
     const subtitle = $('[data-inventory-detail-subtitle]');
     if (title) title.textContent = inventoryDetailData.material.name;
-    if (subtitle) subtitle.textContent = inventoryDetailData.material.trackingMode === 'tracked' ? '库存单元、状态与使用范围' : '状态与使用范围';
+    if (subtitle) subtitle.textContent = inventoryDetailData.material.trackingMode === 'tracked' ? '批次 / 单件、状态与使用范围' : '状态与使用范围';
+    const expiryHint = $<HTMLElement>('#unit-expiry-date')?.closest<HTMLElement>('.field')?.querySelector<HTMLElement>('.field-hint');
+    if (expiryHint) expiryHint.textContent = `填写后按该耗材设置的提前 ${inventoryDetailData.material.expiryWarningDays ?? 30} 天提醒；未填写则不会提醒。`;
     syncInventoryDetailFormOptions();
     renderInventoryUnits();
     renderInventoryStatuses();
@@ -1255,7 +1460,7 @@ async function openInventoryDetail(materialId = '', unitId = '') {
 async function closeInventoryDetail() {
   const stocktakeReturn = inventoryDetailStocktakeReturn;
   inventoryDetailStocktakeReturn = null;
-  inventoryDetailModal?.classList.remove('open');
+  hideModal(inventoryDetailModal);
   inventoryDetailData = null;
   inventoryDetailTargetId = '';
   if (!stocktakeReturn) {
@@ -1274,7 +1479,7 @@ async function closeInventoryDetail() {
       stocktakeCountTarget = item;
       const current = $('[data-stocktake-count-current]');
       if (current) current.textContent = item.currentQuantity === null ? '不可用' : `${formatNumber(item.currentQuantity)} ${item.materialUnit}`;
-      stocktakeCountModal?.classList.add('open');
+      bringModalToFront(stocktakeCountModal);
       syncStocktakeCountDifference();
     }
   }
@@ -1294,7 +1499,7 @@ function openStocktakeInventoryDetail(unitId: string, reopenCount: boolean) {
     reopenCount,
     returnFocus: document.activeElement instanceof HTMLElement ? document.activeElement : null,
   };
-  if (reopenCount) stocktakeCountModal?.classList.remove('open');
+  if (reopenCount) hideModal(stocktakeCountModal);
   void openInventoryDetail('', unitId);
 }
 
@@ -1317,6 +1522,33 @@ function inventoryBalanceByKey(unit: InventoryUnit, key: string) {
   return unit.balances.find((balance) => `${balance.statusId}|${balance.accessScope}|${balance.ownerUserId}|${balance.positionCode}` === key) ?? null;
 }
 
+function openInventoryUnitEdit(unit: InventoryUnit) {
+  if (!state || !inventoryDetailData || !canManageInventory(state.user) || unit.unitType === 'aggregate') return;
+  inventoryUnitEditTarget = unit;
+  const label = $<HTMLInputElement>('#edit-inventory-unit-label');
+  const capacity = $<HTMLInputElement>('#edit-inventory-unit-capacity');
+  const expiryDate = $<HTMLInputElement>('#edit-inventory-unit-expiry-date');
+  const note = $<HTMLTextAreaElement>('#edit-inventory-unit-note');
+  if (label) label.value = unit.label;
+  if (capacity) capacity.value = String(unit.capacity);
+  if (expiryDate) expiryDate.value = unit.expiryDate || '';
+  if (note) note.value = unit.note || '';
+  const title = $('[data-inventory-unit-edit-title]');
+  const subtitle = $('[data-inventory-unit-edit-subtitle]');
+  const isHistory = unit.label === '历史库存（未分批）';
+  if (title) title.textContent = isHistory ? '补录历史库存信息' : '编辑库存单元信息';
+  if (subtitle) subtitle.textContent = isHistory ? '完善批次资料，不改变当前数量或历史流水' : '只维护库存单元资料，不改变当前数量或历史流水';
+  openModal(inventoryUnitEditModal);
+}
+
+function closeInventoryUnitEdit() {
+  hideModal(inventoryUnitEditModal);
+  inventoryUnitEditTarget = null;
+  document.body.classList.toggle('modal-open', Boolean($('.modal-backdrop.open')));
+  if (!$('.modal-backdrop.open')) unlockModalPage();
+  requestAnimationFrame(() => inventoryDetailModal?.querySelector<HTMLElement>('[data-unit-edit]')?.focus());
+}
+
 function firstUseTargetStatus(statuses: InventoryStatus[], sourceStatusId = '') {
   const source = statuses.find((status) => status.id === sourceStatusId);
   if (source?.code !== 'new') return null;
@@ -1326,7 +1558,7 @@ function firstUseTargetStatus(statuses: InventoryStatus[], sourceStatusId = '') 
 }
 
 function closeInventoryOperation() {
-  inventoryOperationModal?.classList.remove('open');
+  hideModal(inventoryOperationModal);
   document.body.classList.toggle('modal-open', Boolean($('.modal-backdrop.open')));
   const returnFocus = inventoryOperationReturnFocus;
   inventoryOperationReturnFocus = null;
@@ -1335,10 +1567,10 @@ function closeInventoryOperation() {
 
 function closeMaterialQr() {
   const returnUnitId = qrInventoryUnitTarget?.id ?? '';
-  materialQrModal?.classList.remove('open');
+  hideModal(materialQrModal);
   qrInventoryUnitTarget = null;
   if (returnUnitId && inventoryDetailData) {
-    inventoryDetailModal?.classList.add('open');
+    bringModalToFront(inventoryDetailModal);
     document.body.classList.add('modal-open');
     requestAnimationFrame(() => inventoryDetailModal?.querySelector<HTMLElement>(`[data-unit-qr][data-unit-id="${CSS.escape(returnUnitId)}"]`)?.focus());
     return;
@@ -1394,7 +1626,7 @@ function syncInventoryOperationForm() {
     ? (assignsContainerPosition
       ? `先为本次使用的单件填写格位 / 单件编号${firstUseStatus ? `，保存后自动更新为“${firstUseStatus.name}”` : ''}`
       : firstUseStatus ? `首次使用后自动更新为“${firstUseStatus.name}”，库存数量不变` : '记录本次使用，当前状态和库存数量不变')
-    : operation === 'out' ? '物品离开当前库存后数量减少' : assignsContainerPosition ? '先定位具体单件，再保存本次变更' : '维护当前状态、使用范围或格位';
+    : operation === 'out' ? '物品离开当前库存后数量减少' : operation === 'dispose' ? '登记退货、报废或危废移交，数量从当前库存移除' : assignsContainerPosition ? '先定位具体单件，再保存本次变更' : '维护当前状态、使用范围或格位';
 }
 
 function openInventoryOperation(unit: InventoryUnit, balance: InventoryBalance | null, preferredOperation: string = '') {
@@ -1417,9 +1649,9 @@ function openInventoryOperation(unit: InventoryUnit, balance: InventoryBalance |
   }
   $('[data-operation-type-field]')?.toggleAttribute('hidden', (operation?.options.length ?? 0) <= 1);
   const title = $('[data-inventory-operation-title]');
-  if (title) title.textContent = preferredOperation === 'use' ? '登记使用' : preferredOperation === 'in' ? '入库库存明细' : '维护库存明细';
+  if (title) title.textContent = preferredOperation === 'use' ? '登记使用' : preferredOperation === 'in' ? '入库库存明细' : preferredOperation === 'dispose' ? '登记处置' : '维护库存明细';
   const submitLabel = $('[data-inventory-operation-submit-label]');
-  if (submitLabel) submitLabel.textContent = preferredOperation === 'use' ? '保存使用登记' : preferredOperation === 'in' ? '确认入库' : '保存变更';
+  if (submitLabel) submitLabel.textContent = preferredOperation === 'use' ? '保存使用登记' : preferredOperation === 'in' ? '确认入库' : preferredOperation === 'dispose' ? '确认处置' : '保存变更';
   const quantity = $<HTMLInputElement>('#inventory-operation-quantity');
   if (quantity) quantity.value = String(balance ? Math.min(1, balance.quantity) : 1);
   const status = $<HTMLSelectElement>('#inventory-operation-status');
@@ -1450,8 +1682,8 @@ function openInventoryOperation(unit: InventoryUnit, balance: InventoryBalance |
   if (date) date.value = localDateTimeValue();
   const source = $('[data-operation-source]');
   if (source) source.innerHTML = balance
-    ? `<strong>${escapeHtml(balance.displayCode)}</strong><span>${escapeHtml(balance.statusName)} · ${balance.accessScope === 'shared' ? '开放使用' : `自用 · ${escapeHtml(balance.ownerName)}`} · ${formatNumber(balance.quantity)} ${escapeHtml(inventoryDetailData.material.unit)}</span>`
-    : `<strong>${escapeHtml(unit.displayLabel)}</strong><span>${unitTypeLabel(unit.unitType)} · 当前 ${formatNumber(unit.quantity)} ${escapeHtml(inventoryDetailData.material.unit)}</span>`;
+    ? `<strong>${escapeHtml(balance.displayCode)}</strong><span>${escapeHtml(balance.statusName)} · ${balance.accessScope === 'shared' ? '开放使用' : `自用 · ${escapeHtml(balance.ownerName)}`} · ${formatNumber(balance.quantity)} ${escapeHtml(inventoryDetailData.material.unit)}${unit.expiry.status !== 'none' ? ` · ${escapeHtml(expiryDescription(unit.expiry))}` : ''}</span>`
+    : `<strong>${escapeHtml(unit.displayLabel)}</strong><span>${unitTypeLabel(unit.unitType)} · 当前 ${formatNumber(unit.quantity)} ${escapeHtml(inventoryDetailData.material.unit)}${unit.expiry.status !== 'none' ? ` · ${escapeHtml(expiryDescription(unit.expiry))}` : ''}</span>`;
   syncInventoryOperationForm();
   openModal(inventoryOperationModal);
 }
@@ -1476,7 +1708,7 @@ async function openInventoryUnitQr(unit: InventoryUnit) {
   if (loading) { loading.textContent = '正在生成二维码'; loading.removeAttribute('hidden'); }
   syncMaterialLabelControls(false);
   const returnFocus = modalReturnFocus;
-  inventoryDetailModal?.classList.remove('open');
+  hideModal(inventoryDetailModal);
   openModal(materialQrModal);
   modalReturnFocus = returnFocus;
   try {
@@ -1494,6 +1726,24 @@ function materialFromInput() {
   return value ? state?.materials.find((material) => material.active && material.name.trim().toLowerCase() === value) : undefined;
 }
 
+function newMaterialTrackingMode() {
+  const select = $<HTMLSelectElement>('#material-tracking-mode');
+  return (select?.value ?? 'quantity') as TrackingMode;
+}
+
+function syncNewMaterialTrackingMode(mode: TrackingMode, isNewInbound: boolean) {
+  const select = $<HTMLSelectElement>('#material-tracking-mode');
+  const labels: Record<string, string> = { quantity: '普通数量', stateful: '按状态统计', tracked: '按批次 / 盒 / 单件管理' };
+  [...(select?.options ?? [])].forEach((option) => { if (labels[option.value]) option.textContent = labels[option.value]; });
+  const hint = $('[data-new-material-tracking-hint]');
+  if (hint) hint.textContent = mode === 'quantity'
+    ? '普通数量可直接填写数量；入库后可在管理耗材中切换为按状态或按批次 / 单件管理。'
+    : mode === 'tracked'
+      ? '保存耗材档案后进入库存明细，下一步建立批次、盒 / 容器或序列 / 单件并完成首次入库。'
+      : '保存耗材档案后进入库存明细，下一步选择状态并完成首次入库。';
+  if (select) select.required = isNewInbound;
+}
+
 function updateMaterialSelection() {
   const material = materialFromInput();
   const materialName = $<HTMLInputElement>('#material-name')?.value.trim() ?? '';
@@ -1504,12 +1754,14 @@ function updateMaterialSelection() {
   const unavailableMaterial = materialName ? state?.materials.find((candidate) => !candidate.active && candidate.name.trim().toLowerCase() === materialName.toLowerCase()) : undefined;
   const hasMatchingMaterial = Boolean(materialName && !material && state?.materials.some((candidate) => candidate.name.toLowerCase().includes(materialName.toLowerCase())));
   const isNewInbound = Boolean(materialName && !material && !unavailableMaterial && !hasMatchingMaterial && type === 'in');
+  const selectedNewTrackingMode = newMaterialTrackingMode();
   if (material && unit) {
     unit.value = material.unit;
   }
   if (unit) unit.readOnly = Boolean(material);
   if (newFields) newFields.hidden = !isNewInbound;
-  const routesToInventoryDetail = Boolean(material && material.trackingMode !== 'quantity');
+  syncNewMaterialTrackingMode(selectedNewTrackingMode, isNewInbound);
+  const routesToInventoryDetail = Boolean(material && material.trackingMode !== 'quantity') || Boolean(isNewInbound && selectedNewTrackingMode !== 'quantity');
   $$<HTMLElement>('[data-transaction-direct-field]').forEach((field) => {
     field.hidden = routesToInventoryDetail;
     $$<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea', field).forEach((control) => {
@@ -1517,22 +1769,27 @@ function updateMaterialSelection() {
     });
   });
   const submitLabel = $('[data-transaction-submit-label]');
-  if (submitLabel) submitLabel.textContent = routesToInventoryDetail ? '选择库存明细' : '保存记录';
+  if (submitLabel) submitLabel.textContent = routesToInventoryDetail ? '下一步：库存明细' : '保存记录';
   const submitIcon = $('[data-transaction-submit-icon]');
   const submitIconTemplate = document.querySelector(routesToInventoryDetail ? '[data-transaction-next-icon-template]' : '[data-transaction-save-icon-template]');
   if (submitIcon && submitIconTemplate) submitIcon.innerHTML = submitIconTemplate.innerHTML;
   const transactionSubtitle = $('[data-transaction-subtitle]');
-  if (transactionSubtitle && routesToInventoryDetail && material) transactionSubtitle.textContent = material.trackingMode === 'tracked'
-    ? '下一步选择盒子和位置，外层数量不会作为登记数量'
-    : '下一步选择状态明细，并填写作用于该明细的数量';
+  if (transactionSubtitle && routesToInventoryDetail) {
+    const trackingMode = material?.trackingMode ?? selectedNewTrackingMode;
+    transactionSubtitle.textContent = trackingMode === 'tracked'
+      ? '下一步建立批次、盒 / 容器或序列 / 单件，再完成首次入库'
+      : '下一步选择状态明细并完成首次入库';
+  }
   if (hint) {
     if (material) hint.textContent = material.trackingMode === 'quantity'
       ? `当前库存 ${formatNumber(material.quantity)} ${material.unit}${material.safetyStock > 0 ? ` · 安全库存 ${formatNumber(material.safetyStock)} ${material.unit}` : ''}`
-      : `开放可用 ${formatNumber(material.availableQuantity)} ${material.unit} · 请在库存明细中选择状态、使用范围和库存单元`;
+      : `开放可用 ${formatNumber(material.availableQuantity)} ${material.unit} · 请在库存明细中选择状态、使用范围和批次 / 盒 / 单件`;
     else if (unavailableMaterial) hint.textContent = '该耗材已归档，请联系管理员恢复后再登记';
     else if (hasMatchingMaterial) hint.textContent = type === 'out' ? '匹配到已有耗材，请从候选菜单中选择' : '匹配到已有耗材，请选择；如需新名称请继续输入';
     else if (materialName && type === 'out') hint.textContent = '领用 / 使用只能选择已有耗材';
-    else if (isNewInbound) hint.textContent = '保存后将创建新耗材并登记首次入库';
+    else if (isNewInbound) hint.textContent = selectedNewTrackingMode === 'quantity'
+      ? '保存后将创建新耗材并登记首次入库'
+      : '保存后将创建耗材档案，并进入库存明细完成首次入库';
     else hint.textContent = '选择已有耗材，或直接填写新耗材名称入库';
   }
 }
@@ -1590,10 +1847,10 @@ function stopScanner() {
 
 function closeScanner(restoreTransaction = scannerReturnToTransaction) {
   stopScanner();
-  scannerModal?.classList.remove('open');
+  hideModal(scannerModal);
   const imageInput = $<HTMLInputElement>('[data-scanner-image]');
   if (imageInput) imageInput.value = '';
-  if (restoreTransaction) transactionModal?.classList.add('open');
+  if (restoreTransaction) bringModalToFront(transactionModal);
   const hasOpenModal = Boolean($('.modal-backdrop.open'));
   document.body.classList.toggle('modal-open', hasOpenModal);
   if (!hasOpenModal) unlockModalPage();
@@ -1608,9 +1865,9 @@ function openTransactionForMaterial(material: Material, type: 'in' | 'out', pres
     return;
   }
   if (material.trackingMode !== 'quantity') {
-    transactionModal?.classList.remove('open');
+    hideModal(transactionModal);
     void openInventoryDetail(material.id);
-    toast(`“${material.name}”使用状态化库存，请在明细中登记`);
+    toast(`“${material.name}”使用按状态或按批次 / 盒 / 单件管理，请在库存明细中登记`);
     return;
   }
   const form = $<HTMLFormElement>('[data-transaction-form]');
@@ -1721,13 +1978,13 @@ function openScanner(returnToTransaction = false) {
   scannerReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   if (returnToTransaction) {
     setScanTransactionType(currentTransactionType());
-    transactionModal?.classList.remove('open');
+    hideModal(transactionModal);
   } else {
     setScanTransactionType('out');
   }
   setScannerStatus('准备扫描耗材二维码');
   lockModalPage();
-  scannerModal?.classList.add('open');
+  bringModalToFront(scannerModal);
   document.body.classList.add('modal-open');
   requestAnimationFrame(() => {
     const dialog = $<HTMLElement>('.modal', scannerModal ?? document);
@@ -2343,26 +2600,28 @@ function renderTransactions() {
   const recordsBody = $('[data-records-body]');
   if (recentBody) recentBody.innerHTML = transactionRows(state.transactions.slice(0, 5), true);
   if (recordsBody) {
-    recordsBody.innerHTML = recordPager.total
-      ? recordPager.items.map((entry: RecordPageItem) => entry.kind === 'transaction' ? transactionRows([entry.record]) : inventoryEventRows([entry.event])).join('')
+    recordsBody.innerHTML = recordTotal
+      ? recordPageItems.map((entry) => entry.kind === 'transaction' ? transactionRows([entry.record]) : inventoryEventRows([entry.event])).join('')
       : '<tr><td colspan="7" class="empty-note">没有符合条件的记录</td></tr>';
     const paginationBar = $<HTMLElement>('[data-record-pagination]');
     const rangeLabel = $('[data-record-page-range]');
     const pageLabel = $('[data-record-page-label]');
     const previous = $<HTMLButtonElement>('[data-record-page-previous]');
     const next = $<HTMLButtonElement>('[data-record-page-next]');
-    const summary = recordPager.summary();
-    if (paginationBar) paginationBar.hidden = recordPager.total === 0;
-    if (rangeLabel) rangeLabel.textContent = `第 ${summary.from}–${summary.to} 条，共 ${recordPager.total} 条`;
-    if (pageLabel) pageLabel.textContent = `第 ${recordPager.page} / ${summary.totalPages} 页`;
-    if (previous) previous.disabled = recordPager.page <= 1;
-    if (next) next.disabled = !recordPager.hasMore;
+    const from = recordTotal ? (recordPage - 1) * DEFAULT_RECORD_PAGE_SIZE + 1 : 0;
+    const to = recordTotal ? from + recordPageItems.length - 1 : 0;
+    const totalPages = Math.max(1, Math.ceil(recordTotal / DEFAULT_RECORD_PAGE_SIZE));
+    if (paginationBar) paginationBar.hidden = recordTotal === 0;
+    if (rangeLabel) rangeLabel.textContent = `第 ${from}–${to} 条，共 ${recordTotal} 条`;
+    if (pageLabel) pageLabel.textContent = `第 ${recordPage} / ${totalPages} 页`;
+    if (previous) previous.disabled = recordPage <= 1;
+    if (next) next.disabled = !recordHasMore;
   }
 }
 
 function syncRecordScopeButtons() {
   $$<HTMLButtonElement>('[data-record-scope]').forEach((button) => {
-    const active = button.dataset.recordScope === recordPager.scope;
+    const active = button.dataset.recordScope === recordScope;
     button.classList.toggle('active', active);
     button.setAttribute('aria-pressed', String(active));
   });
@@ -2402,16 +2661,31 @@ function cancelTransactionLoad() {
   setTransactionLoadingState('idle');
 }
 
-function currentRecordPageUrl({ cursor = recordPager.currentCursor(), pageSize = recordPager.pageSize, queryOverride, typeOverride, scopeOverride }: { cursor?: string; pageSize?: number; queryOverride?: string; typeOverride?: string; scopeOverride?: 'all' | 'mine' } = {}) {
-  const query = queryOverride ?? $<HTMLInputElement>('[data-filter="records"]')?.value.trim() ?? '';
-  return buildRecordPageUrl({
-    cursor,
-    pageSize,
+function recordFilterFrom() {
+  const range = $<HTMLSelectElement>('select[data-record-range]')?.value ?? '30';
+  if (range === 'all') return '';
+  const now = new Date();
+  const start = new Date(now);
+  if (range === '30' || range === '90') start.setDate(now.getDate() - Number(range));
+  if (range === 'year') {
+    start.setMonth(0, 1);
+    start.setHours(0, 0, 0, 0);
+  }
+  return start.toISOString();
+}
+
+function currentRecordPageUrl({ cursor = recordCursorHistory[recordPage - 1] ?? '', pageSize = DEFAULT_RECORD_PAGE_SIZE, queryOverride, typeOverride, scopeOverride }: { cursor?: string; pageSize?: number; queryOverride?: string; typeOverride?: string; scopeOverride?: 'all' | 'mine' } = {}) {
+  const parameters = new URLSearchParams({
+    mode: 'page',
+    pageSize: String(pageSize),
     type: typeOverride ?? $<HTMLSelectElement>('select[data-record-type]')?.value ?? 'all',
-    scope: scopeOverride ?? recordPager.scope,
-    query,
-    from: queryOverride === undefined ? recordPager.from : '',
+    scope: scopeOverride ?? recordScope,
   });
+  const query = queryOverride ?? $<HTMLInputElement>('[data-filter="records"]')?.value.trim() ?? '';
+  if (query) parameters.set('q', query);
+  if (queryOverride === undefined && recordFrom) parameters.set('from', recordFrom);
+  if (cursor) parameters.set('cursor', cursor);
+  return `/api/transactions?${parameters}`;
 }
 
 async function loadRecordPage(force = false): Promise<boolean> {
@@ -2427,7 +2701,10 @@ async function loadRecordPage(force = false): Promise<boolean> {
   try {
     const result = await api<RecordPageResponse>(currentRecordPageUrl(), { signal: controller.signal });
     if (!state || generation !== bootstrapGeneration || sequence !== recordPageLoadSequence) return false;
-    recordPager.applyResult(result);
+    recordPageItems = result.items;
+    recordTotal = result.total;
+    recordHasMore = result.hasMore;
+    recordNextCursor = result.nextCursor;
     renderTransactions();
     setTransactionLoadingState('idle');
     return true;
@@ -2555,7 +2832,7 @@ function auditSnapshotRows(snapshot: Record<string, unknown> | null) {
   if (!snapshot || !Object.keys(snapshot).length) return '<p class="empty-note">未保存内容快照</p>';
   const fieldLabels: Record<string, string> = {
     appName: '系统显示名称', labName: '实验室名称', customIcon: '自定义图标', name: '名称', username: '登录账号', note: '备注', role: '身份',
-    groupId: '组织分组 ID', tagIds: '成员标签 ID', active: '启用状态', isOwner: '系统所有者', category: '分类', safetyStock: '安全库存', unit: '单位', spec: '规格 / 型号',
+    groupId: '组织分组 ID', tagIds: '成员标签 ID', active: '启用状态', isOwner: '系统所有者', category: '分类', safetyStock: '安全库存', expiryWarningDays: '临期提醒提前天数', unit: '单位', spec: '规格 / 型号',
     trackingMode: '库存管理方式', positionCodeHelp: '格位填写说明', usageContextHelp: '用途填写说明', isDefault: '默认分组', materialId: '耗材 ID', code: '状态代码',
     usable: '可用', terminal: '终止不可用', sortOrder: '排序', unitType: '单元类型', label: '盒号 / 批次', positionCode: '位置编号', capacity: '容量',
     inventoryUnitId: '库存单元 ID', fromPositionCode: '原位置', toPositionCode: '新位置', resolved: '已修复', eventId: '库存事件 ID', schemaVersion: '数据库结构版本',
@@ -2772,13 +3049,13 @@ async function openStocktakeDetail(stocktakeId: string) {
 
 function openStocktakeSubdialog(modal: Element | null) {
   closeM3Menus();
-  modal?.classList.add('open');
+  bringModalToFront(modal);
   document.body.classList.add('modal-open');
   requestAnimationFrame(() => modal?.querySelector<HTMLElement>('input, textarea, .m3-select-trigger, button')?.focus());
 }
 
 function closeStocktakeSubdialog(modal?: Element | null) {
-  (modal ?? $('.stocktake-subdialog.open'))?.classList.remove('open');
+  hideModal(modal ?? $('.stocktake-subdialog.open'));
   closeM3Menus();
   document.body.classList.toggle('modal-open', Boolean($('.modal-backdrop.open')));
 }
@@ -2943,16 +3220,23 @@ async function ensureExportRecordsLoaded(force = false): Promise<boolean> {
 
 function renderNotifications() {
   const lowMaterials = lowStockMaterials();
-  $('[data-notification-dot]')?.classList.toggle('is-hidden', lowMaterials.length === 0);
+  const expiryAlerts = state?.expiryAlerts ?? [];
+  const warningMaterialIds = new Set([...lowMaterials.map((material) => material.id), ...expiryAlerts.map((alert) => alert.materialId)]);
+  $('[data-notification-dot]')?.classList.toggle('is-hidden', warningMaterialIds.size === 0);
   const count = $('[data-low-stock-count]');
-  if (count) count.textContent = String(lowMaterials.length);
+  if (count) count.textContent = String(state?.stats.warningCount ?? warningMaterialIds.size);
   const notice = $('[data-low-stock-notice]');
-  if (notice) notice.textContent = lowMaterials.length ? `${lowMaterials.length} 个品类低于安全库存，建议及时完成补货。` : '当前没有低库存耗材。';
+  if (notice) notice.textContent = warningMaterialIds.size ? `${warningMaterialIds.size} 个品类需要关注库存或有效期。` : '当前没有库存或有效期预警。';
   const sidebarNote = $('[data-sidebar-stock-note]');
-  if (sidebarNote) sidebarNote.textContent = lowMaterials.length ? `${lowMaterials.length} 个品类低于安全库存，请及时核对补货。` : '所有耗材均在安全库存以上。';
+  if (sidebarNote) sidebarNote.textContent = warningMaterialIds.size ? `${warningMaterialIds.size} 个品类需要关注库存或有效期。` : '库存与有效期均无预警。';
   const list = $('[data-notification-list]');
   if (!list) return;
-  list.innerHTML = lowMaterials.length ? lowMaterials.map((material) => `<div class="notification-item"><span>${escapeHtml(initial(material.name))}</span><div><strong>${escapeHtml(material.name)}</strong><small>安全库存 ${formatNumber(material.safetyStock)} ${escapeHtml(material.unit)}</small></div><b>${formatNumber(material.availableQuantity)} ${escapeHtml(material.unit)}</b></div>`).join('') : '<div class="empty-note">当前没有低库存耗材</div>';
+  const lowItems = lowMaterials.map((material) => {
+    const out = material.availableQuantity === 0;
+    return `<div class="notification-item"><span>${escapeHtml(initial(material.name))}</span><div><strong>${escapeHtml(material.name)}</strong><small>${out ? '开放库存已耗尽' : `低于安全库存 ${formatNumber(material.safetyStock)} ${escapeHtml(material.unit)}`}</small></div><b>${out ? '缺货' : `${formatNumber(material.availableQuantity)} ${escapeHtml(material.unit)}`}</b></div>`;
+  });
+  const expiryItems = expiryAlerts.map((alert) => `<div class="notification-item expiry-${escapeHtml(alert.status)}"><span>${escapeHtml(initial(alert.materialName))}</span><div><strong>${escapeHtml(alert.materialName)} · ${escapeHtml(alert.inventoryUnitLabel)}</strong><small>${escapeHtml(alert.status === 'expired' ? '已过期，不能领用；请登记处置' : `即将到期 · ${alert.expiryDate}（剩 ${alert.daysRemaining} 天）`)}</small></div><b>${formatNumber(alert.quantity)} ${escapeHtml(alert.unit)}</b></div>`);
+  list.innerHTML = [...expiryItems, ...lowItems].join('') || '<div class="empty-note">当前没有库存或有效期预警</div>';
 }
 
 function renderDashboard() {
@@ -3205,6 +3489,7 @@ function openMaterialAction(materialId: string) {
     ['#edit-material-spec', material.spec],
     ['#edit-material-unit', material.unit],
     ['#edit-material-safety-stock', String(material.safetyStock)],
+    ['#edit-material-expiry-warning-days', String(material.expiryWarningDays ?? 30)],
     ['#edit-material-position-help', material.positionCodeHelp],
     ['#edit-material-usage-help', material.usageContextHelp],
   ];
@@ -3218,6 +3503,7 @@ function openMaterialAction(materialId: string) {
     refreshM3Select(trackingMode);
   }
   $$<HTMLElement>('[data-material-registration-guidance]').forEach((field) => { field.hidden = material.trackingMode !== 'tracked'; });
+  syncMaterialTrackingGuidance(material.trackingMode, material);
   const currentStock = $('[data-edit-material-current-stock]');
   if (currentStock) currentStock.textContent = material.trackingMode === 'quantity'
     ? `${formatNumber(material.quantity)} ${material.unit}`
@@ -3282,6 +3568,8 @@ function openNewMaterialAction() {
   const safetyStock = $<HTMLInputElement>('#edit-material-safety-stock');
   const unit = $<HTMLInputElement>('#edit-material-unit');
   if (safetyStock) safetyStock.value = '0';
+  const expiryWarningDays = $<HTMLInputElement>('#edit-material-expiry-warning-days');
+  if (expiryWarningDays) expiryWarningDays.value = '30';
   if (unit) unit.value = '件';
   const trackingMode = $<HTMLSelectElement>('#edit-material-tracking-mode');
   if (trackingMode) {
@@ -3289,6 +3577,7 @@ function openNewMaterialAction() {
     refreshM3Select(trackingMode);
   }
   $$<HTMLElement>('[data-material-registration-guidance]').forEach((field) => { field.hidden = true; });
+  syncMaterialTrackingGuidance('quantity');
   const title = $('[data-material-action-title]');
   const subtitle = $('[data-material-action-subtitle]');
   const stockLabel = $('[data-material-stock-label]');
@@ -3383,7 +3672,7 @@ function renderApp() {
 function showLogin(message = '') {
   setMobileDrawer(false);
   state = null;
-  recordPager.reset({ scope: 'all' });
+  recordScope = 'all';
   syncRecordScopeButtons();
   const memberSearch = $<HTMLInputElement>('[data-filter="members"]');
   if (memberSearch) memberSearch.value = '';
@@ -3409,8 +3698,14 @@ async function loadBootstrap() {
   const nextState = await api<Bootstrap>('/api/bootstrap');
   if (generation !== bootstrapGeneration) return;
   state = nextState;
-  recordPager.reset({ from: recordRangeStart($<HTMLSelectElement>('select[data-record-range]')?.value ?? '30') });
+  recordPageItems = [];
+  recordTotal = 0;
+  recordHasMore = false;
+  recordNextCursor = '';
+  recordCursorHistory = [''];
+  recordFrom = recordFilterFrom();
   exportSnapshot = null;
+  recordPage = 1;
   auditPageItems = [];
   auditTotal = 0;
   auditHasMore = false;
@@ -3508,13 +3803,13 @@ inventoryCommandMenu?.addEventListener('click', (event) => {
 });
 $$<HTMLButtonElement>('[data-go-view]').forEach((item) => item.addEventListener('click', () => switchView(item.dataset.goView)));
 $<HTMLButtonElement>('[data-go-all-records]')?.addEventListener('click', () => {
-  recordPager.setScope('all');
+  recordScope = 'all';
   syncRecordScopeButtons();
   switchView('transactions');
   applyRecordFilters();
 });
 $<HTMLButtonElement>('[data-go-my-records]')?.addEventListener('click', () => {
-  recordPager.setScope('mine');
+  recordScope = 'mine';
   syncRecordScopeButtons();
   switchView('transactions');
   applyRecordFilters();
@@ -3532,6 +3827,7 @@ $<HTMLInputElement>('[data-scanner-image]')?.addEventListener('change', (event) 
 });
 $$<HTMLButtonElement>('[data-close-modal]').forEach((button) => button.addEventListener('click', () => {
   if (button.closest('[data-modal="inventory-detail"]')) void closeInventoryDetail();
+  else if (button.closest('[data-modal="inventory-unit-edit"]')) closeInventoryUnitEdit();
   else closeModals();
 }));
 $$<HTMLButtonElement>('[data-close-stocktake-subdialog]').forEach((button) => button.addEventListener('click', () => closeStocktakeSubdialog(button.closest('.stocktake-subdialog'))));
@@ -3540,6 +3836,7 @@ $$<HTMLElement>('.modal-backdrop').forEach((backdrop) => backdrop.addEventListen
   if (backdrop === confirmModal) finishConfirmation(false);
   else if (backdrop === scannerModal) closeScanner();
   else if (backdrop === inventoryDetailModal) void closeInventoryDetail();
+  else if (backdrop === inventoryUnitEditModal) closeInventoryUnitEdit();
   else if (backdrop.classList.contains('stocktake-subdialog')) closeStocktakeSubdialog(backdrop);
   else closeModals();
 }));
@@ -3803,7 +4100,7 @@ function setTransactionType(type: 'in' | 'out') {
   const person = $('[data-person-label]');
   const input = $<HTMLInputElement>('#material-person');
   const hint = $('[data-person-hint]');
-  if (title) title.textContent = type === 'out' ? '领用 / 使用登记' : '登记入库';
+  if (title) title.textContent = '库存登记';
   if (subtitle) subtitle.textContent = type === 'out'
     ? '普通耗材登记数量，探针等耗材进入具体盒子或位置'
     : '登记采购、归还或调拨入库';
@@ -3815,6 +4112,7 @@ function setTransactionType(type: 'in' | 'out') {
 }
 
 $$<HTMLButtonElement>('[data-open-modal]').forEach((button) => button.addEventListener('click', () => {
+  $<HTMLFormElement>('[data-transaction-form]')?.reset();
   setTransactionType(button.dataset.openModal === 'out' ? 'out' : 'in');
   const date = $<HTMLInputElement>('#material-date');
   if (date && !date.value) date.value = localDateTimeValue();
@@ -3827,6 +4125,7 @@ $<HTMLInputElement>('#material-name')?.addEventListener('change', () => {
   updateMaterialSelection();
   routeTrackedMaterialSelection();
 });
+$<HTMLSelectElement>('#material-tracking-mode')?.addEventListener('change', () => updateMaterialSelection());
 
 $<HTMLFormElement>('[data-transaction-form]')?.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -3837,6 +4136,8 @@ $<HTMLFormElement>('[data-transaction-form]')?.addEventListener('submit', async 
     const type = currentTransactionType();
     const material = materialFromInput();
     const materialName = $<HTMLInputElement>('#material-name')?.value.trim() ?? '';
+    const isNewInbound = !material && type === 'in' && Boolean(materialName);
+    const selectedTrackingMode = isNewInbound ? newMaterialTrackingMode() : 'quantity';
     if (!material && (type === 'out' || !materialName)) {
       toast(type === 'out' ? '领用 / 使用必须从候选项选择已有耗材' : '请填写耗材名称');
       $<HTMLInputElement>('#material-name')?.focus();
@@ -3848,15 +4149,16 @@ $<HTMLFormElement>('[data-transaction-form]')?.addEventListener('submit', async 
       toast('请在库存明细中选择状态、使用范围和库存单元');
       return;
     }
-    await api('/api/transactions', { method: 'POST', body: JSON.stringify({
+    const result = await api<{ material: Material; createdMaterial?: boolean }>('/api/transactions', { method: 'POST', body: JSON.stringify({
       type,
       materialId: material?.id,
       materialName,
-      quantity: Number($<HTMLInputElement>('#material-quantity')?.value),
+      quantity: selectedTrackingMode === 'quantity' ? Number($<HTMLInputElement>('#material-quantity')?.value) : undefined,
       unit: $<HTMLInputElement>('#material-unit')?.value,
       category: $<HTMLInputElement>('#material-category')?.value,
       spec: $<HTMLInputElement>('#material-spec')?.value,
       safetyStock: Number($<HTMLInputElement>('#material-safety-stock')?.value),
+      trackingMode: isNewInbound ? selectedTrackingMode : undefined,
       counterparty: $<HTMLInputElement>('#material-person')?.value,
       occurredAt: $<HTMLInputElement>('#material-date')?.value,
       note: $<HTMLTextAreaElement>('#material-note')?.value,
@@ -3865,7 +4167,14 @@ $<HTMLFormElement>('[data-transaction-form]')?.addEventListener('submit', async 
     updateMaterialSelection();
     closeModals();
     await loadBootstrap();
-    toast(`${type === 'out' ? '领用 / 使用' : '入库'}记录已保存`);
+    if (result.createdMaterial && result.material.trackingMode !== 'quantity') {
+      toast(result.material.trackingMode === 'tracked'
+        ? '耗材档案已创建，下一步请建立首个批次 / 单件并入库'
+        : '耗材档案已创建，下一步请在库存明细中选择状态并入库');
+      await openInventoryDetail(result.material.id);
+    } else {
+      toast(`${type === 'out' ? '领用 / 使用' : '入库'}记录已保存`);
+    }
   } catch (failure) {
     toast((failure as Error).message);
   } finally {
@@ -4014,7 +4323,7 @@ $<HTMLButtonElement>('[data-material-info-detail]')?.addEventListener('click', (
   if (!materialInfoTargetId) return;
   const materialId = materialInfoTargetId;
   const returnFocus = modalReturnFocus;
-  materialInfoModal?.classList.remove('open');
+  hideModal(materialInfoModal);
   const opening = openInventoryDetail(materialId);
   modalReturnFocus = returnFocus;
   void opening;
@@ -4023,7 +4332,7 @@ $<HTMLButtonElement>('[data-material-info-qr]')?.addEventListener('click', () =>
   if (!materialInfoTargetId) return;
   const materialId = materialInfoTargetId;
   const returnFocus = modalReturnFocus;
-  materialInfoModal?.classList.remove('open');
+  hideModal(materialInfoModal);
   const opening = openMaterialQr(materialId);
   modalReturnFocus = returnFocus;
   void opening;
@@ -4032,7 +4341,7 @@ $<HTMLButtonElement>('[data-material-info-manage]')?.addEventListener('click', (
   if (!materialInfoTargetId) return;
   const materialId = materialInfoTargetId;
   const returnFocus = modalReturnFocus;
-  materialInfoModal?.classList.remove('open');
+  hideModal(materialInfoModal);
   openMaterialAction(materialId);
   modalReturnFocus = returnFocus;
 });
@@ -4040,8 +4349,17 @@ $<HTMLButtonElement>('[data-material-action-qr]')?.addEventListener('click', () 
   if (!materialActionTargetId) return;
   const materialId = materialActionTargetId;
   const returnFocus = modalReturnFocus;
-  materialActionModal?.classList.remove('open');
+  hideModal(materialActionModal);
   const opening = openMaterialQr(materialId);
+  modalReturnFocus = returnFocus;
+  void opening;
+});
+$<HTMLButtonElement>('[data-material-action-detail]')?.addEventListener('click', () => {
+  if (!materialActionTargetId) return;
+  const materialId = materialActionTargetId;
+  const returnFocus = modalReturnFocus;
+  hideModal(materialActionModal);
+  const opening = openInventoryDetail(materialId);
   modalReturnFocus = returnFocus;
   void opening;
 });
@@ -4056,16 +4374,20 @@ $<HTMLButtonElement>('[data-show-unit-create]')?.addEventListener('click', () =>
   unitQuantityFollowsCapacity = true;
   const capacity = $<HTMLInputElement>('#unit-capacity');
   const quantity = $<HTMLInputElement>('#unit-quantity');
-  if (capacity) capacity.value = '1';
+  const unitType = $<HTMLSelectElement>('#unit-type');
+  if (unitType) unitType.value = 'lot';
+  if (capacity) capacity.value = '0';
   if (quantity) quantity.value = '1';
   if (state) setInventoryOwnerFieldValue('#unit-owner', state.user.id);
   const access = $<HTMLSelectElement>('#unit-access');
   if (access) access.value = 'shared';
   $('[data-unit-owner-field]')?.toggleAttribute('hidden', true);
+  syncInventoryUnitTypeForm();
   $$<HTMLSelectElement>('#unit-type, #unit-status, #unit-access, #unit-owner').forEach(refreshM3Select);
   syncInventoryDetailFormOptions();
   requestAnimationFrame(() => $<HTMLInputElement>('#unit-label')?.focus());
 });
+$<HTMLSelectElement>('#unit-type')?.addEventListener('change', () => syncInventoryUnitTypeForm());
 $<HTMLInputElement>('#unit-capacity')?.addEventListener('input', (event) => {
   const quantity = $<HTMLInputElement>('#unit-quantity');
   if (quantity && unitQuantityFollowsCapacity) quantity.value = Number(event.currentTarget.value) > 0 ? event.currentTarget.value : '1';
@@ -4088,6 +4410,8 @@ $<HTMLSelectElement>('#inventory-operation-access')?.addEventListener('change', 
 $<HTMLSelectElement>('#edit-material-tracking-mode')?.addEventListener('change', (event) => {
   const showGuidance = event.currentTarget.value === 'tracked';
   $$<HTMLElement>('[data-material-registration-guidance]').forEach((field) => { field.hidden = !showGuidance; });
+  const material = materialActionTargetId ? state?.materials.find((candidate) => candidate.id === materialActionTargetId) : undefined;
+  syncMaterialTrackingGuidance(event.currentTarget.value, material);
 });
 $$<HTMLButtonElement>('[data-close-inventory-operation]').forEach((button) => button.addEventListener('click', closeInventoryOperation));
 materialQrModal?.addEventListener('click', (event) => {
@@ -4106,6 +4430,12 @@ $<HTMLElement>('[data-modal="inventory-detail"]')?.addEventListener('click', asy
     if (anomaly) openInventoryAnomalyFix(anomaly, anomaly.entries[entryIndex]);
     return;
   }
+  const unitEditButton = target.closest<HTMLButtonElement>('[data-unit-edit]');
+  if (unitEditButton?.dataset.unitId && inventoryDetailData) {
+    const unit = inventoryDetailData.units.find((candidate) => candidate.id === unitEditButton.dataset.unitId);
+    if (unit) openInventoryUnitEdit(unit);
+    return;
+  }
   const unitToggle = target.closest<HTMLButtonElement>('[data-unit-toggle]');
   if (unitToggle?.dataset.unitId) {
     if (expandedInventoryUnitIds.has(unitToggle.dataset.unitId)) expandedInventoryUnitIds.delete(unitToggle.dataset.unitId);
@@ -4118,7 +4448,7 @@ $<HTMLElement>('[data-modal="inventory-detail"]')?.addEventListener('click', asy
   if (balanceButton?.dataset.unitId && balanceButton.dataset.balanceKey && inventoryDetailData) {
     const unit = inventoryDetailData.units.find((candidate) => candidate.id === balanceButton.dataset.unitId);
     const balance = unit ? inventoryBalanceByKey(unit, balanceButton.dataset.balanceKey) : null;
-    if (unit && balance) openInventoryOperation(unit, balance, balanceButton.hasAttribute('data-unit-balance-use') ? 'use' : balance.terminal ? 'dispose' : 'state_change');
+    if (unit && balance) openInventoryOperation(unit, balance, balanceButton.dataset.preferredOperation || (balanceButton.hasAttribute('data-unit-balance-use') ? 'use' : balance.terminal ? 'dispose' : 'state_change'));
     return;
   }
   const inboundButton = target.closest<HTMLButtonElement>('[data-unit-in]');
@@ -4196,6 +4526,7 @@ $<HTMLFormElement>('[data-unit-create-form]')?.addEventListener('submit', async 
         unitType: $<HTMLSelectElement>('#unit-type')?.value,
         label: $<HTMLInputElement>('#unit-label')?.value,
         capacity: Number($<HTMLInputElement>('#unit-capacity')?.value),
+        expiryDate: $<HTMLInputElement>('#unit-expiry-date')?.value,
         counterparty: $<HTMLInputElement>('#unit-counterparty')?.value,
         occurredAt: $<HTMLInputElement>('#unit-date')?.value,
         note: $<HTMLTextAreaElement>('#unit-note')?.value,
@@ -4209,6 +4540,34 @@ $<HTMLFormElement>('[data-unit-create-form]')?.addEventListener('submit', async 
     await loadBootstrap();
     await reloadInventoryDetail();
     toast(`库存单元已创建并入库 ${positionCodes.length || quantity} ${inventoryDetailData.material.unit}`);
+  } catch (failure) {
+    toast((failure as Error).message);
+  } finally {
+    if (submit) submit.disabled = false;
+  }
+});
+
+$<HTMLFormElement>('[data-inventory-unit-edit-form]')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const unit = inventoryUnitEditTarget;
+  if (!unit || !inventoryDetailData) return;
+  const form = event.currentTarget;
+  const submit = $<HTMLButtonElement>('button[type="submit"]', form);
+  if (submit) submit.disabled = true;
+  try {
+    await api(`/api/inventory-units/${encodeURIComponent(unit.id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        label: $<HTMLInputElement>('#edit-inventory-unit-label')?.value,
+        capacity: Number($<HTMLInputElement>('#edit-inventory-unit-capacity')?.value),
+        expiryDate: $<HTMLInputElement>('#edit-inventory-unit-expiry-date')?.value,
+        note: $<HTMLTextAreaElement>('#edit-inventory-unit-note')?.value,
+      }),
+    });
+    closeInventoryUnitEdit();
+    await loadBootstrap();
+    await reloadInventoryDetail();
+    toast(unit.label === '历史库存（未分批）' ? '历史库存资料已补录' : '库存单元资料已保存');
   } catch (failure) {
     toast((failure as Error).message);
   } finally {
@@ -4308,13 +4667,13 @@ $<HTMLElement>('[data-records-body]')?.addEventListener('click', (event) => {
   const target = event.target as Element;
   const correctionButton = target.closest<HTMLButtonElement>('[data-correct-transaction]');
   if (correctionButton?.dataset.correctTransaction) {
-    const record = (recordPager.items as RecordPageItem[]).find((candidate) => candidate.kind === 'transaction' && candidate.record.id === correctionButton.dataset.correctTransaction)?.record;
+    const record = recordPageItems.find((candidate) => candidate.kind === 'transaction' && candidate.record.id === correctionButton.dataset.correctTransaction)?.record;
     if (record) openTransactionCorrection(record);
     return;
   }
   const inventoryEventCorrectionButton = target.closest<HTMLButtonElement>('[data-correct-inventory-event]');
   if (inventoryEventCorrectionButton?.dataset.correctInventoryEvent) {
-    const inventoryEvent = (recordPager.items as RecordPageItem[]).find((candidate) => candidate.kind === 'event' && candidate.event.id === inventoryEventCorrectionButton.dataset.correctInventoryEvent)?.event;
+    const inventoryEvent = recordPageItems.find((candidate) => candidate.kind === 'event' && candidate.event.id === inventoryEventCorrectionButton.dataset.correctInventoryEvent)?.event;
     if (inventoryEvent) openInventoryEventCorrection(inventoryEvent);
     return;
   }
@@ -4885,7 +5244,21 @@ $<HTMLFormElement>('[data-material-action-form]')?.addEventListener('submit', as
   if (submit) submit.disabled = true;
   try {
     const creating = !materialActionTargetId;
-    await api(creating ? '/api/materials' : `/api/materials/${encodeURIComponent(materialActionTargetId)}`, {
+    const previousMaterial = creating ? undefined : state?.materials.find((material) => material.id === materialActionTargetId);
+    const previousTrackingMode = previousMaterial?.trackingMode ?? 'quantity';
+    const selectedTrackingMode = $<HTMLSelectElement>('#edit-material-tracking-mode')?.value ?? 'quantity';
+    const migrateQuantity = !creating && selectedTrackingMode === 'tracked' && previousTrackingMode !== 'tracked' && Boolean(previousMaterial && previousMaterial.quantity > 0);
+    if (migrateQuantity && previousMaterial) {
+      const sourceLabel = previousTrackingMode === 'stateful' ? '状态化' : '普通数量';
+      const preservation = previousTrackingMode === 'stateful' ? '现有状态和使用范围也会保留' : '现有数量和流水会保持连续';
+      const confirmed = await askConfirmation({
+        title: '转为按批次 / 单件管理？',
+        message: `当前还有 ${formatNumber(previousMaterial.quantity)} ${previousMaterial.unit} ${sourceLabel}库存。确认后系统会先将其保留在“历史库存（未分批）”批次，${preservation}；再进入库存明细补录真实批次和有效期。`,
+        confirmLabel: '保留库存并继续',
+      });
+      if (!confirmed) return;
+    }
+    const result = await api<{ material: Material }>(creating ? '/api/materials' : `/api/materials/${encodeURIComponent(materialActionTargetId)}`, {
       method: creating ? 'POST' : 'PATCH',
       body: JSON.stringify({
         name: $<HTMLInputElement>('#edit-material-name')?.value,
@@ -4893,14 +5266,24 @@ $<HTMLFormElement>('[data-material-action-form]')?.addEventListener('submit', as
         spec: $<HTMLInputElement>('#edit-material-spec')?.value,
         unit: $<HTMLInputElement>('#edit-material-unit')?.value,
         safetyStock: $<HTMLInputElement>('#edit-material-safety-stock')?.value,
-        trackingMode: $<HTMLSelectElement>('#edit-material-tracking-mode')?.value,
+        expiryWarningDays: $<HTMLInputElement>('#edit-material-expiry-warning-days')?.value,
+        trackingMode: selectedTrackingMode,
+        migrateQuantity,
         positionCodeHelp: $<HTMLTextAreaElement>('#edit-material-position-help')?.value,
         usageContextHelp: $<HTMLTextAreaElement>('#edit-material-usage-help')?.value,
       }),
     });
     closeModals();
     await loadBootstrap();
-    toast(creating ? '耗材已新增，当前库存为 0' : '耗材信息已更新');
+    const enteredDetailMode = result.material.trackingMode !== 'quantity' && (creating || previousTrackingMode !== result.material.trackingMode);
+    if (enteredDetailMode) {
+      toast(result.material.trackingMode === 'tracked'
+        ? '耗材已保存，接下来请建立批次 / 单件并完成入库'
+        : '耗材已保存，接下来请在库存明细中选择状态并入库');
+      await openInventoryDetail(result.material.id);
+    } else {
+      toast(creating ? '耗材已新增，当前库存为 0' : '耗材信息已更新');
+    }
   } catch (failure) {
     toast((failure as Error).message);
   } finally {
@@ -4999,14 +5382,21 @@ const applyInventoryFilters = () => {
   const status = $<HTMLSelectElement>('[data-filter-select="stock"]')?.value ?? 'active';
   $$<HTMLTableRowElement>('[data-inventory-body] tr').forEach((row) => {
     const matchesStatus = status === 'active'
-      ? row.dataset.stockStatus === 'low' || row.dataset.stockStatus === 'ok'
-      : row.dataset.stockStatus === status;
+      ? ['out', 'low', 'ok'].includes(row.dataset.stockStatus ?? '')
+      : status === 'expired' || status === 'expiring'
+        ? row.dataset[status] === 'true'
+        : status === 'low'
+          ? row.dataset.stockStatus === 'out' || row.dataset.stockStatus === 'low'
+          : row.dataset.stockStatus === status;
     row.hidden = (query.length > 0 && !row.textContent?.toLowerCase().includes(query)) || !matchesStatus;
   });
 };
 
 const applyRecordFilters = () => {
-  recordPager.reset({ from: recordRangeStart($<HTMLSelectElement>('select[data-record-range]')?.value ?? '30') });
+  recordPage = 1;
+  recordCursorHistory = [''];
+  recordNextCursor = '';
+  recordFrom = recordFilterFrom();
   void loadRecordPage(true);
 };
 
@@ -5019,7 +5409,7 @@ $<HTMLInputElement>('[data-filter="records"]')?.addEventListener('input', () => 
 $<HTMLSelectElement>('select[data-record-type]')?.addEventListener('change', applyRecordFilters);
 $<HTMLSelectElement>('select[data-record-range]')?.addEventListener('change', applyRecordFilters);
 $$<HTMLButtonElement>('[data-record-scope]').forEach((button) => button.addEventListener('click', () => {
-  recordPager.setScope(button.dataset.recordScope === 'mine' ? 'mine' : 'all');
+  recordScope = button.dataset.recordScope === 'mine' ? 'mine' : 'all';
   syncRecordScopeButtons();
   applyRecordFilters();
 }));
@@ -5030,12 +5420,15 @@ const scrollToRecordPageStart = () => {
   });
 };
 $<HTMLButtonElement>('[data-record-page-previous]')?.addEventListener('click', () => {
-  if (!recordPager.previous()) return;
+  if (recordPage <= 1) return;
+  recordPage -= 1;
   void loadRecordPage(true);
   scrollToRecordPageStart();
 });
 $<HTMLButtonElement>('[data-record-page-next]')?.addEventListener('click', () => {
-  if (!recordPager.next()) return;
+  if (!recordHasMore || !recordNextCursor) return;
+  recordCursorHistory[recordPage] = recordNextCursor;
+  recordPage += 1;
   void loadRecordPage(true);
   scrollToRecordPageStart();
 });
@@ -5101,8 +5494,23 @@ const showLowStockInventory = () => {
   }
   applyInventoryFilters();
 };
+const showExpiryInventory = (status: 'expired' | 'expiring') => {
+  closeModals();
+  switchView('inventory');
+  const search = $<HTMLInputElement>('[data-filter="inventory"]');
+  if (search) search.value = '';
+  const filter = $<HTMLSelectElement>('[data-filter-select="stock"]');
+  if (filter) {
+    filter.value = status;
+    refreshM3Select(filter);
+  }
+  applyInventoryFilters();
+};
 $<HTMLButtonElement>('[data-notifications-inventory]')?.addEventListener('click', showLowStockInventory);
 $<HTMLButtonElement>('[data-show-low-stock]')?.addEventListener('click', showLowStockInventory);
+$$<HTMLButtonElement>('[data-show-expiry]').forEach((button) => button.addEventListener('click', () => {
+  showExpiryInventory(button.dataset.showExpiry === 'expired' ? 'expired' : 'expiring');
+}));
 $<HTMLButtonElement>('[data-retry-records]')?.addEventListener('click', () => { void loadRecordPage(true); });
 
 const applyAuditFilters = () => {
@@ -5186,9 +5594,13 @@ $<HTMLButtonElement>('[data-download-inventory]')?.addEventListener('click', asy
     const importableMaterials = operationalMaterials.filter((material) => material.trackingMode === 'quantity');
     const categories = [...new Set(operationalMaterials.map((material) => material.category))].sort((a, b) => a.localeCompare(b, 'zh-CN'));
     const statsByMaterial = new Map(currentSnapshot.materialStats.map((item) => [item.materialId, item]));
+    const summariesByMaterial = new Map(currentSnapshot.inventorySummaries.map((item) => [item.materialId, item]));
     const allTransactions = currentSnapshot.transactions;
     const manualOutbound = effectiveManualOutboundTransactions(allTransactions);
     const groupedConsumption = groupConsumptionRows(allTransactions, currentSnapshot.materials);
+    const expiryAlerts = currentSnapshot.expiryAlerts ?? [];
+    const expiredMaterialCount = new Set(expiryAlerts.filter((alert) => alert.status === 'expired').map((alert) => alert.materialId)).size;
+    const expiringMaterialCount = new Set(expiryAlerts.filter((alert) => alert.status === 'expiring').map((alert) => alert.materialId)).size;
     const exportedAt = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(currentSnapshot.exportedAt));
     const overview = XLSX.utils.aoa_to_sheet([
       ['库存统计'],
@@ -5198,6 +5610,8 @@ $<HTMLButtonElement>('[data-download-inventory]')?.addEventListener('click', asy
       ['耗材分类', categories.length],
       ['库存预警', lowStock.length],
       ['库存正常', operationalMaterials.length - lowStock.length],
+      ['过期批次品类', expiredMaterialCount],
+      ['临期批次品类', expiringMaterialCount],
       ['已归档档案', currentSnapshot.materials.length - operationalMaterials.length],
       ['统计口径', '概览、分类和可导入库存仅统计使用中耗材；逐耗材统计同时保留已归档档案'],
       ['分组消耗口径', '只统计网页手工登记的出库；按流水发生时的唯一组织分组归属，不含 Excel 库存调整'],
@@ -5245,9 +5659,10 @@ $<HTMLButtonElement>('[data-download-inventory]')?.addEventListener('click', asy
       { wch: 10 }, { wch: 12 }, { wch: 28 }, { wch: 20 },
     ];
     const inventory = XLSX.utils.aoa_to_sheet([
-      ['耗材名称', '分类', '规格', '开放可用库存', '库存总数', '单位', '安全库存', '管理方式', '档案状态', '库存状态', '累计入库', '累计出库', '入库记录', '出库记录', '最近入库', '最近出库', '历史其他单位', '最近更新'],
+      ['耗材名称', '分类', '规格', '开放可用库存', '库存总数', '单位', '安全库存', '管理方式', '档案状态', '库存状态', '有效期状态', '过期数量', '临期数量', '累计入库', '累计出库', '入库记录', '出库记录', '最近入库', '最近出库', '历史其他单位', '最近更新'],
       ...currentSnapshot.materials.map((material) => {
         const materialStats = statsByMaterial.get(material.id);
+        const summary = summariesByMaterial.get(material.id);
         const unitStats = materialStats?.currentUnit ?? { totalIn: 0, totalOut: 0, inRecords: 0, outRecords: 0 };
         const otherUnits = materialStats?.otherUnits.map((item) => (
           `${item.unit}：入库 ${formatNumber(item.totalIn)}，出库 ${formatNumber(item.totalOut)}`
@@ -5260,9 +5675,12 @@ $<HTMLButtonElement>('[data-download-inventory]')?.addEventListener('click', asy
           material.quantity,
           material.unit,
           material.safetyStock,
-          material.trackingMode === 'quantity' ? '普通数量' : material.trackingMode === 'stateful' ? '按状态统计' : '按库存单元追踪',
+          material.trackingMode === 'quantity' ? '普通数量' : material.trackingMode === 'stateful' ? '按状态统计' : '按批次 / 单件管理',
           material.active ? '使用中' : '已归档',
           material.active ? (material.availableQuantity <= material.safetyStock ? '库存预警' : '库存正常') : '不参与日常库存',
+          material.trackingMode === 'quantity' ? '未启用批次有效期' : summary?.expired ? '有过期批次' : summary?.expiring ? '有临期批次' : '无临期或过期库存',
+          summary?.expired ?? 0,
+          summary?.expiring ?? 0,
           unitStats.totalIn,
           unitStats.totalOut,
           unitStats.inRecords,
@@ -5277,8 +5695,35 @@ $<HTMLButtonElement>('[data-download-inventory]')?.addEventListener('click', asy
     inventory['!cols'] = [
       { wch: 28 }, { wch: 18 }, { wch: 24 }, { wch: 14 }, { wch: 12 },
       { wch: 10 }, { wch: 12 }, { wch: 16 }, { wch: 12 }, { wch: 14 },
-      { wch: 12 }, { wch: 12 }, { wch: 11 }, { wch: 11 }, { wch: 19 },
-      { wch: 19 }, { wch: 34 }, { wch: 19 },
+      { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+      { wch: 11 }, { wch: 11 }, { wch: 19 }, { wch: 19 }, { wch: 34 }, { wch: 19 },
+    ];
+    const expiryRows = [
+      ['耗材名称', '分类', '规格', '库存单元', '单元类型', '库存数量', '可用数量', '有效期', '有效期状态', '剩余天数', '档案状态'],
+      ...currentSnapshot.inventoryUnits
+        .filter((unit) => currentSnapshot.materials.some((material) => material.id === unit.materialId) && unit.expiry.status !== 'none')
+        .map((unit) => {
+          const material = currentSnapshot.materials.find((candidate) => candidate.id === unit.materialId)!;
+          const available = unit.balances.filter((balance) => balance.usable && unit.expiry.status !== 'expired').reduce((sum, balance) => sum + balance.quantity, 0);
+          return [
+            material.name,
+            material.category,
+            material.spec,
+            unit.displayLabel,
+            unit.unitType === 'container' ? '盒 / 容器' : unit.unitType === 'lot' ? '批次' : unit.unitType === 'position' ? '序列 / 单件' : '总库存',
+            unit.quantity,
+            available,
+            unit.expiry.expiryDate,
+            unit.expiry.status === 'expired' ? '已过期' : unit.expiry.status === 'expiring' ? '临期' : '正常',
+            unit.expiry.daysRemaining ?? '',
+            unit.active ? '使用中' : '已归档',
+          ];
+        }),
+    ];
+    const expirySheet = XLSX.utils.aoa_to_sheet(expiryRows);
+    expirySheet['!cols'] = [
+      { wch: 28 }, { wch: 16 }, { wch: 22 }, { wch: 28 }, { wch: 13 },
+      { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
     ];
     const importableInventory = XLSX.utils.aoa_to_sheet([
       ['耗材名称', '分类', '当前库存', '安全库存', '单位', '规格'],
@@ -5300,6 +5745,7 @@ $<HTMLButtonElement>('[data-download-inventory]')?.addEventListener('click', asy
     XLSX.utils.book_append_sheet(workbook, groupOverview, '组织分组概览');
     XLSX.utils.book_append_sheet(workbook, groupConsumption, '分组耗材消耗');
     XLSX.utils.book_append_sheet(workbook, inventory, '逐耗材统计');
+    XLSX.utils.book_append_sheet(workbook, expirySheet, '批次有效期');
     XLSX.utils.book_append_sheet(workbook, importableInventory, '可导入库存');
     XLSX.writeFile(workbook, `${exportPrefix()}-库存统计-${localDateTimeValue().slice(0, 10)}.xlsx`);
     toast('库存统计已导出');
@@ -5383,6 +5829,10 @@ document.addEventListener('keydown', (event) => {
   }
   if (inventoryOperationModal?.classList.contains('open')) {
     closeInventoryOperation();
+    return;
+  }
+  if (inventoryUnitEditModal?.classList.contains('open')) {
+    closeInventoryUnitEdit();
     return;
   }
   if (inventoryDetailModal?.classList.contains('open')) {

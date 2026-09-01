@@ -1,18 +1,19 @@
 # OpenLabStock Individual Contributor License Agreement
 
-- **Candidate version:** 1.0
-- **Project:** OpenLabStock
-- **License recipient and project steward:** 郝春霖 (Hao Chunlin), an individual
-- **Contact:** `contact@okoklabs.com`
+**Candidate version:** 1.0 (frozen review candidate)
+**Project:** OpenLabStock
+**License recipient and project steward:** 郝春霖 (Hao Chunlin), an individual
+**Planned contact:** `contact@okoklabs.com`
 
-> **STATUS: PREPARED FOR ACTIVATION REVIEW; NOT ACTIVE AND NOT CURRENTLY
+> **STATUS: FROZEN FOR PROFESSIONAL REVIEW; NOT ACTIVE AND NOT CURRENTLY
 > ACCEPTING SIGNATURES.** Do not treat a pull-request checkbox, commit, email,
 > or other submission as acceptance of this candidate. The agreement will
 > become available for acceptance only after the contact address is verified,
 > the public repository and designated signing service are configured, the
-> governing-law provision receives final professional review, and the required
-> `license/cla` check is tested. Until then, maintainers must not merge external
-> copyrightable contributions.
+> governing-law provision is finalized, and the required `license/cla` check is
+> tested. This candidate was frozen by the Project Steward on 2026-09-01
+> for professional legal review. Until review and activation are complete,
+> maintainers must not merge external copyrightable contributions.
 
 This candidate is based on the structure and licensing approach of the
 [Harmony Agreements](https://www.harmonyagreements.org/) and is adapted for an
@@ -153,9 +154,9 @@ The Project Steward and the designated signing service may process the minimum
 identity, contact, agreement-version, timestamp, repository, and pull-request
 data reasonably needed to operate the signing check and preserve an auditable
 rights chain. The current planned workflow and data practices are described in
-the [CLA privacy notice](./docs/legal/CLA_PRIVACY_NOTICE.md). Signing records
-are not part of the public source repository. Public pull requests may show
-Your GitHub identity and whether the CLA check passed.
+the [CLA privacy notice](https://github.com/okoklabs/openlabstock/blob/main/docs/legal/CLA_PRIVACY_NOTICE.md).
+Signing records are not part of the public source repository. Public pull
+requests may show Your GitHub identity and whether the CLA check passed.
 
 ### 8. General Terms
 
@@ -172,13 +173,13 @@ Your GitHub identity and whether the CLA check passed.
 4. This Agreement may be accepted electronically. The authoritative acceptance
    record is the record retained by the designated signing service and the
    Project's private compliance archive.
-5. This Agreement is governed by the laws of the People's Republic of China,
-   excluding for this purpose the laws of the Hong Kong Special Administrative
-   Region, the Macao Special Administrative Region, and Taiwan, and without
-   regard to conflict-of-laws principles. Any dispute arising out of or in
-   connection with this Agreement is subject to the exclusive jurisdiction of
-   a people's court with competent jurisdiction at the domicile of the Project
-   Steward.
+5. Subject to applicable mandatory law, this Agreement is governed by the laws
+   of the People's Republic of China applicable in mainland China, excluding its
+   choice-of-law rules. Subject to applicable mandatory law, disputes arising
+   out of or relating to this Agreement shall be submitted to a competent court
+   at the domicile of the Project Steward. Nothing in this Section limits either
+   party's right to seek urgent injunctive or other provisional relief from a
+   court of competent jurisdiction, or any right that cannot lawfully be waived.
 
 ## Activation Record
 
@@ -186,12 +187,13 @@ This section is operational and is not a signature block.
 
 | Field | Current value |
 | --- | --- |
-| Agreement status | Not active; signatures are not accepted |
+| Agreement status | Frozen review candidate; not active; signatures are not accepted |
 | Candidate version | 1.0 |
 | License recipient | 郝春霖 (Hao Chunlin), individual |
 | Intended public repository | `okoklabs/openlabstock` |
 | Planned signing service | CLA Assistant hosted service |
-| Contact | `contact@okoklabs.com` (receiving verified; activation review pending) |
-| Governing law and forum | Laws of the People's Republic of China; competent people's court at the Project Steward's domicile (pending final professional review) |
+| Planned contact | `contact@okoklabs.com` (external delivery, forwarding and reply test passed 2026-09-01; ImprovMX forwarding) |
+| Governing law and forum | Draft confirmed by the Project Steward: mainland China law; competent court at the Project Steward's domicile; professional review pending |
+| Candidate freeze date | 2026-09-01 |
 | Activation date | Not set |
 | Authoritative agreement revision | Not set |

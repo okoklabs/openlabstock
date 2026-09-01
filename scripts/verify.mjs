@@ -21,6 +21,7 @@ for (const [command, args] of commands) {
   const result = spawnSync(command, args, {
     cwd: rootDir,
     stdio: 'inherit',
+    ...(process.platform === 'win32' && !pnpmScript ? { shell: true } : {}),
   });
   if (result.error) throw result.error;
   if (result.status !== 0) process.exit(result.status ?? 1);

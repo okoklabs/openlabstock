@@ -60,6 +60,20 @@ const allowedRoots = [
   'package.json', 'password.mjs', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'server.mjs', 'storage.mjs',
   '.github', 'deploy', 'dist', 'docs', 'public', 'scripts', 'src', 'tests',
 ];
+
+// These paths contain instance-specific operations or private compliance data.
+// Keep them in the private operations repository; they must never enter a
+// distributable application archive even when the archive is built locally.
+const excludedReleasePaths = new Set([
+  'docs/DEPLOYMENT_OPERATIONS.md',
+  'docs/private',
+]);
+
+function isExcluded(relativePath) {
+  const normalized = relativePath.replaceAll('\\', '/').replace(/\/$/, '');
+  return [...excludedReleasePaths].some((excluded) => normalized === excluded || normalized.startsWith(`${excluded}/`));
+}
+
 function isForbidden(relativePath) {
   const normalized = relativePath.replaceAll('\\', '/');
   const segments = normalized.split('/');
@@ -70,6 +84,7 @@ function isForbidden(relativePath) {
 }
 
 function collectFiles(relativePath) {
+  if (isExcluded(relativePath)) return [];
   const absolutePath = join(rootDir, relativePath);
   if (!existsSync(absolutePath)) throw new Error(`Required release path is missing: ${relativePath}`);
   const stat = lstatSync(absolutePath);
@@ -78,6 +93,7 @@ function collectFiles(relativePath) {
   const result = [];
   for (const entry of readdirSync(absolutePath, { withFileTypes: true })) {
     const child = `${relativePath}/${entry.name}`;
+    if (isExcluded(child)) continue;
     if (isForbidden(child)) throw new Error(`Forbidden path found under release roots: ${child}`);
     if (entry.isDirectory()) result.push(...collectFiles(child));
     else if (entry.isFile()) result.push(child.replaceAll('\\', '/'));
@@ -87,6 +103,11 @@ function collectFiles(relativePath) {
 }
 
 const files = [...new Set(allowedRoots.flatMap(collectFiles))].sort();
+for (const excluded of excludedReleasePaths) {
+  if (files.some((entry) => entry === excluded || entry.startsWith(`${excluded}/`))) {
+    throw new Error(`Private path entered the release file list: ${excluded}`);
+  }
+}
 const required = [
   'dist/index.html', 'server.mjs', 'storage.mjs', 'password.mjs', 'scripts/backup.mjs',
   'scripts/reset-owner-password.mjs', 'package.json', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md',

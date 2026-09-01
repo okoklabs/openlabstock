@@ -1,0 +1,978 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenLabStock | 实验室耗材管理工作台</title>
+    <meta
+      name="description"
+      content="OpenLabStock 实验室耗材管理工作台 A4 宣传页：不可变流水、扫码登记、库存预警与自主部署。"
+    />
+    <style>
+      :root {
+        --ink: #17231f;
+        --muted: #5a6962;
+        --line: #cbd8d1;
+        --paper: #ffffff;
+        --soft: #f1f6f3;
+        --mint: #d9eee5;
+        --green: #08745e;
+        --green-dark: #074438;
+        --amber: #d49a24;
+        --amber-soft: #fff4d8;
+        --blue: #2b6b83;
+        --blue-soft: #e7f1f5;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+
+      body {
+        color: var(--ink);
+        background: #dfe7e2;
+        font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+
+      figure {
+        margin: 0;
+      }
+
+      .print-toolbar {
+        position: fixed;
+        z-index: 10;
+        top: 20px;
+        right: 20px;
+        width: 248px;
+        padding: 14px;
+        border: 1px solid #b9c9c0;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 10px 30px rgba(20, 42, 32, 0.14);
+      }
+
+      .print-toolbar strong,
+      .print-toolbar span {
+        display: block;
+      }
+
+      .print-toolbar strong {
+        font-size: 14px;
+      }
+
+      .print-toolbar span {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .print-toolbar button {
+        width: 100%;
+        min-height: 40px;
+        margin-top: 12px;
+        border: 0;
+        border-radius: 4px;
+        color: #fff;
+        background: var(--green);
+        font: inherit;
+        font-size: 13px;
+        font-weight: 750;
+        cursor: pointer;
+      }
+
+      .print-toolbar button:hover {
+        background: #075d4d;
+      }
+
+      .print-toolbar button:active {
+        background: var(--green-dark);
+      }
+
+      .print-toolbar button:focus-visible {
+        outline: 3px solid #ecbd51;
+        outline-offset: 2px;
+      }
+
+      .page {
+        width: 210mm;
+        height: 297mm;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        gap: 3mm;
+        padding: 10mm 12mm 9mm;
+        background: var(--paper);
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .brand-row,
+      .hero,
+      .product-band,
+      .scan-band,
+      .feature-band,
+      .footer {
+        min-width: 0;
+      }
+
+      .brand-row {
+        flex: 0 0 14mm;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 3mm;
+      }
+
+      .brand img {
+        width: 11mm;
+        height: 11mm;
+        border-radius: 2.5mm;
+      }
+
+      .brand-name {
+        font-size: 16pt;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .brand-subtitle {
+        margin-top: 1.7mm;
+        color: var(--muted);
+        font-size: 8.5pt;
+        line-height: 1;
+      }
+
+      .brand-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 2mm;
+        padding: 2mm 3mm;
+        color: var(--green-dark);
+        background: var(--mint);
+        font-size: 8.5pt;
+        font-weight: 750;
+        white-space: nowrap;
+      }
+
+      .brand-note::before {
+        content: "";
+        width: 2.2mm;
+        height: 2.2mm;
+        border-radius: 50%;
+        background: var(--green);
+      }
+
+      .hero {
+        flex: 0 0 34mm;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8mm;
+        align-items: center;
+      }
+
+      .eyebrow {
+        margin: 0 0 2mm;
+        color: var(--green);
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: 8pt;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        max-width: 122mm;
+        font-size: 25pt;
+        line-height: 1.12;
+        letter-spacing: 0;
+      }
+
+      .hero-lede {
+        margin-top: 2.2mm;
+        color: var(--muted);
+        font-size: 10.5pt;
+        line-height: 1.55;
+      }
+
+      .hero-mark {
+        width: 40mm;
+        height: 25mm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--green-dark);
+        border-left: 3px solid var(--amber);
+        background: var(--amber-soft);
+        font-size: 11pt;
+        font-weight: 800;
+        line-height: 1.35;
+        text-align: center;
+      }
+
+      .product-band {
+        flex: 0 0 70mm;
+        display: grid;
+        grid-template-columns: minmax(0, 1.55fr) minmax(0, 0.8fr);
+        gap: 6mm;
+        padding: 4mm;
+        border: 1px solid var(--line);
+        background: var(--soft);
+      }
+
+      .screen-frame {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid #b7c9c0;
+        background: #fff;
+      }
+
+      .product-visual {
+        position: relative;
+        height: 52mm;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .desktop-screen {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: left top;
+      }
+
+      .mobile-product {
+        position: absolute;
+        right: 2.5mm;
+        bottom: 1.5mm;
+        width: 22mm;
+        height: 47.6mm;
+        overflow: hidden;
+        border: 0.7mm solid #263b34;
+        border-radius: 3.5mm;
+        background: #fff;
+        box-shadow: 0 2mm 5mm rgba(20, 52, 41, 0.24);
+      }
+
+      .mobile-product img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center top;
+      }
+
+      .device-label {
+        position: absolute;
+        z-index: 2;
+        left: 2mm;
+        bottom: 2mm;
+        padding: 1.2mm 1.8mm;
+        color: var(--green-dark);
+        background: rgba(255, 255, 255, 0.93);
+        font-size: 7pt;
+        font-weight: 800;
+      }
+
+      .screen-caption {
+        display: flex;
+        justify-content: space-between;
+        gap: 3mm;
+        padding: 1.3mm 2mm;
+        border-top: 1px solid #dce5e0;
+        color: var(--muted);
+        font-size: 7.5pt;
+      }
+
+      .screen-caption strong {
+        color: var(--green);
+      }
+
+      .product-copy {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+      }
+
+      .section-kicker {
+        color: var(--green);
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: 7.8pt;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+      }
+
+      .product-copy h2 {
+        margin-top: 2mm;
+        font-size: 13pt;
+        line-height: 1.3;
+      }
+
+      .product-copy > p {
+        margin-top: 1.5mm;
+        color: var(--muted);
+        font-size: 8pt;
+        line-height: 1.45;
+      }
+
+      .proof-list {
+        display: grid;
+        gap: 1.5mm;
+        margin: 3mm 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .proof-list li {
+        display: grid;
+        grid-template-columns: 7mm minmax(0, 1fr);
+        gap: 2mm;
+        align-items: start;
+        font-size: 8.5pt;
+        line-height: 1.42;
+      }
+
+      .proof-list b {
+        width: 6mm;
+        height: 6mm;
+        display: grid;
+        place-items: center;
+        color: var(--green-dark);
+        background: var(--mint);
+        font-size: 8pt;
+      }
+
+      .proof-list strong {
+        display: block;
+        font-weight: 800;
+      }
+
+      .proof-list span {
+        display: block;
+        margin-top: 0.6mm;
+        color: var(--muted);
+        font-size: 7.3pt;
+      }
+
+      .scan-band {
+        flex: 0 0 46mm;
+        display: grid;
+        grid-template-columns: 34mm minmax(0, 1fr);
+        gap: 5mm;
+        align-items: center;
+        padding: 4mm;
+        border-left: 4px solid var(--green);
+        background: var(--mint);
+      }
+
+      .scan-visual {
+        min-width: 0;
+        height: 38mm;
+        display: grid;
+        place-items: center;
+      }
+
+      .scan-phone {
+        position: relative;
+        width: 18mm;
+        height: 38mm;
+        padding: 2.5mm 1mm 1mm;
+        border: 0.7mm solid #173f35;
+        border-radius: 3.6mm;
+        background: #173f35;
+        box-shadow: 2.2mm 2.2mm 0 rgba(8, 116, 94, 0.18);
+      }
+
+      .phone-camera {
+        position: absolute;
+        top: 0.8mm;
+        left: 50%;
+        width: 5mm;
+        height: 0.8mm;
+        border-radius: 1mm;
+        background: #8db3a7;
+        transform: translateX(-50%);
+      }
+
+      .scan-screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        border-radius: 2.4mm;
+        background: #eaf2ee;
+      }
+
+      .camera-label {
+        position: absolute;
+        z-index: 3;
+        top: 1.5mm;
+        left: 1.5mm;
+        color: #42655a;
+        font-size: 6pt;
+        font-weight: 750;
+      }
+
+      .scan-reticle {
+        position: absolute;
+        top: 5mm;
+        left: 50%;
+        width: 15mm;
+        height: 15mm;
+        transform: translateX(-50%);
+      }
+
+      .reticle-corner {
+        position: absolute;
+        width: 4mm;
+        height: 4mm;
+        border-color: var(--green);
+        border-style: solid;
+      }
+
+      .reticle-corner:nth-child(1) {
+        top: 0;
+        left: 0;
+        border-width: 0.7mm 0 0 0.7mm;
+      }
+
+      .reticle-corner:nth-child(2) {
+        top: 0;
+        right: 0;
+        border-width: 0.7mm 0.7mm 0 0;
+      }
+
+      .reticle-corner:nth-child(3) {
+        bottom: 0;
+        left: 0;
+        border-width: 0 0 0.7mm 0.7mm;
+      }
+
+      .reticle-corner:nth-child(4) {
+        right: 0;
+        bottom: 0;
+        border-width: 0 0.7mm 0.7mm 0;
+      }
+
+      .fake-qr {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 11mm;
+        height: 11mm;
+        border: 0.5mm solid #fff;
+        background: #fff;
+        transform: translate(-50%, -50%) rotate(-3deg);
+      }
+
+      .finder {
+        position: absolute;
+        width: 3mm;
+        height: 3mm;
+        border: 0.7mm solid #173f35;
+        background: #fff;
+      }
+
+      .finder::after {
+        content: "";
+        position: absolute;
+        inset: 0.45mm;
+        background: #173f35;
+      }
+
+      .finder.one {
+        top: 0.7mm;
+        left: 0.7mm;
+      }
+
+      .finder.two {
+        top: 0.7mm;
+        right: 0.7mm;
+      }
+
+      .finder.three {
+        bottom: 0.7mm;
+        left: 0.7mm;
+      }
+
+      .qr-pixels {
+        position: absolute;
+        top: 4.7mm;
+        left: 4.8mm;
+        width: 0.75mm;
+        height: 0.75mm;
+        background: #173f35;
+        box-shadow:
+          1.5mm 0 #173f35,
+          3mm 0 #173f35,
+          -1.5mm 1.5mm #173f35,
+          0 1.5mm #173f35,
+          3mm 1.5mm #173f35,
+          -1.5mm 3mm #173f35,
+          1.5mm 3mm #173f35,
+          3mm 3mm #173f35,
+          0 4.5mm #173f35,
+          1.5mm 4.5mm #173f35,
+          3mm 4.5mm #173f35;
+      }
+
+      .scan-beam {
+        position: absolute;
+        z-index: 2;
+        top: 12mm;
+        left: 3mm;
+        right: 3mm;
+        height: 0.6mm;
+        background: var(--amber);
+      }
+
+      .scan-result {
+        position: absolute;
+        z-index: 4;
+        right: 1.2mm;
+        bottom: 1.2mm;
+        left: 1.2mm;
+        padding: 1mm;
+        border-left: 0.8mm solid var(--green);
+        background: #fff;
+        box-shadow: 0 1mm 3mm rgba(23, 63, 53, 0.12);
+      }
+
+      .scan-result span,
+      .scan-result strong,
+      .scan-result small {
+        display: block;
+      }
+
+      .scan-result span {
+        color: var(--green);
+        font-size: 6pt;
+        font-weight: 800;
+      }
+
+      .scan-result strong {
+        margin-top: 0.5mm;
+        font-size: 6.5pt;
+        line-height: 1.25;
+      }
+
+      .scan-result small {
+        margin-top: 0.3mm;
+        color: var(--muted);
+        font-size: 5.8pt;
+        line-height: 1.2;
+      }
+
+      .scan-copy {
+        min-width: 0;
+      }
+
+      .scan-copy h2 {
+        margin-top: 1.5mm;
+        font-size: 14pt;
+        line-height: 1.25;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 3mm;
+        margin-top: 3mm;
+      }
+
+      .flow-step {
+        min-width: 0;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-rows: auto auto;
+        column-gap: 2mm;
+        align-content: start;
+        padding-top: 1.5mm;
+        border-top: 2px solid var(--green);
+      }
+
+      .flow-step b {
+        grid-row: 1 / -1;
+        color: var(--amber);
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: 8pt;
+      }
+
+      .flow-step strong {
+        display: block;
+        margin-top: 0;
+        font-size: 9.4pt;
+      }
+
+      .flow-step span {
+        display: block;
+        margin-top: 0.5mm;
+        color: #426255;
+        font-size: 8pt;
+        line-height: 1.45;
+        white-space: nowrap;
+      }
+
+      .scan-note {
+        margin-top: 2.5mm;
+        color: var(--green-dark);
+        font-size: 8pt;
+        font-weight: 800;
+      }
+
+      .feature-band {
+        flex: 0 0 77mm;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 3mm 6mm;
+        padding-top: 1mm;
+      }
+
+      .feature-heading {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 4mm;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 2.2mm;
+      }
+
+      .feature-heading h2 {
+        font-size: 14pt;
+      }
+
+      .feature-heading p {
+        color: var(--muted);
+        font-size: 8.5pt;
+        white-space: nowrap;
+      }
+
+      .feature-column {
+        display: grid;
+        grid-template-rows: repeat(3, minmax(0, 1fr));
+        gap: 2mm;
+        min-width: 0;
+      }
+
+      .feature-item {
+        display: grid;
+        grid-template-columns: 8mm minmax(0, 1fr);
+        gap: 3mm;
+        align-items: center;
+        min-width: 0;
+        padding: 2.2mm 3mm;
+        border: 1px solid var(--line);
+        background: #fff;
+      }
+
+      .feature-item:nth-child(2) {
+        background: var(--amber-soft);
+        border-color: #ecdcae;
+      }
+
+      .feature-column:last-child .feature-item:nth-child(2) {
+        background: var(--blue-soft);
+        border-color: #c9dce4;
+      }
+
+      .feature-icon {
+        width: 8mm;
+        height: 8mm;
+        display: grid;
+        place-items: center;
+        color: var(--green-dark);
+        background: var(--mint);
+        font-size: 13pt;
+        font-weight: 800;
+      }
+
+      .feature-item:nth-child(2) .feature-icon {
+        color: #79520d;
+        background: #f7d889;
+      }
+
+      .feature-column:last-child .feature-item:nth-child(2) .feature-icon {
+        color: #21576d;
+        background: #c8e0e9;
+      }
+
+      .feature-item h3 {
+        font-size: 9.6pt;
+        line-height: 1.25;
+      }
+
+      .feature-item p {
+        margin-top: 0.8mm;
+        color: var(--muted);
+        font-size: 7.8pt;
+        line-height: 1.35;
+      }
+
+      .footer {
+        flex: 1 1 auto;
+        min-height: 20mm;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 6mm;
+        align-items: center;
+        padding: 2.5mm 4mm;
+        color: #edf8f3;
+        background: var(--green-dark);
+      }
+
+      .footer h2 {
+        font-size: 12pt;
+        line-height: 1.2;
+      }
+
+      .footer p {
+        margin-top: 1mm;
+        color: #c5ded4;
+        font-size: 7.6pt;
+        line-height: 1.5;
+      }
+
+      .footer-meta {
+        display: flex;
+        align-items: center;
+        gap: 4mm;
+      }
+
+      .footer-url {
+        color: #fff;
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: 9pt;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .footer-license {
+        margin-top: 1mm;
+        color: #a8cdbf;
+        font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+        font-size: 7pt;
+      }
+
+      .footer img {
+        width: 14mm;
+        height: 14mm;
+        padding: 1mm;
+        background: #fff;
+      }
+
+      @media screen {
+        .page {
+          margin: 24px auto;
+          box-shadow: 0 14px 42px rgba(20, 42, 32, 0.18);
+        }
+      }
+
+      @media screen and (min-width: 1100px) {
+        body {
+          padding-right: 288px;
+        }
+      }
+
+      @media screen and (min-width: 721px) and (max-width: 1099px) {
+        .print-toolbar {
+          position: static;
+          width: min(calc(100% - 48px), 210mm);
+          margin: 24px auto 0;
+        }
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        .page {
+          margin: 0;
+          box-shadow: none;
+        }
+
+        .screen-only {
+          display: none !important;
+        }
+      }
+
+      @media (max-width: 720px) {
+        body {
+          background: #dfe7e2;
+        }
+
+        .page {
+          width: 210mm;
+          min-width: 210mm;
+          zoom: 0.84;
+          margin: 12px auto;
+        }
+
+        .print-toolbar {
+          position: static;
+          width: auto;
+          margin: 12px;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .page {
+          zoom: 0.7;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .page {
+          zoom: 0.55;
+        }
+      }
+
+      @media (max-width: 400px) {
+        .page {
+          zoom: 0.46;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="print-toolbar screen-only" aria-label="打印设置提示">
+      <strong>A4 彩色打印</strong>
+      <span>选择“实际大小 / 100%”，关闭浏览器页眉页脚。页面已按低墨量彩色打印优化。</span>
+      <button type="button" onclick="window.print()">打印宣传页</button>
+    </aside>
+    <main class="page" aria-label="OpenLabStock A4 宣传页">
+      <header class="brand-row">
+        <div class="brand">
+          <img src="assets/openlabstock-icon.png" alt="OpenLabStock 图标" />
+          <div>
+            <div class="brand-name">OpenLabStock</div>
+            <div class="brand-subtitle">实验室耗材管理工作台</div>
+          </div>
+        </div>
+        <div class="brand-note">开源 · 自主部署</div>
+      </header>
+
+      <section class="hero" aria-labelledby="hero-title">
+        <div>
+          <p class="eyebrow">LAB INVENTORY, WITH A MEMORY</p>
+          <h1 id="hero-title">让每一次库存变化，<br /><span style="color: var(--green)">都有来处。</span></h1>
+          <p class="hero-lede">把入库、领用、盘点和组织核算，收进一套安静、可追溯的实验室工作台。</p>
+        </div>
+        <div class="hero-mark">从“差不多还有”<br />到“记录说得清”</div>
+      </section>
+
+      <section class="product-band" aria-labelledby="product-title">
+        <figure class="screen-frame">
+          <div class="product-visual">
+            <img class="desktop-screen" src="assets/product-dashboard-2x.png" alt="OpenLabStock 桌面端库存总览，展示库存预警与快捷操作" />
+            <span class="device-label">桌面管理</span>
+            <div class="mobile-product"><img src="assets/product-mobile.png" alt="OpenLabStock 手机端探针库存与登记使用界面" /></div>
+          </div>
+          <figcaption class="screen-caption"><strong>真实桌面与手机界面</strong><span>库存总览 / 移动登记 / 演示数据</span></figcaption>
+        </figure>
+        <div class="product-copy">
+          <span class="section-kicker">01 / CORE RECORD</span>
+          <h2 id="product-title">不是更漂亮的表格，<br />是可追溯的库存秩序。</h2>
+          <p>每笔变化都保留发生时的事实快照，方便团队复核、交接和长期使用。</p>
+          <ul class="proof-list">
+            <li><b>01</b><div><strong>不可变流水</strong><span>所有角色都不能改删；纠错另留记录。</span></div></li>
+            <li><b>02</b><div><strong>安全库存预警</strong><span>数量触线，及时提醒补货。</span></div></li>
+            <li><b>03</b><div><strong>盘点有依据</strong><span>差额生成独立、可解释的调整流水。</span></div></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="scan-band" aria-labelledby="scan-title">
+        <div class="scan-visual" role="img" aria-label="手机扫描耗材二维码并定位移液枪头的示意图">
+          <div class="scan-phone" aria-hidden="true">
+            <span class="phone-camera"></span>
+            <div class="scan-screen">
+              <span class="camera-label">扫描耗材标签</span>
+              <div class="scan-reticle">
+                <i class="reticle-corner"></i><i class="reticle-corner"></i><i class="reticle-corner"></i><i class="reticle-corner"></i>
+                <div class="fake-qr"><b class="finder one"></b><b class="finder two"></b><b class="finder three"></b><i class="qr-pixels"></i></div>
+              </div>
+              <span class="scan-beam"></span>
+              <div class="scan-result"><span>已定位</span><strong>移液枪头</strong><small>200 µL</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="scan-copy">
+          <span class="section-kicker">02 / SCAN TO REGISTER</span>
+          <h2 id="scan-title">扫描即定位，登记更快捷。</h2>
+          <div class="flow">
+            <div class="flow-step"><b>01</b><strong>扫描定位</strong><span>快速找到对应耗材。</span></div>
+            <div class="flow-step"><b>02</b><strong>用户确认</strong><span>核对数量、来源或去向。</span></div>
+            <div class="flow-step"><b>03</b><strong>保存流水</strong><span>校验通过后生成记录。</span></div>
+          </div>
+          <p class="scan-note">扫码只负责定位，不会直接增减库存；产品页中可查看完整流程。</p>
+        </div>
+      </section>
+
+      <section class="feature-band" aria-labelledby="feature-title">
+        <div class="feature-heading">
+          <h2 id="feature-title">为实验室日常，准备好六个关键答案。</h2>
+          <p>从登记到导出，边界清楚，数据可带走。</p>
+        </div>
+        <div class="feature-column">
+          <article class="feature-item"><span class="feature-icon">↺</span><div><h3>流水生成后不可改删</h3><p>纠错新增更正记录，原始流水继续保留。</p></div></article>
+          <article class="feature-item"><span class="feature-icon">!</span><div><h3>低库存主动提醒</h3><p>逐耗材设置安全库存，触线即预警。</p></div></article>
+          <article class="feature-item"><span class="feature-icon">⇄</span><div><h3>Excel 目标库存导入</h3><p>导入目标值，系统只生成差额流水。</p></div></article>
+        </div>
+        <div class="feature-column">
+          <article class="feature-item"><span class="feature-icon">⌘</span><div><h3>组织快照核算</h3><p>按发生时的课题组或平台归属统计。</p></div></article>
+          <article class="feature-item"><span class="feature-icon">▣</span><div><h3>清晰的权限边界</h3><p>所有者、管理员、库存管理员、成员各司其职。</p></div></article>
+          <article class="feature-item"><span class="feature-icon">↥</span><div><h3>备份、导出与迁移</h3><p>SQLite 备份与完整流水导出，数据掌握在自己手里。</p></div></article>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div>
+          <h2>开源、透明、可以自己部署。</h2>
+          <p>适合课题组、公共平台和需要清楚库存责任的实验室团队。</p>
+          <div class="footer-license">AGPL-3.0-only · 产品截图与数据均为演示内容</div>
+        </div>
+        <div class="footer-meta">
+          <div class="footer-url">openlabstock.com</div>
+          <img src="assets/openlabstock-site-qr.png" alt="OpenLabStock 产品页二维码" />
+        </div>
+      </footer>
+    </main>
+  </body>
+</html>

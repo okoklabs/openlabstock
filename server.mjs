@@ -7,8 +7,9 @@ import { fileURLToPath } from 'node:url';
 import { openStorage, validateBackupDatabase } from './storage.mjs';
 import { hashPassword, verifyPassword } from './password.mjs';
 import { createLoginProtection } from './src/server/login-attempts.mjs';
+import { encodeRecordCursor, recordPageOptions } from './src/server/record-query.mjs';
 import { normalizedMaterialName, planQuantityImport } from './src/server/quantity-import.mjs';
-import { readTransactionsResponse } from './src/server/transaction-read.mjs';
+import { EXPIRY_WARNING_DAYS, inventoryExpiryInfo, normalizeExpiryDate } from './src/server/inventory-expiry.mjs';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const packageMetadata = JSON.parse(await readFile(path.join(rootDir, 'package.json'), 'utf8'));
@@ -42,6 +43,7 @@ const forceSecureCookies = ['1', 'true'].includes(String(process.env.COOKIE_SECU
 const sessionCookieName = forceSecureCookies ? '__Host-labstock_session' : 'labstock_session';
 const databaseUploadMaxBytes = Number(process.env.DATABASE_UPLOAD_MAX_BYTES ?? 100 * 1024 * 1024);
 const bootstrapTransactionLimit = 30;
+const maxExpiryWarningDays = 3650;
 const backupDir = path.resolve(process.env.BACKUP_DIR ?? path.join(dataDir, 'backups'));
 const restoreAuthorizations = new Map();
 const staticFileCache = new Map();
@@ -182,12 +184,17 @@ function createDefaultStore() {
   };
 }
 
+function parseExpiryWarningDays(value, fallback = EXPIRY_WARNING_DAYS) {
+  const days = Number(value);
+  return Number.isInteger(days) && days >= 0 && days <= maxExpiryWarningDays ? days : fallback;
+}
+
 function normalizeStore(input) {
   const store = input && typeof input === 'object' ? input : {};
   const settings = store.settings && typeof store.settings === 'object' ? store.settings : {};
   const requestedAppName = String(settings.appName ?? '').trim();
   store.settings = {
-    appName: requestedAppName || defaultSettings.appName,
+    appName: requestedAppName === 'SYSULab' ? defaultSettings.appName : (requestedAppName || defaultSettings.appName),
     labName: String(settings.labName ?? '').trim() || defaultSettings.labName,
     brandIcon: typeof settings.brandIcon === 'string' ? settings.brandIcon : defaultSettings.brandIcon,
   };
@@ -214,6 +221,8 @@ function normalizeStore(input) {
   store.materials.forEach((material) => {
     material.active = material.active !== false;
     material.trackingMode = ['quantity', 'stateful', 'tracked'].includes(material.trackingMode) ? material.trackingMode : 'quantity';
+    const expiryWarningDays = Number(material.expiryWarningDays);
+    material.expiryWarningDays = Number.isInteger(expiryWarningDays) && expiryWarningDays >= 0 && expiryWarningDays <= 3650 ? expiryWarningDays : EXPIRY_WARNING_DAYS;
     material.positionCodeHelp = typeof material.positionCodeHelp === 'string' ? material.positionCodeHelp : '';
     material.usageContextHelp = typeof material.usageContextHelp === 'string' ? material.usageContextHelp : '';
   });
@@ -251,6 +260,7 @@ function normalizeStore(input) {
     unit.label = String(unit.label ?? '').trim();
     unit.positionCode = String(unit.positionCode ?? '').trim();
     unit.capacity = Number.isFinite(Number(unit.capacity)) && Number(unit.capacity) >= 0 ? Number(unit.capacity) : 0;
+    try { unit.expiryDate = normalizeExpiryDate(unit.expiryDate); } catch { unit.expiryDate = ''; }
     unit.note = String(unit.note ?? '').trim();
     unit.active = unit.active !== false;
     unit.createdAt = typeof unit.createdAt === 'string' ? unit.createdAt : new Date().toISOString();
@@ -636,6 +646,8 @@ function upsertInventoryBalance(store, identity, delta) {
 }
 
 function inventorySummary(store, materialId) {
+  const material = store.materials.find((candidate) => candidate.id === materialId);
+  const warningDays = material?.expiryWarningDays ?? EXPIRY_WARNING_DAYS;
   const statuses = statusesForMaterial(store, materialId, { includeInactive: true });
   const statusById = new Map(statuses.map((status) => [status.id, status]));
   const unitIds = new Set(store.inventoryUnits.filter((unit) => unit.materialId === materialId && unit.active).map((unit) => unit.id));
@@ -646,19 +658,26 @@ function inventorySummary(store, materialId) {
   let reserved = 0;
   let sharedUsable = 0;
   let reservedUsable = 0;
+  let expired = 0;
+  let expiring = 0;
   const nonemptyUnitIds = new Set();
+  const unitById = new Map(store.inventoryUnits.map((unit) => [unit.id, unit]));
   for (const balance of store.inventoryUnitBalances) {
     if (!unitIds.has(balance.inventoryUnitId)) continue;
     const status = statusById.get(balance.statusId);
     nonemptyUnitIds.add(balance.inventoryUnitId);
+    const expiryStatus = inventoryExpiryInfo(unitById.get(balance.inventoryUnitId)?.expiryDate, Date.now(), warningDays).status;
+    const expiryUsable = expiryStatus !== 'expired';
+    if (expiryStatus === 'expired') expired += balance.quantity;
+    if (expiryStatus === 'expiring') expiring += balance.quantity;
     total += balance.quantity;
-    if (status?.usable) usable += balance.quantity;
+    if (status?.usable && expiryUsable) usable += balance.quantity;
     if (balance.accessScope === 'shared') {
       shared += balance.quantity;
-      if (status?.usable) sharedUsable += balance.quantity;
+      if (status?.usable && expiryUsable) sharedUsable += balance.quantity;
     } else {
       reserved += balance.quantity;
-      if (status?.usable) reservedUsable += balance.quantity;
+      if (status?.usable && expiryUsable) reservedUsable += balance.quantity;
     }
     byStatus.set(balance.statusId, (byStatus.get(balance.statusId) ?? 0) + balance.quantity);
   }
@@ -671,6 +690,9 @@ function inventorySummary(store, materialId) {
     reserved,
     sharedUsable,
     reservedUsable,
+    expired,
+    expiring,
+    expiryWarningDays: warningDays,
     unitCount: nonemptyUnitIds.size,
     activeUnitCount: unitIds.size,
     statuses: statuses.map((status) => ({ ...status, quantity: byStatus.get(status.id) ?? 0 })),
@@ -860,6 +882,8 @@ function assertUnitCapacity(store, unit, delta) {
 }
 
 function inventoryUnitPayload(store, unit) {
+  const material = store.materials.find((candidate) => candidate.id === unit.materialId);
+  const warningDays = material?.expiryWarningDays ?? EXPIRY_WARNING_DAYS;
   const statusById = new Map(store.inventoryStatuses.map((status) => [status.id, status]));
   const userById = new Map(store.users.map((candidate) => [candidate.id, candidate]));
   const balances = balancesForUnit(store, unit.id).map((balance) => {
@@ -872,11 +896,13 @@ function inventoryUnitPayload(store, unit) {
       terminal: status?.terminal ?? false,
       ownerName: balance.accessScope === 'user' ? owner?.name ?? '成员已停用或删除' : '',
       displayCode: inventoryUnitDisplayLabel(unit, balance.positionCode),
+      expiry: inventoryExpiryInfo(unit.expiryDate, Date.now(), warningDays),
     };
   }).sort((left, right) => left.displayCode.localeCompare(right.displayCode, 'zh-CN', { numeric: true })
     || left.statusName.localeCompare(right.statusName, 'zh-CN'));
   return {
     ...unit,
+    expiry: inventoryExpiryInfo(unit.expiryDate, Date.now(), warningDays),
     displayLabel: inventoryUnitDisplayLabel(unit),
     quantity: balances.reduce((sum, balance) => sum + balance.quantity, 0),
     balances,
@@ -965,7 +991,7 @@ function createAggregateUnit(store, materialId) {
   return unit;
 }
 
-function configureMaterialTracking(store, material, trackingMode, user, initialStatusId = '') {
+function configureMaterialTracking(store, material, trackingMode, user, initialStatusId = '', migrateQuantity = false) {
   if (!['quantity', 'stateful', 'tracked'].includes(trackingMode)) {
     throw Object.assign(new Error('请选择有效的库存追踪模式'), { statusCode: 400 });
   }
@@ -991,7 +1017,63 @@ function configureMaterialTracking(store, material, trackingMode, user, initialS
     ?? statuses.find((status) => status.active);
   if (!targetStatus) throw Object.assign(new Error('该耗材没有可用的库存状态，请先配置状态'), { statusCode: 409 });
   if (trackingMode === 'tracked' && material.quantity > 0) {
-    throw Object.assign(new Error('切换为库存单元模式前，请先把当前数量导入到具体批次、盒子或位置'), { statusCode: 409 });
+    if (!(migrateQuantity && ['quantity', 'stateful'].includes(previousMode))) {
+      throw Object.assign(new Error(`当前仍有${previousMode === 'stateful' ? '状态化' : '普通数量'}库存；请确认后将其转入“历史库存（未分批）”批次，再继续补录真实批次`), { statusCode: 409 });
+    }
+    const now = new Date().toISOString();
+    const unit = {
+      id: randomUUID(), materialId: material.id, unitType: 'lot', label: '历史库存（未分批）', positionCode: '', capacity: 0,
+      expiryDate: '', note: `由${previousMode === 'stateful' ? '状态统计' : '普通数量'}模式转换，批次信息待补录`, active: true, createdAt: now, updatedAt: now,
+    };
+    const sourceUnitIds = new Set(previousMode === 'stateful' ? materialUnits().map((sourceUnit) => sourceUnit.id) : []);
+    const sourceBalances = previousMode === 'stateful'
+      ? materialUnits().flatMap((sourceUnit) => balancesForUnit(store, sourceUnit.id).map((balance) => ({ ...balance })))
+      : [];
+    store.inventoryUnits.push(unit);
+    if (sourceBalances.length) {
+      const statusById = new Map(statuses.map((status) => [status.id, status]));
+      for (const source of sourceBalances) {
+        const status = statusById.get(source.statusId) ?? targetStatus;
+        upsertInventoryBalance(store, { inventoryUnitId: unit.id, statusId: status.id, accessScope: source.accessScope, ownerUserId: source.ownerUserId, positionCode: source.positionCode }, source.quantity);
+        appendInventoryEvent(store, user, {
+          materialId: material.id,
+          materialName: material.name,
+          inventoryUnitId: unit.id,
+          inventoryUnitLabel: inventoryUnitDisplayLabel(unit),
+          quantity: source.quantity,
+          eventType: 'adjustment',
+          toStatusId: status.id,
+          toStatusName: status.name,
+          toAccessScope: source.accessScope,
+          toOwnerUserId: source.ownerUserId,
+          toOwnerName: source.accessScope === 'user' ? store.users.find((candidate) => candidate.id === source.ownerUserId)?.name ?? '' : '',
+          toPositionCode: source.positionCode,
+          note: '按状态统计模式转换为按批次 / 单件管理，库存状态与使用范围已保留，批次信息待补录',
+          occurredAt: now,
+        });
+      }
+      store.inventoryUnitBalances = store.inventoryUnitBalances.filter((balance) => !sourceUnitIds.has(balance.inventoryUnitId));
+      store.inventoryUnits = store.inventoryUnits.filter((candidate) => !sourceUnitIds.has(candidate.id));
+    } else {
+      upsertInventoryBalance(store, { inventoryUnitId: unit.id, statusId: targetStatus.id, accessScope: 'shared', ownerUserId: '' }, material.quantity);
+      appendInventoryEvent(store, user, {
+        materialId: material.id,
+        materialName: material.name,
+        inventoryUnitId: unit.id,
+        inventoryUnitLabel: inventoryUnitDisplayLabel(unit),
+        quantity: material.quantity,
+        eventType: 'adjustment',
+        toStatusId: targetStatus.id,
+        toStatusName: targetStatus.name,
+        toAccessScope: 'shared',
+        note: '普通数量模式转换为按批次 / 单件管理，批次信息待补录',
+        occurredAt: now,
+      });
+      if (previousMode === 'stateful') {
+        store.inventoryUnitBalances = store.inventoryUnitBalances.filter((balance) => !sourceUnitIds.has(balance.inventoryUnitId));
+        store.inventoryUnits = store.inventoryUnits.filter((candidate) => !sourceUnitIds.has(candidate.id));
+      }
+    }
   }
   if (trackingMode === 'stateful' && previousMode === 'quantity') {
     const unit = createAggregateUnit(store, material.id);
@@ -1012,10 +1094,10 @@ function configureMaterialTracking(store, material, trackingMode, user, initialS
     }
   }
   if (trackingMode === 'tracked' && previousMode === 'stateful') {
-    if (material.quantity > 0) {
+    if (material.quantity > 0 && !migrateQuantity) {
       throw Object.assign(new Error('总库存单元仍有数量，请先拆分到具体库存单元'), { statusCode: 409 });
     }
-    removeMaterialUnits();
+    if (!(material.quantity > 0 && migrateQuantity)) removeMaterialUnits();
   }
   if (trackingMode === 'stateful' && previousMode === 'tracked') {
     if (material.quantity > 0) throw Object.assign(new Error('具体库存单元仍有数量，清零后才能改为按状态统计'), { statusCode: 409 });
@@ -1175,6 +1257,25 @@ function formatBootstrap(store, user) {
     const availableQuantity = material.trackingMode === 'quantity' ? material.quantity : inventorySummary(store, material.id).sharedUsable;
     return availableQuantity <= material.safetyStock;
   }).length;
+  const expiryAlerts = store.inventoryUnits
+    .filter((unit) => unit.active && totalForUnit(store, unit.id) > 0 && visibleMaterials.some((material) => material.id === unit.materialId))
+    .map((unit) => {
+      const material = store.materials.find((candidate) => candidate.id === unit.materialId);
+      const expiry = inventoryExpiryInfo(unit.expiryDate, Date.now(), material?.expiryWarningDays ?? EXPIRY_WARNING_DAYS);
+      return material && ['expiring', 'expired'].includes(expiry.status)
+        ? { materialId: material.id, materialName: material.name, inventoryUnitId: unit.id, inventoryUnitLabel: inventoryUnitDisplayLabel(unit), expiryDate: expiry.expiryDate, status: expiry.status, daysRemaining: expiry.daysRemaining, quantity: totalForUnit(store, unit.id), unit: material.unit }
+        : null;
+    })
+    .filter(Boolean)
+    .sort((left, right) => (left.status === 'expired' ? 0 : 1) - (right.status === 'expired' ? 0 : 1) || (left.daysRemaining ?? 0) - (right.daysRemaining ?? 0));
+  const warningMaterialIds = new Set([
+    ...operationalMaterials.filter((material) => {
+      const availableQuantity = material.trackingMode === 'quantity' ? material.quantity : inventorySummary(store, material.id).sharedUsable;
+      return availableQuantity <= material.safetyStock;
+    }).map((material) => material.id),
+    ...expiryAlerts.map((alert) => alert.materialId),
+  ]);
+  const warningCount = warningMaterialIds.size;
   return {
     version: appVersion,
     user: publicUser(user),
@@ -1186,6 +1287,7 @@ function formatBootstrap(store, user) {
     materials: [...visibleMaterialPayload].sort((a, b) => a.name.localeCompare(b.name, 'zh-CN')),
     materialStats: materialTransactionStats(visibleMaterials, effectiveTransactions),
     inventorySummaries: [...inventorySummaries.values()],
+    expiryAlerts,
     transactions: transactions.slice(0, bootstrapTransactionLimit),
     transactionTotal: transactions.length,
     recentlyUsedMaterialIds: recentlyUsedMaterialIds(store, user),
@@ -1193,6 +1295,8 @@ function formatBootstrap(store, user) {
       items: operationalMaterials.length,
       categories: new Set(operationalMaterials.map((material) => material.category)).size,
       lowStock,
+      warningCount,
+      expiry: expiryAlerts.length,
       normalStock: operationalMaterials.length - lowStock,
       monthInRecords: monthInbound.length,
       monthOutRecords: monthOutbound.length,
@@ -1204,7 +1308,16 @@ function formatBootstrap(store, user) {
 }
 
 function formatExportSnapshot(store, user, exportedAt) {
+  // Export snapshots are read directly from SQLite and bypass the request
+  // store normalizer; normalize once so legacy or hand-edited expiry values
+  // cannot make the export path fail while regular API reads remain resilient.
+  normalizeStore(store);
   const bootstrap = formatBootstrap(store, user);
+  const visibleMaterialIds = new Set(bootstrap.materials.map((material) => material.id));
+  const inventoryUnits = store.inventoryUnits
+    .filter((unit) => visibleMaterialIds.has(unit.materialId))
+    .map((unit) => inventoryUnitPayload(store, unit))
+    .sort((left, right) => left.displayLabel.localeCompare(right.displayLabel, 'zh-CN', { numeric: true }));
   const transactions = [...store.transactions]
     .filter((record) => canViewAllTransactions(user) || record.userId === user.id)
     .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) || right.id.localeCompare(left.id));
@@ -1218,6 +1331,9 @@ function formatExportSnapshot(store, user, exportedAt) {
     directory: bootstrap.directory,
     materials: bootstrap.materials,
     materialStats: bootstrap.materialStats,
+    inventorySummaries: bootstrap.inventorySummaries,
+    inventoryUnits,
+    expiryAlerts: bootstrap.expiryAlerts,
     transactions,
     total: transactions.length,
     inventoryEvents,
@@ -1519,14 +1635,34 @@ async function handleApi(request, response, url) {
 
   if (url.pathname === '/api/transactions' && request.method === 'GET') {
     const view = requestStorage.getStore() ?? storage.readView;
-    const result = readTransactionsResponse({
-      url,
-      session,
-      view,
-      canViewAllTransactions,
-      formatExportSnapshot,
-    });
-    return sendJson(response, result.statusCode, result.body);
+    if (url.searchParams.get('mode') === 'export') {
+      const { store, exportedAt } = view.readStoreSnapshot();
+      const user = store.users.find((candidate) => candidate.id === session.userId && candidate.active);
+      if (!user) return sendJson(response, 401, { error: '账号已停用' });
+      return sendJson(response, 200, formatExportSnapshot(store, user, exportedAt));
+    }
+    const user = view.readActiveUser(session.userId);
+    if (!user) return sendJson(response, 401, { error: '账号已停用' });
+    if (url.searchParams.get('mode') === 'page') {
+      const page = view.queryRecordPage(recordPageOptions(url, {
+        userId: user.id,
+        canViewAll: canViewAllTransactions(user),
+      }));
+      return sendJson(response, 200, {
+        items: page.items,
+        total: page.total,
+        hasMore: page.hasMore,
+        nextCursor: encodeRecordCursor(page.nextCursor),
+      });
+    }
+    const query = canViewAllTransactions(user) ? {} : { userId: user.id };
+    const transactions = view.queryTransactions(query);
+    const result = { transactions, total: transactions.length };
+    if (url.searchParams.get('includeInventoryEvents') === '1') {
+      result.inventoryEvents = view.queryInventoryEvents(query);
+      result.eventTotal = result.inventoryEvents.length;
+    }
+    return sendJson(response, 200, result);
   }
 
   if (url.pathname === '/api/transactions' && request.method === 'POST') {
@@ -1535,13 +1671,15 @@ async function handleApi(request, response, url) {
     if (!user) return sendJson(response, 401, { error: '账号已停用' });
     const input = await readJsonBody(request);
     const type = input.type === 'out' ? 'out' : input.type === 'in' ? 'in' : null;
+    const requestedTrackingMode = String(input.trackingMode ?? 'quantity');
     const quantity = Number(input.quantity);
     const requestedName = String(input.materialName ?? '').trim();
     const counterparty = String(input.counterparty ?? '').trim();
     const note = String(input.note ?? '').trim();
     const materials = view.readMaterials();
     let material = materials.find((item) => item.id === input.materialId || (requestedName && item.name.toLowerCase() === requestedName.toLowerCase()));
-    if (!type || !Number.isFinite(quantity) || quantity <= 0) return sendJson(response, 400, { error: '耗材、类型或数量无效' });
+    if (!type) return sendJson(response, 400, { error: '耗材、类型或数量无效' });
+    if (!['quantity', 'stateful', 'tracked'].includes(requestedTrackingMode)) return sendJson(response, 400, { error: '请选择有效的库存追踪模式' });
     if (counterparty.length > 120) return sendJson(response, 400, { error: '来源或去向不能超过 120 个字符' });
     if (note.length > 500) return sendJson(response, 400, { error: '备注不能超过 500 个字符' });
     let createdMaterial = false;
@@ -1563,9 +1701,10 @@ async function handleApi(request, response, url) {
         category,
         quantity: 0,
         safetyStock,
+        expiryWarningDays: parseExpiryWarningDays(input.expiryWarningDays, EXPIRY_WARNING_DAYS),
         unit,
         spec,
-        trackingMode: 'quantity',
+        trackingMode: requestedTrackingMode,
         positionCodeHelp: '',
         usageContextHelp: '',
         active: true,
@@ -1575,7 +1714,17 @@ async function handleApi(request, response, url) {
     }
     if (!material) return sendJson(response, 400, { error: type === 'out' ? '出库必须选择已有耗材' : '请填写或选择耗材' });
     if (!material.active) return sendJson(response, 409, { error: `耗材“${material.name}”已归档，请先由管理员恢复` });
-    if (material.trackingMode !== 'quantity') return sendJson(response, 409, { error: `耗材“${material.name}”启用了状态化库存，请在库存单元登记中选择状态和使用范围` });
+    if (createdMaterial && material.trackingMode !== 'quantity') {
+      if (type !== 'in') return sendJson(response, 400, { error: '只有入库可以创建新耗材' });
+      const store = view.readStore();
+      store.materials.push(material);
+      ensureDefaultInventoryStatuses(store, material.id);
+      if (material.trackingMode === 'stateful') createAggregateUnit(store, material.id);
+      await writeStore({ operation: 'syncStore', store });
+      return sendJson(response, 201, { transaction: null, material, createdMaterial: true });
+    }
+    if (!Number.isFinite(quantity) || quantity <= 0) return sendJson(response, 400, { error: '耗材、类型或数量无效' });
+    if (material.trackingMode !== 'quantity') return sendJson(response, 409, { error: `耗材“${material.name}”启用了状态化库存（按状态或按批次 / 单件管理），请在库存明细中登记` });
     if (type === 'out' && material.quantity < quantity) return sendJson(response, 409, { error: `${material.name} 库存不足，当前仅 ${material.quantity} ${material.unit}` });
     material.quantity += type === 'in' ? quantity : -quantity;
     material.updatedAt = new Date().toISOString();
@@ -1768,6 +1917,7 @@ async function handleApi(request, response, url) {
     const spec = String(input.spec ?? '').trim();
     const unit = String(input.unit ?? '').trim();
     const safetyStock = Number(input.safetyStock ?? 0);
+    const expiryWarningDays = parseExpiryWarningDays(input.expiryWarningDays, EXPIRY_WARNING_DAYS);
     const trackingMode = String(input.trackingMode ?? 'quantity');
     const positionCodeHelp = String(input.positionCodeHelp ?? '').trim();
     const usageContextHelp = String(input.usageContextHelp ?? '').trim();
@@ -1776,12 +1926,13 @@ async function handleApi(request, response, url) {
     if (spec.length > 120) return sendJson(response, 400, { error: '规格、型号不能超过 120 个字符' });
     if (!unit || unit.length > 20) return sendJson(response, 400, { error: '请填写有效单位' });
     if (!Number.isFinite(safetyStock) || safetyStock < 0) return sendJson(response, 400, { error: '安全库存必须是大于或等于 0 的数字' });
+    if (input.expiryWarningDays !== undefined && (!Number.isInteger(Number(input.expiryWarningDays)) || Number(input.expiryWarningDays) < 0 || Number(input.expiryWarningDays) > maxExpiryWarningDays)) return sendJson(response, 400, { error: `临期提醒天数必须是 0-${maxExpiryWarningDays} 的整数` });
     if (!['quantity', 'stateful', 'tracked'].includes(trackingMode)) return sendJson(response, 400, { error: '请选择有效的库存追踪模式' });
     if (positionCodeHelp.length > 200 || usageContextHelp.length > 200) return sendJson(response, 400, { error: '登记字段说明不能超过 200 个字符' });
     const duplicate = similarMaterial(store, name);
     if (duplicate) return sendJson(response, 409, { error: `可能与已有耗材“${duplicate.name}”重复；不同规格请在名称中写明，例如“移液枪头 200 μL”` });
     const material = {
-      id: randomUUID(), name, category, spec, unit, safetyStock, quantity: 0,
+      id: randomUUID(), name, category, spec, unit, safetyStock, expiryWarningDays, quantity: 0,
       active: true,
       trackingMode,
       positionCodeHelp,
@@ -1808,6 +1959,9 @@ async function handleApi(request, response, url) {
     const spec = String(input.spec ?? '').trim();
     const unit = String(input.unit ?? '').trim();
     const safetyStock = Number(input.safetyStock);
+    const expiryWarningDays = input.expiryWarningDays === undefined
+      ? (material.expiryWarningDays ?? EXPIRY_WARNING_DAYS)
+      : parseExpiryWarningDays(input.expiryWarningDays, -1);
     const trackingMode = input.trackingMode === undefined ? material.trackingMode : String(input.trackingMode);
     const positionCodeHelp = String(input.positionCodeHelp ?? material.positionCodeHelp ?? '').trim();
     const usageContextHelp = String(input.usageContextHelp ?? material.usageContextHelp ?? '').trim();
@@ -1816,6 +1970,7 @@ async function handleApi(request, response, url) {
     if (spec.length > 120) return sendJson(response, 400, { error: '规格、型号不能超过 120 个字符' });
     if (!unit || unit.length > 20) return sendJson(response, 400, { error: '请填写有效单位' });
     if (!Number.isFinite(safetyStock) || safetyStock < 0) return sendJson(response, 400, { error: '安全库存必须是大于或等于 0 的数字' });
+    if (!Number.isInteger(expiryWarningDays) || expiryWarningDays < 0 || expiryWarningDays > maxExpiryWarningDays) return sendJson(response, 400, { error: `临期提醒天数必须是 0-${maxExpiryWarningDays} 的整数` });
     if (!['quantity', 'stateful', 'tracked'].includes(trackingMode)) return sendJson(response, 400, { error: '请选择有效的库存追踪模式' });
     if (positionCodeHelp.length > 200 || usageContextHelp.length > 200) return sendJson(response, 400, { error: '登记字段说明不能超过 200 个字符' });
     const duplicate = similarMaterial(store, name, material.id);
@@ -1823,8 +1978,8 @@ async function handleApi(request, response, url) {
     if (unit !== material.unit && material.quantity !== 0) {
       return sendJson(response, 409, { error: `当前仍有 ${material.quantity} ${material.unit} 库存，不能直接更改单位；请先将库存调整为 0` });
     }
-    Object.assign(material, { name, category, spec, unit, safetyStock, positionCodeHelp, usageContextHelp, updatedAt: new Date().toISOString() });
-    configureMaterialTracking(store, material, trackingMode, user, String(input.initialStatusId ?? ''));
+    Object.assign(material, { name, category, spec, unit, safetyStock, expiryWarningDays, positionCodeHelp, usageContextHelp, updatedAt: new Date().toISOString() });
+    configureMaterialTracking(store, material, trackingMode, user, String(input.initialStatusId ?? ''), input.migrateQuantity === true);
     material.updatedAt = new Date().toISOString();
     await writeStore({ operation: 'syncStore', store });
     return sendJson(response, 200, { material });
@@ -2031,13 +2186,15 @@ async function handleApi(request, response, url) {
     const material = store.materials.find((candidate) => candidate.id === String(input.materialId ?? ''));
     if (!material) return sendJson(response, 404, { error: '耗材不存在' });
     if (!material.active) return sendJson(response, 409, { error: '已归档耗材不能新增库存单元，请先恢复' });
-    if (material.trackingMode !== 'tracked') return sendJson(response, 409, { error: '只有按库存单元追踪的耗材可以新增盒、批次或序列单元' });
+    if (material.trackingMode !== 'tracked') return sendJson(response, 409, { error: '只有按批次 / 单件管理的耗材可以新增盒、批次或序列单元' });
     const unitType = ['lot', 'container', 'position'].includes(input.unitType) ? input.unitType : material.trackingMode === 'tracked' ? 'container' : 'aggregate';
     const label = String(input.label ?? '').trim();
     const positionCode = String(input.positionCode ?? '').trim();
     const note = String(input.note ?? '').trim();
     const counterparty = String(input.counterparty ?? '').trim();
     const capacity = Number(input.capacity ?? 0);
+    let expiryDate;
+    try { expiryDate = normalizeExpiryDate(input.expiryDate); } catch (error) { return sendJson(response, 400, { error: error.message }); }
     if (label.length > 80 || positionCode.length > 40) return sendJson(response, 400, { error: '批次或盒标签不能超过 80 个字符，位置编号不能超过 40 个字符' });
     if (unitType !== 'aggregate' && !label && !positionCode) return sendJson(response, 400, { error: '库存单元需要填写批次、盒标签或位置编号' });
     if (!Number.isFinite(capacity) || capacity < 0) return sendJson(response, 400, { error: '容量必须是大于或等于 0 的数字' });
@@ -2068,7 +2225,7 @@ async function handleApi(request, response, url) {
     if (capacity > 0 && totalQuantity > capacity) return sendJson(response, 400, { error: '库存单元数量不能超过容量' });
     const occurredAt = occurredAtFromInput(input.occurredAt);
     const now = new Date().toISOString();
-    const unit = { id: randomUUID(), materialId: material.id, unitType, label, positionCode, capacity, note, active: true, createdAt: now, updatedAt: now };
+    const unit = { id: randomUUID(), materialId: material.id, unitType, label, positionCode, capacity, expiryDate, note, active: true, createdAt: now, updatedAt: now };
     store.inventoryUnits.push(unit);
     for (const balance of balances) {
       upsertInventoryBalance(store, { inventoryUnitId: unit.id, statusId: balance.status.id, accessScope: balance.accessScope, ownerUserId: balance.ownerUserId, positionCode: balance.positionCode }, balance.quantity);
@@ -2082,6 +2239,39 @@ async function handleApi(request, response, url) {
     refreshTrackedMaterialQuantity(store, material);
     await writeStore({ operation: 'syncStore', store });
     return sendJson(response, 201, { unit: inventoryUnitPayload(store, unit), material, summary: inventorySummary(store, material.id) });
+  }
+
+  const inventoryUnitUpdateMatch = url.pathname.match(/^\/api\/inventory-units\/([^/]+)$/);
+  if (inventoryUnitUpdateMatch && request.method === 'PATCH') {
+    if (!canManageInventory(user)) return sendJson(response, 403, { error: '只有库存管理员及以上身份可以补录库存单元信息' });
+    const unit = store.inventoryUnits.find((candidate) => candidate.id === decodeURIComponent(inventoryUnitUpdateMatch[1]));
+    if (!unit) return sendJson(response, 404, { error: '库存单元不存在' });
+    if (unit.unitType === 'aggregate') return sendJson(response, 409, { error: '按状态统计的总库存单元没有批次资料，不能单独补录' });
+    const material = store.materials.find((candidate) => candidate.id === unit.materialId);
+    if (!material) return sendJson(response, 404, { error: '库存单元对应的耗材不存在' });
+    const input = await readJsonBody(request);
+    const label = input.label === undefined ? unit.label : String(input.label ?? '').trim();
+    const positionCode = unit.positionCode;
+    const note = input.note === undefined ? unit.note : String(input.note ?? '').trim();
+    const capacity = input.capacity === undefined ? unit.capacity : Number(input.capacity);
+    let expiryDate;
+    try { expiryDate = input.expiryDate === undefined ? unit.expiryDate : normalizeExpiryDate(input.expiryDate); } catch (error) { return sendJson(response, 400, { error: error.message }); }
+    if (label.length > 80) return sendJson(response, 400, { error: '批次或盒标签不能超过 80 个字符' });
+    if (!label && !positionCode) return sendJson(response, 400, { error: '库存单元需要填写批次或盒标签' });
+    if (!Number.isFinite(capacity) || capacity < 0) return sendJson(response, 400, { error: '容量必须是大于或等于 0 的数字' });
+    const currentQuantity = totalForUnit(store, unit.id);
+    if (capacity > 0 && currentQuantity > capacity + 1e-9) return sendJson(response, 409, { error: `容量不能小于当前库存 ${currentQuantity}` });
+    if (note.length > 500) return sendJson(response, 400, { error: '库存单元备注不能超过 500 个字符' });
+    if (store.inventoryUnits.some((candidate) => candidate.id !== unit.id && candidate.materialId === unit.materialId && candidate.label === label && candidate.positionCode === positionCode)) {
+      return sendJson(response, 409, { error: '该耗材已存在同名库存单元，请使用不同的批次或盒标签' });
+    }
+    unit.label = label;
+    unit.capacity = capacity;
+    unit.expiryDate = expiryDate;
+    unit.note = note;
+    unit.updatedAt = new Date().toISOString();
+    await writeStore({ operation: 'syncStore', store });
+    return sendJson(response, 200, { unit: inventoryUnitPayload(store, unit), material, summary: inventorySummary(store, material.id) });
   }
 
   const inventoryUnitOperationMatch = url.pathname.match(/^\/api\/inventory-units\/([^/]+)\/operation$/);
@@ -2113,6 +2303,10 @@ async function handleApi(request, response, url) {
     let targetPositionCode = '';
 
     if (isInbound) {
+      const expiry = inventoryExpiryInfo(unit.expiryDate);
+      if (expiry.status === 'expired') {
+        return sendJson(response, 409, { error: `库存单元“${inventoryUnitDisplayLabel(unit)}”已于 ${expiry.expiryDate} 过期，不能继续入库；请新建批次并填写新的有效期` });
+      }
       targetStatus = statusById.get(String(input.toStatusId ?? input.statusId ?? ''));
       if (!targetStatus) return sendJson(response, 400, { error: '请选择有效的入库状态' });
       targetAccess = validateAccessTarget(store, input.toAccessScope === 'user' || input.accessScope === 'user' ? 'user' : 'shared', input.toOwnerUserId ?? input.ownerUserId);
@@ -2143,6 +2337,10 @@ async function handleApi(request, response, url) {
       };
       sourceBalance = store.inventoryUnitBalances.find((balance) => balanceIdentity(balance) === balanceIdentity(fromIdentity));
       if (!sourceBalance || sourceBalance.quantity < quantity) return sendJson(response, 409, { error: `该明细只有 ${sourceBalance?.quantity ?? 0} ${material.unit}` });
+      const expiry = inventoryExpiryInfo(unit.expiryDate);
+      if (['use', 'out'].includes(operation) && expiry.status === 'expired') {
+        return sendJson(response, 409, { error: `库存单元“${inventoryUnitDisplayLabel(unit, fromPositionCode)}”已于 ${expiry.expiryDate} 过期，不能作为正常领用使用或出库；如需退货、报废或危废移交，请改用“处置”操作` });
+      }
       if (fromPositionCode && (Math.abs(sourceBalance.quantity - 1) > 1e-9 || Math.abs(quantity - sourceBalance.quantity) > 1e-9)) {
         return sendJson(response, 409, { error: '按位置追踪的库存必须是一件且整条登记；旧数据异常请联系系统管理员处理' });
       }
@@ -2177,7 +2375,7 @@ async function handleApi(request, response, url) {
         return sendJson(response, 403, { error: '该库存明细属于其他成员自用，不能登记' });
       }
       if (['use', 'out'].includes(operation) && !fromStatus.usable) return sendJson(response, 409, { error: '不可用库存不能登记使用，请选择处置或由管理员修正状态' });
-      if (operation === 'dispose' && fromStatus.usable && !canManageInventory(user)) return sendJson(response, 409, { error: '请先将状态改为不可用，再登记处置' });
+      if (operation === 'dispose' && fromStatus.usable && !canManageInventory(user) && expiry.status !== 'expired') return sendJson(response, 409, { error: '请先将状态改为不可用，再登记处置' });
       if (fromStatus.terminal && !canManageInventory(user) && operation !== 'dispose') return sendJson(response, 403, { error: '不可用状态只能由库存管理员修正或由成员处置' });
       if (['state_change', 'access_change', 'position_change'].includes(operation)
         && targetStatus.id === fromStatus.id
@@ -2590,7 +2788,7 @@ function auditEntitySnapshot(type, value) {
   };
   if (type === 'material') return {
     id: value.id, name: value.name, category: value.category, safetyStock: value.safetyStock, unit: value.unit,
-    spec: value.spec, trackingMode: value.trackingMode, positionCodeHelp: value.positionCodeHelp ?? '',
+    spec: value.spec, expiryWarningDays: value.expiryWarningDays ?? EXPIRY_WARNING_DAYS, trackingMode: value.trackingMode, positionCodeHelp: value.positionCodeHelp ?? '',
     usageContextHelp: value.usageContextHelp ?? '', active: Boolean(value.active),
   };
   if (type === 'inventory_status') return {
@@ -2599,7 +2797,7 @@ function auditEntitySnapshot(type, value) {
   };
   if (type === 'inventory_unit') return {
     id: value.id, materialId: value.materialId, unitType: value.unitType, label: value.label,
-    positionCode: value.positionCode, capacity: value.capacity, note: value.note ?? '', active: Boolean(value.active),
+    positionCode: value.positionCode, capacity: value.capacity, expiryDate: value.expiryDate ?? '', note: value.note ?? '', active: Boolean(value.active),
   };
   return auditSnapshot(value);
 }
@@ -2643,6 +2841,7 @@ function captureManagementAudit(request, url) {
   else if (pathName === '/api/inventory-statuses' && method === 'POST') descriptor = { action: 'inventory_status.create', targetType: 'inventory_status' };
   else if (match(/^\/api\/inventory-statuses\/([^/]+)$/) && method === 'PATCH') descriptor = { action: 'inventory_status.update', targetType: 'inventory_status', targetId: decodeURIComponent(match(/^\/api\/inventory-statuses\/([^/]+)$/)[1]) };
   else if (pathName === '/api/inventory-units' && method === 'POST') descriptor = { action: 'inventory_unit.create', targetType: 'inventory_unit' };
+  else if (match(/^\/api\/inventory-units\/([^/]+)$/) && method === 'PATCH') descriptor = { action: 'inventory_unit.update', targetType: 'inventory_unit', targetId: decodeURIComponent(match(/^\/api\/inventory-units\/([^/]+)$/)[1]) };
   else if (match(/^\/api\/inventory-units\/([^/]+)\/status$/) && method === 'PATCH') descriptor = {
     action: input.status === 'active' ? 'inventory_unit.restore' : 'inventory_unit.archive', targetType: 'inventory_unit',
     targetId: decodeURIComponent(match(/^\/api\/inventory-units\/([^/]+)\/status$/)[1]),
@@ -2677,7 +2876,7 @@ const auditActionLabels = Object.freeze({
   'settings.update': '修改实验室与品牌设置', 'group.create': '新增组织分组', 'group.update': '修改组织分组', 'group.delete': '删除组织分组',
   'tag.create': '新增成员标签', 'tag.update': '修改成员标签', 'tag.delete': '删除成员标签',
   'material.create': '新增耗材档案', 'material.update': '修改耗材档案', 'material.archive': '归档耗材档案', 'material.restore': '恢复耗材档案', 'material.delete': '永久删除耗材档案',
-  'inventory_status.create': '新增库存状态', 'inventory_status.update': '修改库存状态', 'inventory_unit.create': '新增库存单元', 'inventory_unit.archive': '归档库存单元', 'inventory_unit.restore': '恢复库存单元',
+  'inventory_status.create': '新增库存状态', 'inventory_status.update': '修改库存状态', 'inventory_unit.create': '新增库存单元', 'inventory_unit.update': '补录库存单元信息', 'inventory_unit.archive': '归档库存单元', 'inventory_unit.restore': '恢复库存单元',
   'inventory_anomaly.resolve': '修复库存位置异常', 'user.create': '新增成员账号', 'user.update': '修改成员账号', 'user.delete': '删除成员账号',
   'user.password_reset': '重置成员密码', 'user.enable': '启用成员账号', 'user.disable': '停用成员账号', 'user.group_change': '调整成员分组', 'user.profile_update': '修改管理员个人资料',
   'owner.transfer': '转移系统所有权', 'account.password_change': '修改自己的密码', 'database.restore_authorize': '授权数据库恢复',

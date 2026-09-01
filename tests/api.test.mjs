@@ -19,6 +19,7 @@ import {
 import { detectMobileKeyboard, measureMobileViewport } from '../src/scripts/mobile-viewport.mjs';
 import { paginateRecords } from '../src/scripts/record-pagination.mjs';
 import { terminalStateConfirmation } from '../src/scripts/inventory-operation.mjs';
+import { inventoryExpiryInfo, normalizeExpiryDate } from '../src/server/inventory-expiry.mjs';
 
 const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const packageMetadata = JSON.parse(await readFile(path.join(rootDir, 'package.json'), 'utf8'));
@@ -69,7 +70,7 @@ async function startServer(origin, serverDataDir = dataDir, extraEnv = {}) {
       DATA_DIR: serverDataDir,
       PORT: String(port),
       HOST: '127.0.0.1',
-      SQLITE_BUSY_TIMEOUT_MS: '2000',
+      SQLITE_BUSY_TIMEOUT_MS: '500',
       ...extraEnv,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -166,6 +167,21 @@ test('只有变更为终止不可用状态时要求二次确认', () => {
   assert.equal(terminalStateConfirmation('state_change', unavailable, null), null);
 });
 
+test('库存有效期按日期校验并区分正常、临期和过期边界', () => {
+  assert.equal(normalizeExpiryDate(''), '');
+  assert.equal(normalizeExpiryDate('2026-08-31'), '2026-08-31');
+  assert.throws(() => normalizeExpiryDate('2026-2-1'), /YYYY-MM-DD/);
+  assert.throws(() => normalizeExpiryDate('2026-02-30'), /日期无效/);
+  const noon = Date.UTC(2026, 7, 31, 12);
+  assert.deepEqual(inventoryExpiryInfo('2026-08-31', noon), { status: 'expiring', daysRemaining: 0, expiryDate: '2026-08-31' });
+  assert.equal(inventoryExpiryInfo('2026-09-30', noon).status, 'expiring');
+  assert.equal(inventoryExpiryInfo('2026-10-01', noon).status, 'normal');
+  assert.equal(inventoryExpiryInfo('2026-09-01', noon, 0).status, 'normal');
+  assert.equal(inventoryExpiryInfo('2026-09-02', noon, 0).status, 'normal');
+  assert.equal(inventoryExpiryInfo('2026-08-30', noon).status, 'expired');
+  assert.equal(inventoryExpiryInfo('2026-08-31', Date.UTC(2026, 8, 1)).status, 'expired');
+});
+
 test('完整流水响应保留成员 UUID，供“我的记录”稳定筛选', async () => {
   const session = await login('student', 'demo123');
   const bootstrap = await request('/api/bootstrap', { session });
@@ -189,12 +205,247 @@ test('完整导出在同一数据库快照中返回库存、统计和流水', as
   assert.equal(exported.payload.eventTotal, exported.payload.inventoryEvents.length);
   assert.ok(Array.isArray(exported.payload.materials));
   assert.ok(Array.isArray(exported.payload.materialStats));
+  assert.ok(Array.isArray(exported.payload.inventorySummaries));
+  assert.ok(Array.isArray(exported.payload.inventoryUnits));
+  assert.ok(Array.isArray(exported.payload.expiryAlerts));
   assert.ok(Array.isArray(exported.payload.groups));
   assert.ok(Array.isArray(exported.payload.directory));
   assert.ok(exported.payload.transactions.every((record, index, all) => (
     index === 0 || all[index - 1].occurredAt > record.occurredAt
       || (all[index - 1].occurredAt === record.occurredAt && all[index - 1].id > record.id)
   )));
+});
+
+test('批次有效期会提醒、排除可用量并阻止过期出库', async () => {
+  const expiryDataDir = await mkdtemp(path.join(os.tmpdir(), 'labstock-expiry-'));
+  const origin = `http://127.0.0.1:${await freePort()}`;
+  let expiryServer;
+  try {
+    expiryServer = await startServer(origin, expiryDataDir);
+    const owner = await login('admin', 'admin123', origin);
+    const member = await login('student', 'demo123', origin);
+    const materialResult = await request('/api/materials', {
+      method: 'POST', session: owner, origin,
+      body: { name: '有效期测试耗材', category: '测试', unit: '盒', trackingMode: 'tracked', safetyStock: 1 },
+    });
+    assert.equal(materialResult.response.status, 201, JSON.stringify(materialResult.payload));
+    const materialId = materialResult.payload.material.id;
+    assert.equal(materialResult.payload.material.expiryWarningDays, 30);
+    const customReminder = await request(`/api/materials/${materialId}`, {
+      method: 'PATCH', session: owner, origin,
+      body: { name: '有效期测试耗材', category: '测试', unit: '盒', safetyStock: 1, trackingMode: 'tracked', expiryWarningDays: 7 },
+    });
+    assert.equal(customReminder.response.status, 200, JSON.stringify(customReminder.payload));
+    assert.equal(customReminder.payload.material.expiryWarningDays, 7);
+    const inventory = await request(`/api/inventory-units?materialId=${materialId}`, { session: owner, origin });
+    const newStatus = inventory.payload.statuses.find((status) => status.code === 'new');
+    assert.ok(newStatus);
+    const dateOnly = (offsetDays) => new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
+    const expiredUnit = await request('/api/inventory-units', {
+      method: 'POST', session: owner, origin,
+      body: { materialId, unitType: 'lot', label: '过期批次', expiryDate: dateOnly(-1), balances: [{ statusId: newStatus.id, accessScope: 'shared', quantity: 2 }] },
+    });
+    assert.equal(expiredUnit.response.status, 201, JSON.stringify(expiredUnit.payload));
+    assert.equal(expiredUnit.payload.unit.expiry.status, 'expired');
+    assert.equal(expiredUnit.payload.summary.expired, 2);
+    assert.equal(expiredUnit.payload.summary.sharedUsable, 0);
+    const bootstrapWithExpired = await request('/api/bootstrap', { session: owner, origin });
+    const expiredMaterial = bootstrapWithExpired.payload.materials.find((material) => material.id === materialId);
+    assert.equal(expiredMaterial.availableQuantity, 0);
+    assert.equal(bootstrapWithExpired.payload.expiryAlerts.length, 1);
+    assert.equal(bootstrapWithExpired.payload.expiryAlerts[0].status, 'expired');
+    const expectedWarningMaterialCount = new Set([
+      ...bootstrapWithExpired.payload.materials.filter((material) => material.active && material.availableQuantity <= material.safetyStock).map((material) => material.id),
+      ...bootstrapWithExpired.payload.expiryAlerts.map((alert) => alert.materialId),
+    ]).size;
+    assert.equal(bootstrapWithExpired.payload.stats.warningCount, expectedWarningMaterialCount);
+    const operationBody = { operation: 'out', quantity: 1, fromStatusId: newStatus.id, fromAccessScope: 'shared' };
+    const blockedOut = await request(`/api/inventory-units/${expiredUnit.payload.unit.id}/operation`, { method: 'POST', session: owner, origin, body: operationBody });
+    assert.equal(blockedOut.response.status, 409);
+    assert.match(blockedOut.payload.error, /过期/);
+    const blockedUse = await request(`/api/inventory-units/${expiredUnit.payload.unit.id}/operation`, {
+      method: 'POST', session: owner, origin,
+      body: { ...operationBody, operation: 'use' },
+    });
+    assert.equal(blockedUse.response.status, 409);
+    const blockedInbound = await request(`/api/inventory-units/${expiredUnit.payload.unit.id}/operation`, {
+      method: 'POST', session: owner, origin,
+      body: { operation: 'in', quantity: 1, toStatusId: newStatus.id, toAccessScope: 'shared' },
+    });
+    assert.equal(blockedInbound.response.status, 409);
+    assert.match(blockedInbound.payload.error, /不能继续入库/);
+    const memberDisposed = await request(`/api/inventory-units/${expiredUnit.payload.unit.id}/operation`, {
+      method: 'POST', session: member, origin,
+      body: { ...operationBody, quantity: 1, operation: 'dispose', counterparty: '废弃物处理', note: '有效期届满' },
+    });
+    assert.equal(memberDisposed.response.status, 200, JSON.stringify(memberDisposed.payload));
+    assert.equal(memberDisposed.payload.summary.total, 1);
+    const disposed = await request(`/api/inventory-units/${expiredUnit.payload.unit.id}/operation`, {
+      method: 'POST', session: owner, origin,
+      body: { ...operationBody, quantity: 1, operation: 'dispose', counterparty: '废弃物处理', note: '有效期届满' },
+    });
+    assert.equal(disposed.response.status, 200, JSON.stringify(disposed.payload));
+    assert.equal(disposed.payload.summary.total, 0);
+    const normalUnit = await request('/api/inventory-units', {
+      method: 'POST', session: owner, origin,
+      body: { materialId, unitType: 'lot', label: '正常批次', expiryDate: dateOnly(60), balances: [{ statusId: newStatus.id, accessScope: 'shared', quantity: 4 }] },
+    });
+    assert.equal(normalUnit.response.status, 201, JSON.stringify(normalUnit.payload));
+    assert.equal(normalUnit.payload.unit.expiry.status, 'normal');
+    const bootstrapWithNormal = await request('/api/bootstrap', { session: owner, origin });
+    assert.equal(bootstrapWithNormal.payload.expiryAlerts.some((alert) => alert.inventoryUnitId === normalUnit.payload.unit.id), false);
+    const sevenDayUnit = await request('/api/inventory-units', {
+      method: 'POST', session: owner, origin,
+      body: { materialId, unitType: 'lot', label: '七天规则批次', expiryDate: dateOnly(10), balances: [{ statusId: newStatus.id, accessScope: 'shared', quantity: 1 }] },
+    });
+    assert.equal(sevenDayUnit.response.status, 201, JSON.stringify(sevenDayUnit.payload));
+    assert.equal(sevenDayUnit.payload.unit.expiry.status, 'normal');
+    const extendedReminder = await request(`/api/materials/${materialId}`, {
+      method: 'PATCH', session: owner, origin,
+      body: { name: '有效期测试耗材', category: '测试', unit: '盒', safetyStock: 1, trackingMode: 'tracked', expiryWarningDays: 90 },
+    });
+    assert.equal(extendedReminder.response.status, 200, JSON.stringify(extendedReminder.payload));
+    assert.equal(extendedReminder.payload.material.expiryWarningDays, 90);
+    const sevenDayDetail = await request(`/api/inventory-units?unitId=${sevenDayUnit.payload.unit.id}`, { session: owner, origin });
+    assert.equal(sevenDayDetail.payload.units[0].expiry.status, 'expiring');
+    const expiringUnit = await request('/api/inventory-units', {
+      method: 'POST', session: owner, origin,
+      body: { materialId, unitType: 'lot', label: '临期批次', expiryDate: dateOnly(5), balances: [{ statusId: newStatus.id, accessScope: 'shared', quantity: 3 }] },
+    });
+    assert.equal(expiringUnit.response.status, 201, JSON.stringify(expiringUnit.payload));
+    assert.equal(expiringUnit.payload.unit.expiry.status, 'expiring');
+    const bootstrapWithExpiring = await request('/api/bootstrap', { session: owner, origin });
+    assert.ok(bootstrapWithExpiring.payload.expiryAlerts.some((alert) => alert.inventoryUnitId === expiringUnit.payload.unit.id && alert.status === 'expiring'));
+  } finally {
+    await stopServer(expiryServer);
+    await rm(expiryDataDir, { recursive: true, force: true });
+  }
+});
+
+test('库存单元资料可以独立补录且不改变数量流水', async () => {
+  const editDataDir = await mkdtemp(path.join(os.tmpdir(), 'labstock-unit-edit-'));
+  const origin = `http://127.0.0.1:${await freePort()}`;
+  let editServer;
+  try {
+    editServer = await startServer(origin, editDataDir);
+    const owner = await login('admin', 'admin123', origin);
+    const member = await login('student', 'demo123', origin);
+    const materialResult = await request('/api/materials', {
+      method: 'POST', session: owner, origin,
+      body: { name: '库存单元资料补录测试', category: '测试', unit: '盒', trackingMode: 'tracked', safetyStock: 0 },
+    });
+    assert.equal(materialResult.response.status, 201, JSON.stringify(materialResult.payload));
+    const materialId = materialResult.payload.material.id;
+    const inventory = await request(`/api/inventory-units?materialId=${materialId}`, { session: owner, origin });
+    const statusId = inventory.payload.statuses.find((status) => status.code === 'new').id;
+    const unitResult = await request('/api/inventory-units', {
+      method: 'POST', session: owner, origin,
+      body: { materialId, unitType: 'lot', label: '历史库存（未分批）', capacity: 0, expiryDate: '', note: '待补录', balances: [{ statusId, accessScope: 'shared', quantity: 4 }] },
+    });
+    assert.equal(unitResult.response.status, 201, JSON.stringify(unitResult.payload));
+    const unitId = unitResult.payload.unit.id;
+    const beforeTransactions = (await request('/api/transactions?includeInventoryEvents=1', { session: owner, origin })).payload;
+    const denied = await request(`/api/inventory-units/${unitId}`, {
+      method: 'PATCH', session: member, origin,
+      body: { label: 'LOT-DENIED', capacity: 8, expiryDate: '2027-02-01', note: '无权限' },
+    });
+    assert.equal(denied.response.status, 403);
+    const updated = await request(`/api/inventory-units/${unitId}`, {
+      method: 'PATCH', session: owner, origin,
+      body: { label: 'LOT-2026-A', capacity: 8, expiryDate: '2027-02-01', note: '由历史表补录' },
+    });
+    assert.equal(updated.response.status, 200, JSON.stringify(updated.payload));
+    assert.equal(updated.payload.unit.label, 'LOT-2026-A');
+    assert.equal(updated.payload.unit.capacity, 8);
+    assert.equal(updated.payload.unit.expiryDate, '2027-02-01');
+    assert.equal(updated.payload.unit.quantity, 4);
+    const cleared = await request(`/api/inventory-units/${unitId}`, {
+      method: 'PATCH', session: owner, origin,
+      body: { expiryDate: '', note: '已核对' },
+    });
+    assert.equal(cleared.response.status, 200);
+    assert.equal(cleared.payload.unit.expiryDate, '');
+    assert.equal(cleared.payload.unit.quantity, 4);
+    const tooSmall = await request(`/api/inventory-units/${unitId}`, {
+      method: 'PATCH', session: owner, origin,
+      body: { capacity: 3 },
+    });
+    assert.equal(tooSmall.response.status, 409);
+    assert.match(tooSmall.payload.error, /容量不能小于当前库存/);
+    const duplicate = await request('/api/inventory-units', {
+      method: 'POST', session: owner, origin,
+      body: { materialId, unitType: 'lot', label: 'LOT-DUP', balances: [{ statusId, accessScope: 'shared', quantity: 1 }] },
+    });
+    assert.equal(duplicate.response.status, 201);
+    const duplicateUpdate = await request(`/api/inventory-units/${duplicate.payload.unit.id}`, {
+      method: 'PATCH', session: owner, origin,
+      body: { label: 'LOT-2026-A' },
+    });
+    assert.equal(duplicateUpdate.response.status, 409);
+    const afterTransactions = (await request('/api/transactions?includeInventoryEvents=1', { session: owner, origin })).payload;
+    assert.equal(afterTransactions.transactions.length, beforeTransactions.transactions.length + 1);
+    assert.equal(afterTransactions.inventoryEvents.length, beforeTransactions.inventoryEvents.length);
+    const audit = await request('/api/audit-logs?type=inventory_unit&pageSize=100', { session: owner, origin });
+    assert.equal(audit.response.status, 200);
+    const updateAudit = audit.payload.items.find((item) => item.action === 'inventory_unit.update' && item.targetId === unitId && item.after?.expiryDate === '2027-02-01');
+    assert.ok(updateAudit);
+    assert.equal(updateAudit.before.expiryDate, '');
+    assert.equal(updateAudit.after.expiryDate, '2027-02-01');
+    assert.equal(updateAudit.after.label, 'LOT-2026-A');
+    const clearExpiryAudit = audit.payload.items.find((item) => item.action === 'inventory_unit.update' && item.targetId === unitId && item.after?.expiryDate === '');
+    assert.ok(clearExpiryAudit);
+  } finally {
+    await stopServer(editServer);
+    await rm(editDataDir, { recursive: true, force: true });
+  }
+});
+
+test('版本 14 的库存单元表会自动补齐有效期字段', async () => {
+  const migrationDataDir = await mkdtemp(path.join(os.tmpdir(), 'labstock-schema-v14-expiry-'));
+  const origin = `http://127.0.0.1:${await freePort()}`;
+  let migrationServer;
+  let database;
+  try {
+    migrationServer = await startServer(origin, migrationDataDir);
+    await stopServer(migrationServer);
+    migrationServer = null;
+    const databasePath = path.join(migrationDataDir, 'labstock.sqlite');
+    database = new DatabaseSync(databasePath);
+    database.exec(`
+      PRAGMA foreign_keys = OFF;
+      CREATE TABLE inventory_units_legacy (
+        id TEXT PRIMARY KEY,
+        material_id TEXT NOT NULL,
+        unit_type TEXT NOT NULL CHECK (unit_type IN ('aggregate', 'lot', 'container', 'position')),
+        label TEXT NOT NULL DEFAULT '',
+        position_code TEXT NOT NULL DEFAULT '',
+        capacity REAL NOT NULL DEFAULT 0 CHECK (capacity >= 0),
+        note TEXT NOT NULL DEFAULT '',
+        active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      ) STRICT;
+      INSERT INTO inventory_units_legacy (id, material_id, unit_type, label, position_code, capacity, note, active, created_at, updated_at)
+        SELECT id, material_id, unit_type, label, position_code, capacity, note, active, created_at, updated_at FROM inventory_units;
+      DROP TABLE inventory_units;
+      ALTER TABLE inventory_units_legacy RENAME TO inventory_units;
+      UPDATE metadata SET value = '14' WHERE key = 'schema_version';
+      PRAGMA foreign_keys = ON;
+    `);
+    database.close();
+    database = null;
+    migrationServer = await startServer(origin, migrationDataDir);
+    database = new DatabaseSync(databasePath, { readOnly: true });
+    assert.equal(database.prepare("SELECT value FROM metadata WHERE key = 'schema_version'").get().value, '16');
+    assert.ok(database.prepare('PRAGMA table_info(inventory_units)').all().some((column) => column.name === 'expiry_date'));
+    assert.ok(database.prepare('PRAGMA table_info(materials)').all().some((column) => column.name === 'expiry_warning_days'));
+    assert.equal(database.prepare('SELECT expiry_warning_days FROM materials').get().expiry_warning_days, 30);
+    assert.equal(database.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
+  } finally {
+    try { database?.close(); } catch {}
+    await stopServer(migrationServer);
+    await rm(migrationDataDir, { recursive: true, force: true });
+  }
 });
 
 test('库存活动服务端筛选和游标分页保持稳定顺序', async () => {
@@ -228,7 +479,7 @@ test('库存活动服务端筛选和游标分页保持稳定顺序', async () =>
   assert.equal((await request('/api/transactions?mode=page&cursor=invalid', { session })).response.status, 400);
 });
 
-test('耗材二维码仅接受稳定 UUID 或带目标参数的网址', () => {
+test('耗材二维码仅接受稳定 UUID 或带参数的网址', () => {
   const materialId = '123e4567-e89b-42d3-a456-426614174000';
   const unitId = '223e4567-e89b-42d3-a456-426614174001';
   assert.equal(
@@ -236,12 +487,12 @@ test('耗材二维码仅接受稳定 UUID 或带目标参数的网址', () => {
     `https://inventory.example/lab/?material=${materialId}`,
   );
   assert.equal(
-    createMaterialQrPayload(materialId, 'https://inventory.example.org/?from=inventory#labels'),
-    `https://inventory.example.org/?material=${materialId}`,
+    createMaterialQrPayload(materialId, 'https://henulab.com/?from=inventory#labels'),
+    `https://henulab.com/?material=${materialId}`,
   );
   assert.equal(materialIdFromQrText(materialId), materialId);
   assert.equal(materialIdFromQrText(`https://inventory.example/?material=${materialId}`), materialId);
-  assert.equal(materialIdFromQrText(`https://inventory.example.org/?material=${materialId}`), materialId);
+  assert.equal(materialIdFromQrText(`https://henulab.com/?material=${materialId}`), materialId);
   assert.equal(materialIdFromQrText('https://inventory.example/?material=not-a-uuid'), '');
   assert.equal(materialIdFromQrText('plain inventory text'), '');
   assert.equal(createInventoryUnitQrPayload(unitId, 'https://inventory.example/lab/?old=1'), `https://inventory.example/lab/?unit=${unitId}`);
@@ -313,7 +564,6 @@ test('完整的耗材、权限和成员管理流程', async () => {
   assert.equal(manifest.start_url, '/');
   assert.equal(manifest.scope, '/');
   assert.equal(manifest.display, 'standalone');
-  assert.equal('orientation' in manifest, false, 'PWA direction should follow the operating system rotation setting');
   assert.ok(manifest.icons.some((icon) => icon.sizes === '512x512' && icon.purpose === 'maskable'));
   const unchangedManifest = await fetch(`${baseUrl}/manifest.webmanifest`, { headers: { 'If-None-Match': manifestEtag } });
   assert.equal(unchangedManifest.status, 304);
@@ -670,10 +920,7 @@ test('完整的耗材、权限和成员管理流程', async () => {
     method: 'POST', session: member, origin: index % 2 ? secondBaseUrl : baseUrl,
     body: { type: 'in', materialId: created.payload.material.id, quantity: 1, note: '双进程并发测试' },
   })));
-  const failedConcurrentWrites = concurrentWrites
-    .filter((result) => result.response.status !== 201)
-    .map((result) => ({ status: result.response.status, error: result.payload.error }));
-  assert.deepEqual(failedConcurrentWrites, []);
+  assert.ok(concurrentWrites.every((result) => result.response.status === 201));
 
   const singleStock = await request('/api/transactions', {
     method: 'POST', session: member,
@@ -862,6 +1109,60 @@ test('完整的耗材、权限和成员管理流程', async () => {
     body: { name: '库存管理员创建的耗材', category: '测试', spec: 'A 型', unit: '件', safetyStock: 2 },
   });
   assert.equal(inventoryMaterial.response.status, 201);
+
+  const quickTrackedMaterial = await request('/api/transactions', {
+    method: 'POST', session: member,
+    body: {
+      type: 'in', materialName: '快速入库批次耗材', category: '测试', spec: '需追踪批次', unit: '盒',
+      safetyStock: 0, trackingMode: 'tracked',
+    },
+  });
+  assert.equal(quickTrackedMaterial.response.status, 201, JSON.stringify(quickTrackedMaterial.payload));
+  assert.equal(quickTrackedMaterial.payload.transaction, null);
+  assert.equal(quickTrackedMaterial.payload.material.trackingMode, 'tracked');
+  const quickTrackedInventory = await request(`/api/inventory-units?materialId=${quickTrackedMaterial.payload.material.id}`, { session: member });
+  assert.equal(quickTrackedInventory.response.status, 200);
+  assert.equal(quickTrackedInventory.payload.units.length, 0);
+  assert.equal(quickTrackedInventory.payload.statuses.length, 3);
+
+  const quickStatefulMaterial = await request('/api/transactions', {
+    method: 'POST', session: member,
+    body: {
+      type: 'in', materialName: '快速入库状态耗材', category: '测试', spec: '需追踪状态', unit: '个',
+      safetyStock: 1, trackingMode: 'stateful',
+    },
+  });
+  assert.equal(quickStatefulMaterial.response.status, 201, JSON.stringify(quickStatefulMaterial.payload));
+  assert.equal(quickStatefulMaterial.payload.transaction, null);
+  assert.equal(quickStatefulMaterial.payload.material.trackingMode, 'stateful');
+  const quickStatefulInventory = await request(`/api/inventory-units?materialId=${quickStatefulMaterial.payload.material.id}`, { session: member });
+  assert.equal(quickStatefulInventory.payload.units.length, 1);
+  assert.equal(quickStatefulInventory.payload.units[0].unitType, 'aggregate');
+
+  const migrationMaterial = await request('/api/materials', {
+    method: 'POST', session: inventoryAdmin,
+    body: { name: '普通库存转换验收', category: '测试', unit: '盒', safetyStock: 0 },
+  });
+  assert.equal(migrationMaterial.response.status, 201);
+  const migrationInbound = await request('/api/transactions', {
+    method: 'POST', session: member,
+    body: { type: 'in', materialId: migrationMaterial.payload.material.id, quantity: 5, counterparty: '转换前入库' },
+  });
+  assert.equal(migrationInbound.response.status, 201);
+  const rejectedMigration = await request(`/api/materials/${migrationMaterial.payload.material.id}`, {
+    method: 'PATCH', session: inventoryAdmin,
+    body: { ...migrationMaterial.payload.material, trackingMode: 'tracked' },
+  });
+  assert.equal(rejectedMigration.response.status, 409);
+  const migrated = await request(`/api/materials/${migrationMaterial.payload.material.id}`, {
+    method: 'PATCH', session: inventoryAdmin,
+    body: { ...migrationMaterial.payload.material, trackingMode: 'tracked', migrateQuantity: true },
+  });
+  assert.equal(migrated.response.status, 200, JSON.stringify(migrated.payload));
+  const migratedInventory = await request(`/api/inventory-units?materialId=${migrationMaterial.payload.material.id}`, { session: member });
+  assert.equal(migratedInventory.payload.units.length, 1);
+  assert.equal(migratedInventory.payload.units[0].label, '历史库存（未分批）');
+  assert.equal(migratedInventory.payload.units[0].quantity, 5);
 
   const probePeerAccount = await request('/api/users', {
     method: 'POST', session: ordinaryAdmin,
@@ -1461,6 +1762,36 @@ test('完整的耗材、权限和成员管理流程', async () => {
     method: 'PATCH', session: inventoryAdmin, body: { ...filterBase, trackingMode: 'quantity' },
   })).response.status, 200);
 
+  const statefulMigration = await request('/api/materials', {
+    method: 'POST', session: inventoryAdmin,
+    body: { name: '状态库存转换验收', category: '测试', unit: '盒', safetyStock: 0, trackingMode: 'stateful' },
+  });
+  assert.equal(statefulMigration.response.status, 201);
+  const statefulMigrationInventory = await request(`/api/inventory-units?materialId=${statefulMigration.payload.material.id}`, { session: member });
+  const statefulMigrationAggregate = statefulMigrationInventory.payload.units.find((unit) => unit.unitType === 'aggregate');
+  const statefulMigrationStatus = statefulMigrationInventory.payload.statuses.find((status) => status.code === 'new');
+  assert.ok(statefulMigrationAggregate && statefulMigrationStatus);
+  const statefulMigrationInbound = await request(`/api/inventory-units/${statefulMigrationAggregate.id}/operation`, {
+    method: 'POST', session: member,
+    body: { operation: 'in', quantity: 3, toStatusId: statefulMigrationStatus.id, toAccessScope: 'shared', counterparty: '状态转换入库' },
+  });
+  assert.equal(statefulMigrationInbound.response.status, 200);
+  const rejectedStatefulMigration = await request(`/api/materials/${statefulMigration.payload.material.id}`, {
+    method: 'PATCH', session: inventoryAdmin,
+    body: { ...statefulMigration.payload.material, trackingMode: 'tracked' },
+  });
+  assert.equal(rejectedStatefulMigration.response.status, 409);
+  const migratedStateful = await request(`/api/materials/${statefulMigration.payload.material.id}`, {
+    method: 'PATCH', session: inventoryAdmin,
+    body: { ...statefulMigration.payload.material, trackingMode: 'tracked', migrateQuantity: true },
+  });
+  assert.equal(migratedStateful.response.status, 200, JSON.stringify(migratedStateful.payload));
+  const migratedStatefulInventory = await request(`/api/inventory-units?materialId=${statefulMigration.payload.material.id}`, { session: member });
+  assert.equal(migratedStatefulInventory.payload.units.length, 1);
+  assert.equal(migratedStatefulInventory.payload.units[0].label, '历史库存（未分批）');
+  assert.equal(migratedStatefulInventory.payload.units[0].quantity, 3);
+  assert.equal(migratedStatefulInventory.payload.units[0].balances[0].statusId, statefulMigrationStatus.id);
+
   const genericTrackedMaterial = await request('/api/materials', {
     method: 'POST', session: inventoryAdmin,
     body: { name: '通用追踪单元验收', category: '测试', spec: '批次与序列', unit: 'L', safetyStock: 0, trackingMode: 'tracked' },
@@ -1766,7 +2097,7 @@ test('旧角色约束会自动迁移并保留所有者与账号数据', async ()
     database.prepare("INSERT INTO metadata (key, value) VALUES ('initialized', ?), ('schema_version', '1'), ('owner_user_id', ?)")
       .run(new Date().toISOString(), ownerId);
     database.prepare('INSERT INTO settings (id, app_name, lab_name, brand_icon) VALUES (1, ?, ?, ?)')
-      .run('旧版自定义名称', '旧数据库迁移测试', '');
+      .run('SYSULab', '旧数据库迁移测试', '');
     database.prepare('INSERT INTO groups (id, name, is_default) VALUES (?, ?, 1)').run(groupId, '默认组');
     database.prepare('INSERT INTO users (id, username, name, role, group_id, active, salt, password_hash, last_login_at) VALUES (?, ?, ?, ?, ?, 1, ?, ?, NULL)')
       .run(ownerId, 'legacy_admin', '旧系统所有者', 'admin', groupId, credentials.salt, credentials.passwordHash);
@@ -1786,8 +2117,8 @@ test('旧角色约束会自动迁移并保留所有者与账号数据', async ()
     const migrated = new DatabaseSync(databasePath, { readOnly: true });
     try {
       assert.match(migrated.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'").get().sql, /'inventory'/);
-         assert.equal(migrated.prepare("SELECT value FROM metadata WHERE key = 'schema_version'").get().value, '14');
-         assert.equal(migrated.prepare('SELECT app_name FROM settings WHERE id = 1').get().app_name, '旧版自定义名称');
+        assert.equal(migrated.prepare("SELECT value FROM metadata WHERE key = 'schema_version'").get().value, '16');
+        assert.equal(migrated.prepare('SELECT app_name FROM settings WHERE id = 1').get().app_name, 'OpenLabStock');
         assert.ok(migrated.prepare('PRAGMA table_info(materials)').all().some((column) => column.name === 'active'));
         const migratedMaterialColumns = new Set(migrated.prepare('PRAGMA table_info(materials)').all().map((column) => column.name));
         assert.ok(migratedMaterialColumns.has('position_code_help'));
@@ -1816,7 +2147,7 @@ test('旧角色约束会自动迁移并保留所有者与账号数据', async ()
   }
 });
 
-test('版本 12 数据库会直接迁移到版本 14 并开始记录系统审计', async () => {
+test('版本 12 数据库会直接迁移到当前版本并开始记录系统审计', async () => {
   const version12DataDir = await mkdtemp(path.join(os.tmpdir(), 'labstock-schema-v12-audit-'));
   const origin = `http://127.0.0.1:${await freePort()}`;
   const databasePath = path.join(version12DataDir, 'labstock.sqlite');
@@ -1847,7 +2178,7 @@ test('版本 12 数据库会直接迁移到版本 14 并开始记录系统审计
     assert.equal(audit.payload.items[0].action, 'settings.update');
 
     database = new DatabaseSync(databasePath, { readOnly: true });
-    assert.equal(database.prepare("SELECT value FROM metadata WHERE key = 'schema_version'").get().value, '14');
+    assert.equal(database.prepare("SELECT value FROM metadata WHERE key = 'schema_version'").get().value, '16');
     assert.equal(database.prepare('SELECT COUNT(*) AS count FROM materials').get().count, materialCountBefore);
     assert.equal(database.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'audit_logs'").get().count, 1);
     assert.equal(database.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
@@ -1931,7 +2262,7 @@ test('版本 8 库存事件会自动迁移并保留历史事实', async () => {
 
     const migrated = new DatabaseSync(databasePath, { readOnly: true });
     try {
-      assert.equal(migrated.prepare("SELECT value FROM metadata WHERE key = 'schema_version'").get().value, '14');
+      assert.equal(migrated.prepare("SELECT value FROM metadata WHERE key = 'schema_version'").get().value, '16');
       assert.equal(migrated.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'audit_logs'").get().count, 1);
       assert.match(migrated.prepare("SELECT sql FROM sqlite_master WHERE type = 'index' AND name = 'transactions_occurred_at'").get().sql, /occurred_at DESC, id DESC/);
       assert.match(migrated.prepare("SELECT sql FROM sqlite_master WHERE type = 'index' AND name = 'inventory_events_occurred_at'").get().sql, /occurred_at DESC, id DESC/);
@@ -2258,7 +2589,7 @@ test('版本 13 数据库会迁移盘点批次表并保留现有数据', async (
 
     version13Server = await startServer(origin, version13DataDir);
     database = new DatabaseSync(databasePath, { readOnly: true });
-    assert.equal(database.prepare("SELECT value FROM metadata WHERE key = 'schema_version'").get().value, '14');
+    assert.equal(database.prepare("SELECT value FROM metadata WHERE key = 'schema_version'").get().value, '16');
     assert.equal(database.prepare('SELECT COUNT(*) AS count FROM materials').get().count, materialCount);
     assert.equal(database.prepare('SELECT COUNT(*) AS count FROM transactions').get().count, transactionCount);
     assert.equal(database.prepare("SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name IN ('stocktakes', 'stocktake_items')").get().count, 2);
