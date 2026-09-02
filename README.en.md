@@ -11,6 +11,7 @@
     <img src="https://img.shields.io/badge/Node.js-%3E%3D22.12-339933?logo=nodedotjs&logoColor=white" alt="Node.js 22.12 or newer" />
     <img src="https://img.shields.io/badge/status-public_preview-e6a23c" alt="Public preview status" />
   </p>
+  <p><a href="#quick-start"><strong>Quick start</strong></a> · <a href="https://github.com/okoklabs/openlabstock/releases"><strong>Releases</strong></a> · <a href="./DEPLOYMENT.md"><strong>Deployment</strong></a> · <a href="./CONTRIBUTING.md"><strong>Contributing</strong></a></p>
 </div>
 
 ![OpenLabStock cover showing quantity inventory and tracked high-value items](./docs/assets/openlabstock-readme-hero-v2.png)
@@ -128,12 +129,13 @@ Production mode never creates these demo credentials. Runtime data defaults to t
 
 ### Single-host production
 
-For a Linux server, the Docker single-instance route is the shortest path. It generates the initial password, persists data, and provides scripted update, backup, and rollback commands:
+For a Linux server, use the single-instance Docker route. For production, download the matching production archive and manifest from [GitHub Releases](https://github.com/okoklabs/openlabstock/releases), verify the SHA-256, and extract the fixed version instead of deploying `main` or a working branch. See [`DEPLOYMENT.md`](./DEPLOYMENT.md#获取固定版本) for the complete download and verification commands:
 
 ```bash
-git clone https://github.com/okoklabs/openlabstock.git /opt/openlabstock-docker
+sudo install -d -m 755 /opt/openlabstock-docker
+sudo tar -xzf OpenLabStock-production-YYYYMMDD-rN.tar.gz -C /opt/openlabstock-docker
 cd /opt/openlabstock-docker
-bash deploy/docker/openlabstock.sh init
+sudo bash deploy/docker/openlabstock.sh init
 ```
 
 After the script prints the initial `admin` password, sign in and change it immediately. Operators with an existing systemd service, reverse proxy, or manual directory policy should use the systemd route in [`DEPLOYMENT.md`](./DEPLOYMENT.md).
@@ -161,7 +163,6 @@ The project is still a public preview; move to a stable release after a clean Li
 ```bash
 pnpm run verify:auto     # Select the smallest sufficient gate from the actual changes
 pnpm run verify:status   # Show reusable evidence before a release
-pnpm run verify          # Full gate for high-risk changes or releases
 pnpm run release:prepare -- --next # Bump, verify, package, and smoke-test
 ```
 
@@ -169,7 +170,7 @@ With no repository changes, `verify:auto` repeats nothing. Runtime changes rerun
 
 ## Project status and license
 
-OpenLabStock is publicly available as a preview. The application is functional and regression-tested, while the external-contribution gate, CLA activation, and stable-release review remain in progress. Review the [roadmap](./ROADMAP.md) and [current tasks](./TODO.md) before production planning.
+OpenLabStock can be presented, demonstrated, and tested publicly as a **Public Preview**. The application is functional and regression-tested, but clean Linux installation, upgrade, backup, restore, rollback, and real-device checks are not all complete, so it should not yet be described as Stable or ready for critical production data without evaluation. Use synthetic data first and review the [roadmap](./ROADMAP.md) and [current tasks](./TODO.md). The CLA is an external-code-contribution and future commercial-relicensing gate; it does not prevent users from viewing, evaluating, or self-hosting the AGPL application.
 
 Source code is licensed under [GNU AGPL v3.0 only](./LICENSE), SPDX `AGPL-3.0-only`. Third-party components retain their own licenses; see [NOTICE](./NOTICE) and [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md). A separate commercial license is planned but is **not currently available**, and the draft [CLA](./CLA.md) is **not active**.
 

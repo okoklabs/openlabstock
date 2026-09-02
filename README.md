@@ -10,7 +10,7 @@
     <img src="https://img.shields.io/badge/Node.js-%3E%3D22.12-339933?logo=nodedotjs&logoColor=white" alt="Node.js 22.12 或更高版本" />
     <img src="https://img.shields.io/badge/status-public_preview-e6a23c" alt="公开预览状态" />
   </p>
-  <p><a href="#快速启动"><strong>快速启动</strong></a> · <a href="./DEPLOYMENT.md"><strong>部署文档</strong></a> · <a href="./ROADMAP.md"><strong>路线图</strong></a> · <a href="./CONTRIBUTING.md"><strong>参与贡献</strong></a></p>
+  <p><a href="#快速启动"><strong>快速启动</strong></a> · <a href="https://github.com/okoklabs/openlabstock/releases"><strong>发布版本</strong></a> · <a href="./DEPLOYMENT.md"><strong>部署文档</strong></a> · <a href="./CONTRIBUTING.md"><strong>参与贡献</strong></a></p>
 </div>
 
 ![OpenLabStock 产品封面：普通耗材按数量，高价值或可复用物品按单件](./docs/assets/openlabstock-readme-hero-v2.png)
@@ -150,12 +150,13 @@ pnpm run dev
 
 ### 单机正式部署
 
-Linux 服务器优先使用 Docker 单实例路线，自动生成初始密码、持久化数据并提供更新、备份和回滚命令：
+Linux 服务器优先使用 Docker 单实例路线。正式环境从 [GitHub Releases](https://github.com/okoklabs/openlabstock/releases) 下载同一版本的生产包和 manifest，校验 SHA-256 后解压；不要直接部署 `main` 或临时工作分支。完整复制命令见 [`DEPLOYMENT.md`](./DEPLOYMENT.md#获取固定版本)：
 
 ```bash
-git clone https://github.com/okoklabs/openlabstock.git /opt/openlabstock-docker
+sudo install -d -m 755 /opt/openlabstock-docker
+sudo tar -xzf OpenLabStock-production-YYYYMMDD-rN.tar.gz -C /opt/openlabstock-docker
 cd /opt/openlabstock-docker
-bash deploy/docker/openlabstock.sh init
+sudo bash deploy/docker/openlabstock.sh init
 ```
 
 脚本输出初始 `admin` 密码后，登录并立即修改。已有 systemd、反向代理或需要手工控制目录的维护者，再阅读 [`DEPLOYMENT.md`](./DEPLOYMENT.md) 的 systemd 路线。
@@ -191,7 +192,6 @@ OpenLabStock 默认只监听 `127.0.0.1:4388`，公网访问应通过受控的 H
 ```bash
 pnpm run verify:auto    # 日常：根据实际变更自动选择最小充分门禁
 pnpm run verify:status  # 发布前查看哪些验证凭据仍可复用
-pnpm run verify         # 高风险改动或正式发布的完整门禁
 pnpm run release:prepare -- --next # 自动升版、验证、打包和生产烟测
 ```
 
@@ -201,7 +201,7 @@ pnpm run release:prepare -- --next # 自动升版、验证、打包和生产烟�
 
 ## 项目状态
 
-OpenLabStock 已以公开预览形式提供。应用已经可以运行并有回归测试，但外部贡献门禁、CLA 激活和正式发行审查仍在进行。评估阶段请使用合成数据；规划生产使用前请查看[路线图](./ROADMAP.md)和[当前公开任务](./TODO.md)。
+OpenLabStock 已经可以按 **Public Preview / 公开预览** 对外介绍、演示和邀请试用。应用可运行并有自动化回归，但全新 Linux 安装、升级、备份、恢复、回滚和真实手机专项验收尚未全部完成，因此暂不宣传为 Stable 或“开箱即可承担关键生产数据”。评估阶段请使用合成数据；规划生产使用前请查看[路线图](./ROADMAP.md)和[当前公开任务](./TODO.md)。CLA 属于外部代码贡献与未来商业再许可门禁，不影响普通用户查看源码、试用或按 AGPL 自主部署。
 
 ## 许可证与社区
 

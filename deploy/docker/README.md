@@ -12,7 +12,7 @@
 
 ## 首次安装
 
-服务器先按 Docker 官方文档安装 Docker Engine 与 Compose v2 插件。把完整项目或包含 Docker 构建文件的生产包解压到独立目录，例如 `/opt/openlabstock-docker`，然后运行：
+服务器先按 Docker 官方文档安装 Docker Engine 与 Compose v2 插件。从 [GitHub Releases](https://github.com/okoklabs/openlabstock/releases) 下载同一标签的生产包和 manifest，并按根目录 [`DEPLOYMENT.md`](../../DEPLOYMENT.md#获取固定版本) 校验 SHA-256。把生产包解压到独立目录，例如 `/opt/openlabstock-docker`，然后运行：
 
 ```bash
 cd /opt/openlabstock-docker

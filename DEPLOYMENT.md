@@ -11,18 +11,35 @@ OpenLabStock 由两个部分组成：
 
 默认端口为 `4388`。生产环境建议保持单个 Node 进程，只监听 `127.0.0.1:4388`，再由 Caddy、Nginx 或其他受控反向代理提供 HTTPS。
 
+## 获取固定版本
+
+正式部署使用 [GitHub Releases](https://github.com/okoklabs/openlabstock/releases) 中同一标签的生产包和 manifest，不直接部署 `main`。在 Release 页面复制版本标签，然后下载并校验：
+
+```bash
+RELEASE=YYYYMMDD-rN
+ARCHIVE="OpenLabStock-production-${RELEASE}.tar.gz"
+MANIFEST="OpenLabStock-production-${RELEASE}.manifest.txt"
+BASE_URL="https://github.com/okoklabs/openlabstock/releases/download/${RELEASE}"
+
+curl --fail --location --remote-name "${BASE_URL}/${ARCHIVE}"
+curl --fail --location --remote-name "${BASE_URL}/${MANIFEST}"
+EXPECTED="$(sed -n 's/^sha256: //p' "$MANIFEST")"
+test -n "$EXPECTED"
+printf '%s  %s\n' "$EXPECTED" "$ARCHIVE" | sha256sum --check -
+```
+
+只有看到校验结果为 `OK` 才继续解压。生产包不包含数据库、备份、环境变量或账号信息。
+
 ## 本机运行
 
 要求 Node.js `>=22.12.0` 与仓库声明的 pnpm 版本：
 
 ```bash
 pnpm install --frozen-lockfile
-pnpm run verify
-pnpm run build
-pnpm run start
+pnpm run dev
 ```
 
-打开 <http://127.0.0.1:4388/>。本机开发数据默认写入 `data/`，该目录已被 Git 忽略。
+打开 <http://127.0.0.1:4388/>。本机试用不需要先执行完整测试、许可证检查或依赖审计；这些属于贡献和发布门禁。本机开发数据默认写入 `data/`，该目录已被 Git 忽略。
 
 ## 生产目录
 

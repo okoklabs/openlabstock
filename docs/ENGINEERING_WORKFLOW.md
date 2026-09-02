@@ -71,6 +71,8 @@ pnpm run release:prepare -- --next
 
 上传生产包后仍需执行一致性备份、暂存目录切换、本地和公网健康检查。生产部署不会由本地发布脚本自动触发，避免误操作。
 
+推送与 `package.json` 版本一致的 `YYYYMMDD-rN` 标签后，GitHub 的 `Publish Preview Release` 工作流会在干净 Linux 环境重新执行发布门禁和浏览器烟测，并把生产包与 manifest 发布为 Pre-release。正式稳定版启用前保持 `--prerelease`；不要手工上传来源不明或未经该工作流验证的同名资产。
+
 ### 不重复原则
 
 - 一轮任务只保留一个最终门禁；最小测试用于调试，不能与最终门禁机械叠加。

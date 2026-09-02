@@ -286,24 +286,44 @@ curl -I https://www.openlabstock.com
 
 网页内容变化不需要重启或重载 Caddy，只需替换 `/var/www/openlabstock` 中的静态文件。
 
-建议先在本机打开 `index.html`，检查桌面和 `390 x 844` 手机视口，再上传整个站点目录。官网页面会链接公开应用仓库；应用本身仍按应用仓库的 Release 和部署文档更新，不能把宣传页目录当成应用发布包。
+建议先在本机打开 `index.html`，检查桌面和 `390 x 844` 手机视口，再把四项静态内容打成一个独立压缩包。官网页面会链接公开应用仓库；应用本身仍按应用仓库的 Release 和部署文档更新，不能把宣传页压缩包当成应用发布包。
 
-在本机 PowerShell 上传到服务器临时目录：
+在仓库根目录的 PowerShell 中制作并上传：
 
 ```powershell
-ssh <SSH_USER>@<SERVER_IP> "mkdir -p /tmp/openlabstock-upload"
-scp -r "C:\Users\HCL\Documents\CodexProjects\openlabstock\openlabstock-landing\*" <SSH_USER>@<SERVER_IP>:/tmp/openlabstock-upload/
+tar -czf OpenLabStock-website-YYYYMMDD-rN.tar.gz -C .\openlabstock-landing index.html styles.css script.js assets
+scp -P 22 .\OpenLabStock-website-YYYYMMDD-rN.tar.gz <SSH_USER>@<SERVER_IP>:/tmp/
 ```
 
-登录服务器，将临时目录同步到专用网页目录：
+登录服务器，在临时目录校验文件后同步到专用网页目录：
 
 ```bash
 ssh <SSH_USER>@<SERVER_IP>
-sudo rsync -av --delete /tmp/openlabstock-upload/ /var/www/openlabstock/
+
+set -euo pipefail
+ARCHIVE=/tmp/OpenLabStock-website-YYYYMMDD-rN.tar.gz
+STAGING="$(mktemp -d /tmp/openlabstock-site.XXXXXX)"
+BACKUP="/var/www/openlabstock-backup-$(date +%Y%m%d-%H%M%S)"
+
+tar -xzf "$ARCHIVE" -C "$STAGING"
+test -f "$STAGING/index.html"
+test -f "$STAGING/styles.css"
+test -f "$STAGING/script.js"
+test -d "$STAGING/assets"
+
+if [ -f /var/www/openlabstock/index.html ]; then
+  sudo cp -a /var/www/openlabstock "$BACKUP"
+fi
+sudo install -d -m 755 /var/www/openlabstock
+sudo rsync -av --delete "$STAGING/" /var/www/openlabstock/
 sudo chmod -R a+rX /var/www/openlabstock
+case "$STAGING" in
+  /tmp/openlabstock-site.*) rm -rf -- "$STAGING" ;;
+  *) echo "拒绝清理异常临时目录：$STAGING" >&2; exit 1 ;;
+esac
 ```
 
-`--delete` 只允许用于已经确认的专用目录 `/var/www/openlabstock/`，不要改成其他服务器目录。
+`--delete` 只允许用于已经确认的专用目录 `/var/www/openlabstock/`，不要改成其他服务器目录。若上线检查失败，把 `$BACKUP/` 同步回该目录即可恢复旧站。
 
 ## 上线检查
 
