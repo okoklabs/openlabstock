@@ -218,7 +218,8 @@ import {
       .stock-item { display: flex; align-items: center; gap: 9px; min-width: 155px; }
       .material-info-trigger { width: 100%; padding: 0; border: 0; color: inherit; background: transparent; font: inherit; text-align: left; cursor: pointer; }
       .material-info-trigger:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
-      .item-avatar { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 6px; color: var(--primary); background: var(--surface-tint); font-size: 11px; font-weight: 760; }
+      .item-icon { width: 28px; height: 28px; flex: 0 0 28px; display: grid; place-items: center; border-radius: 6px; color: var(--primary); background: var(--surface-tint); }
+      .item-icon svg { width: 16px; height: 16px; }
       .stock-item strong { display: block; color: var(--ink); font-size: 13px; }
       .stock-item > span:last-child > span { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
       .stock-number { font-weight: 750; }
@@ -729,12 +730,13 @@ import {
       .toast { position: fixed; left: 50%; bottom: 24px; z-index: 60; display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 15px; border-radius: 6px; color: #fff; background: #24312b; box-shadow: var(--shadow-2); font-size: 12px; transform: translate(-50%, 90px); opacity: 0; pointer-events: none; transition: transform .25s, opacity .25s; }
       .notification-list { display: grid; gap: 8px; }
       .notification-item { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 11px; min-height: 62px; padding: 10px 12px; border-radius: 8px; background: var(--surface-soft); }
-      .notification-item > span:first-child { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--danger); background: var(--danger-soft); font-size: 11px; font-weight: 750; }
+      .notification-item > .notification-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; color: var(--danger); background: var(--danger-soft); }
+      .notification-item > .notification-icon svg { width: 18px; height: 18px; }
       .notification-item strong { display: block; font-size: 13px; }
       .notification-item small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
       .notification-item > b { color: var(--danger); font-size: 12px; }
       .notification-item.expiry-expiring { background: var(--warning-soft); }
-      .notification-item.expiry-expiring > span:first-child { color: #805500; background: #f8e4ad; }
+      .notification-item.expiry-expiring > .notification-icon { color: #805500; background: #f8e4ad; }
       .notification-item.expiry-expiring > b { color: #805500; }
       .notification-item.expiry-expired { background: var(--danger-soft); }
       .confirm-modal { width: min(420px, 100%); }
@@ -963,7 +965,7 @@ import {
         .inventory-panel .stock-item { min-width: 0; gap: 7px; }
         .inventory-panel .stock-item > span:last-child { min-width: 0; }
         .inventory-panel .stock-item strong { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.25; max-height: 2.5em; }
-        .inventory-panel .stock-item .item-avatar { width: 27px; height: 27px; flex: 0 0 27px; }
+        .inventory-panel .stock-item .item-icon { width: 27px; height: 27px; flex-basis: 27px; }
         .inventory-panel [data-inventory-spec], .inventory-panel [data-inventory-tracking] { display: none !important; }
         .inventory-panel [data-inventory-quantity]::after, .inventory-panel [data-inventory-safety]::after { content: " " attr(data-unit); color: var(--muted); font-size: 9px; }
         .inventory-panel .status-chip { width: 100%; max-width: 100%; min-width: 0; justify-content: center; padding: 4px 3px; font-size: 11px; line-height: 18px; text-align: center; white-space: nowrap; overflow-wrap: normal; }
@@ -1103,7 +1105,7 @@ import {
         .expiry-panel .stock-item > span:last-child { min-width: 0; }
         .expiry-panel .stock-item strong { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.25; max-height: 2.5em; }
         .expiry-panel .stock-item > span:last-child > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .expiry-panel .item-avatar { width: 26px; height: 26px; flex: 0 0 26px; }
+        .expiry-panel .item-icon { width: 26px; height: 26px; flex-basis: 26px; }
         .expiry-panel .status-chip { width: 100%; max-width: 100%; justify-content: center; padding-inline: 2px; font-size: 10px; line-height: 18px; }
         .stocktake-status-filter { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .stocktake-list-toolbar { align-items: stretch; flex-direction: column; }
@@ -1211,7 +1213,7 @@ import {
       .stock-table th, .transaction-table th, .data-table th { font-size: 12px; }
       .user-meta strong, .stock-item strong, .quick-action strong, .directory-person-name strong { font-size: 14px; }
       .topbar-link, .page-heading p, .filter-select, .toolbar-select .m3-select-trigger { font-size: 13px; }
-      .item-avatar, .mini-avatar, .notification-item > span:first-child { font-size: 11px; }
+      .mini-avatar { font-size: 11px; }
       :is(.page-heading, .panel-header, .summary-card-top, .quick-action, .notification-item, .directory-person-top) > * { min-width: 0; }
       :is(.button, .text-button, .quick-action) > svg { flex: 0 0 auto; }
       .records-load-copy > span, .startup-status { overflow-wrap: anywhere; }
@@ -1348,7 +1350,7 @@ import {
 
     <nav class="mobile-nav" aria-label="移动端导航"><button class="active" type="button" data-view-target="dashboard"><LayoutDashboard size={18} />总览</button><button type="button" data-view-target="inventory"><Package size={18} />库存</button><button type="button" data-view-target="transactions"><ClipboardList size={18} />记录</button><button type="button" data-view-target="members"><Users size={18} />成员</button></nav>
 
-    <template data-inventory-row-template><tr><td><button class="stock-item material-info-trigger" type="button" title="查看耗材详情" data-material-info><span class="item-avatar" data-inventory-initial>耗</span><span><strong data-inventory-name>耗材</strong><span data-inventory-spec>规格、型号：未填写</span><span class="tracking-mode-label" data-inventory-tracking hidden>按状态统计</span></span></button></td><td data-inventory-category></td><td><div class="inventory-quantity-stack"><strong class="stock-number" data-inventory-quantity></strong><small data-inventory-total hidden></small></div></td><td data-inventory-safety></td><td data-inventory-unit></td><td data-inventory-updated></td><td><span class="status-chip" data-inventory-status></span></td><td class="member-actions"><span class="material-row-actions"><button class="icon-button member-action-button material-info-action" type="button" title="查看耗材详情" aria-label="查看耗材详情" data-material-info><Info size={18} /></button><button class="icon-button member-action-button" type="button" title="查看库存明细" data-inventory-detail><ClipboardList size={18} /></button><button class="icon-button member-action-button" type="button" title="查看二维码标签" data-material-qr><QrCode size={18} /></button><button class="icon-button member-action-button" type="button" title="管理耗材" data-material-action><MoreVertical size={18} /></button></span></td></tr></template>
+    <template data-inventory-row-template><tr><td><button class="stock-item material-info-trigger" type="button" title="查看耗材详情" data-material-info><span class="item-icon" aria-hidden="true"><Package size={16} /></span><span><strong data-inventory-name>耗材</strong><span data-inventory-spec>规格、型号：未填写</span><span class="tracking-mode-label" data-inventory-tracking hidden>按状态统计</span></span></button></td><td data-inventory-category></td><td><div class="inventory-quantity-stack"><strong class="stock-number" data-inventory-quantity></strong><small data-inventory-total hidden></small></div></td><td data-inventory-safety></td><td data-inventory-unit></td><td data-inventory-updated></td><td><span class="status-chip" data-inventory-status></span></td><td class="member-actions"><span class="material-row-actions"><button class="icon-button member-action-button material-info-action" type="button" title="查看耗材详情" aria-label="查看耗材详情" data-material-info><Info size={18} /></button><button class="icon-button member-action-button" type="button" title="查看库存明细" data-inventory-detail><ClipboardList size={18} /></button><button class="icon-button member-action-button" type="button" title="查看二维码标签" data-material-qr><QrCode size={18} /></button><button class="icon-button member-action-button" type="button" title="管理耗材" data-material-action><MoreVertical size={18} /></button></span></td></tr></template>
     <template data-member-action-icon-template><MoreVertical size={18} /></template>
     <template data-inventory-register-icon-template><ClipboardList size={16} /></template>
     <template data-inventory-more-icon-template><MoreVertical size={18} /></template>
@@ -1359,6 +1361,8 @@ import {
     <template data-inventory-restore-icon-template><RotateCcw size={18} /></template>
     <template data-inventory-save-icon-template><Check size={18} /></template>
     <template data-inventory-settings-icon-template><Settings size={16} /></template>
+    <template data-material-icon-template><Package size={16} /></template>
+    <template data-expiry-icon-template><AlertTriangle size={16} /></template>
     <template data-close-icon-template><X size={18} /></template>
     <template data-transaction-next-icon-template><ChevronRight size={18} /></template>
     <template data-transaction-save-icon-template><Check size={15} /></template>

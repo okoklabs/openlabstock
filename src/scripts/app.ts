@@ -831,6 +831,7 @@ function renderMaterialOptions(type: 'in' | 'out' = currentTransactionType()) {
 
 function renderMaterials() {
   if (!state) return;
+  const materialIcon = document.querySelector('[data-material-icon-template]')?.innerHTML ?? '';
   const inventoryBody = $('[data-inventory-body]');
   if (inventoryBody) {
     const template = $<HTMLTemplateElement>('[data-inventory-row-template]');
@@ -845,7 +846,6 @@ function renderMaterials() {
       row.dataset.stockStatus = lifecycleStatus;
       row.dataset.expired = String((expirySummary?.expired ?? 0) > 0);
       row.dataset.expiring = String((expirySummary?.expiring ?? 0) > 0);
-      $('[data-inventory-initial]', row)!.textContent = initial(material.name);
       $('[data-inventory-name]', row)!.textContent = material.name;
       $('[data-inventory-spec]', row)!.textContent = material.spec ? `规格、型号：${material.spec}` : '规格、型号：未填写';
       const trackingLabel = $<HTMLElement>('[data-inventory-tracking]', row)!;
@@ -899,7 +899,7 @@ function renderMaterials() {
   if (lowBody) {
     lowBody.innerHTML = lowMaterials.length ? lowMaterials.map((material) => {
       const statusView = lowStockPresentation(material);
-      return `<tr><td><div class="stock-item"><span class="item-avatar">${escapeHtml(initial(material.name))}</span><span><strong>${escapeHtml(material.name)}</strong><span>${escapeHtml(material.category)}${material.spec ? ` · ${escapeHtml(material.spec)}` : ''}</span></span></div></td><td class="stock-number stock-low">${formatNumber(material.availableQuantity)} ${escapeHtml(material.unit)}</td><td>${formatNumber(material.safetyStock)} ${escapeHtml(material.unit)}</td><td>${statusChipMarkup(statusView.label, 'low', statusView.description)}</td></tr>`;
+      return `<tr><td><div class="stock-item"><span class="item-icon" aria-hidden="true">${materialIcon}</span><span><strong>${escapeHtml(material.name)}</strong><span>${escapeHtml(material.category)}${material.spec ? ` · ${escapeHtml(material.spec)}` : ''}</span></span></div></td><td class="stock-number stock-low">${formatNumber(material.availableQuantity)} ${escapeHtml(material.unit)}</td><td>${formatNumber(material.safetyStock)} ${escapeHtml(material.unit)}</td><td>${statusChipMarkup(statusView.label, 'low', statusView.description)}</td></tr>`;
     }).join('') : '<tr><td colspan="4" class="empty-note">当前没有低库存耗材</td></tr>';
   }
 
@@ -912,6 +912,7 @@ function renderExpiryAlerts() {
   const panel = $('[data-expiry-panel]');
   const body = $('[data-expiry-body]');
   if (!panel || !body) return;
+  const expiryIcon = document.querySelector('[data-expiry-icon-template]')?.innerHTML ?? '';
   const alerts = state?.expiryAlerts ?? [];
   const expired = alerts.filter((alert) => alert.status === 'expired');
   const expiring = alerts.filter((alert) => alert.status === 'expiring');
@@ -930,7 +931,7 @@ function renderExpiryAlerts() {
     const isExpired = alert.status === 'expired';
     const statusLabel = isExpired ? '已过期' : '临期';
     const description = isExpired ? `已于 ${alert.expiryDate} 过期，请登记处置` : alert.daysRemaining === 0 ? `今日到期（${alert.expiryDate}）` : `${alert.expiryDate} 到期，剩 ${alert.daysRemaining} 天`;
-    return `<tr><td><div class="stock-item"><span class="item-avatar expiry-avatar ${isExpired ? 'expired' : 'expiring'}">${escapeHtml(initial(alert.materialName))}</span><span><strong>${escapeHtml(alert.materialName)}</strong><span>${escapeHtml(alert.inventoryUnitLabel)}</span></span></div></td><td>${escapeHtml(alert.expiryDate)}</td><td>${statusChipMarkup(statusLabel, isExpired ? 'low' : 'warning', description)}</td><td class="stock-number ${isExpired ? 'stock-low' : 'stock-mid'}">${formatNumber(alert.quantity)} ${escapeHtml(alert.unit)}</td></tr>`;
+    return `<tr><td><div class="stock-item"><span class="item-icon expiry-avatar ${isExpired ? 'expired' : 'expiring'}" aria-hidden="true">${expiryIcon}</span><span><strong>${escapeHtml(alert.materialName)}</strong><span>${escapeHtml(alert.inventoryUnitLabel)}</span></span></div></td><td>${escapeHtml(alert.expiryDate)}</td><td>${statusChipMarkup(statusLabel, isExpired ? 'low' : 'warning', description)}</td><td class="stock-number ${isExpired ? 'stock-low' : 'stock-mid'}">${formatNumber(alert.quantity)} ${escapeHtml(alert.unit)}</td></tr>`;
   }).join('') : '<tr><td colspan="4" class="empty-note">当前没有临期或过期批次</td></tr>';
 }
 
@@ -3223,6 +3224,8 @@ async function ensureExportRecordsLoaded(force = false): Promise<boolean> {
 function renderNotifications() {
   const lowMaterials = lowStockMaterials();
   const expiryAlerts = state?.expiryAlerts ?? [];
+  const materialIcon = document.querySelector('[data-material-icon-template]')?.innerHTML ?? '';
+  const expiryIcon = document.querySelector('[data-expiry-icon-template]')?.innerHTML ?? '';
   const warningMaterialIds = new Set([...lowMaterials.map((material) => material.id), ...expiryAlerts.map((alert) => alert.materialId)]);
   $('[data-notification-dot]')?.classList.toggle('is-hidden', warningMaterialIds.size === 0);
   const count = $('[data-low-stock-count]');
@@ -3235,9 +3238,9 @@ function renderNotifications() {
   if (!list) return;
   const lowItems = lowMaterials.map((material) => {
     const out = material.availableQuantity === 0;
-    return `<div class="notification-item"><span>${escapeHtml(initial(material.name))}</span><div><strong>${escapeHtml(material.name)}</strong><small>${out ? '开放库存已耗尽' : `低于安全库存 ${formatNumber(material.safetyStock)} ${escapeHtml(material.unit)}`}</small></div><b>${out ? '缺货' : `${formatNumber(material.availableQuantity)} ${escapeHtml(material.unit)}`}</b></div>`;
+    return `<div class="notification-item"><span class="notification-icon" aria-hidden="true">${materialIcon}</span><div><strong>${escapeHtml(material.name)}</strong><small>${out ? '开放库存已耗尽' : `低于安全库存 ${formatNumber(material.safetyStock)} ${escapeHtml(material.unit)}`}</small></div><b>${out ? '缺货' : `${formatNumber(material.availableQuantity)} ${escapeHtml(material.unit)}`}</b></div>`;
   });
-  const expiryItems = expiryAlerts.map((alert) => `<div class="notification-item expiry-${escapeHtml(alert.status)}"><span>${escapeHtml(initial(alert.materialName))}</span><div><strong>${escapeHtml(alert.materialName)} · ${escapeHtml(alert.inventoryUnitLabel)}</strong><small>${escapeHtml(alert.status === 'expired' ? '已过期，不能领用；请登记处置' : `即将到期 · ${alert.expiryDate}（剩 ${alert.daysRemaining} 天）`)}</small></div><b>${formatNumber(alert.quantity)} ${escapeHtml(alert.unit)}</b></div>`);
+  const expiryItems = expiryAlerts.map((alert) => `<div class="notification-item expiry-${escapeHtml(alert.status)}"><span class="notification-icon" aria-hidden="true">${expiryIcon}</span><div><strong>${escapeHtml(alert.materialName)} · ${escapeHtml(alert.inventoryUnitLabel)}</strong><small>${escapeHtml(alert.status === 'expired' ? '已过期，不能领用；请登记处置' : `即将到期 · ${alert.expiryDate}（剩 ${alert.daysRemaining} 天）`)}</small></div><b>${formatNumber(alert.quantity)} ${escapeHtml(alert.unit)}</b></div>`);
   list.innerHTML = [...expiryItems, ...lowItems].join('') || '<div class="empty-note">当前没有库存或有效期预警</div>';
 }
 
