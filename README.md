@@ -161,6 +161,36 @@ sudo bash deploy/docker/openlabstock.sh init
 
 脚本输出初始 `admin` 密码后，登录并立即修改。已有 systemd、反向代理或需要手工控制目录的维护者，再阅读 [`DEPLOYMENT.md`](./DEPLOYMENT.md) 的 systemd 路线。
 
+#### 最短 Docker 安装路径
+
+下面是一条完整的首次安装路径。先把 `RELEASE` 改成 Releases 页面上要安装的固定标签；当前公开预览示例为 `20260902-r64`。安装过程不会自动追踪或替换到未知的最新版本：
+
+```bash
+RELEASE=20260902-r64
+BASE_URL="https://github.com/okoklabs/openlabstock/releases/download/${RELEASE}"
+WORKDIR="/tmp/openlabstock-${RELEASE}"
+mkdir -p "$WORKDIR"
+cd "$WORKDIR"
+curl --fail --location --remote-name "${BASE_URL}/OpenLabStock-production-${RELEASE}.tar.gz"
+curl --fail --location --remote-name "${BASE_URL}/OpenLabStock-production-${RELEASE}.manifest.txt"
+EXPECTED="$(sed -n 's/^sha256: //p' "OpenLabStock-production-${RELEASE}.manifest.txt")"
+printf '%s  %s\n' "$EXPECTED" "OpenLabStock-production-${RELEASE}.tar.gz" | sha256sum --check -
+sudo install -d -m 755 /opt/openlabstock-docker
+sudo tar -xzf "OpenLabStock-production-${RELEASE}.tar.gz" -C /opt/openlabstock-docker
+cd /opt/openlabstock-docker
+sudo bash deploy/docker/openlabstock.sh init
+```
+
+看到 `首次部署完成` 后，按这个顺序完成第一次使用：
+
+1. 用终端显示的 `admin` 初始密码登录，并立即修改所有者密码。
+2. 在系统设置中建立组织分组和成员，再建立常用耗材档案。
+3. 为需要补货的耗材设置安全库存；只有批次库存才填写有效期。
+4. 打印耗材二维码，扫码只定位耗材，数量、来源 / 去向仍由用户确认后登记。
+5. 先用合成数据做一次入库、领用、盘点和备份，再导入真实库存。
+
+更新时不要重新运行 `init`；在程序目录执行 `bash deploy/docker/openlabstock.sh update`，失败时执行 `rollback`。每次更新前脚本会先备份数据卷。
+
 ### 选择安装路径
 
 | 目标 | 推荐入口 | 适合谁 |
