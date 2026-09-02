@@ -22,6 +22,9 @@ export function materialIdFromQrText(value) {
   const text = String(value ?? '').trim();
   if (materialIdPattern.test(text)) return text;
 
+  const schemeMatch = text.match(/^sysulab:material:([0-9a-f-]+)$/i);
+  if (schemeMatch && materialIdPattern.test(schemeMatch[1])) return schemeMatch[1];
+
   try {
     const materialId = new URL(text).searchParams.get('material') ?? '';
     return materialIdPattern.test(materialId) ? materialId : '';
@@ -32,6 +35,9 @@ export function materialIdFromQrText(value) {
 
 export function inventoryUnitIdFromQrText(value) {
   const text = String(value ?? '').trim();
+  const schemeMatch = text.match(/^sysulab:unit:([0-9a-f-]+)$/i);
+  if (schemeMatch && inventoryUnitIdPattern.test(schemeMatch[1])) return schemeMatch[1];
+
   try {
     const unitId = new URL(text).searchParams.get('unit') ?? '';
     return inventoryUnitIdPattern.test(unitId) ? unitId : '';
