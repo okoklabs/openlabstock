@@ -69,7 +69,7 @@ const uiOnly = paths.length > 0 && paths.every((entry) => (
   || /^(?:src|public)\/.+\.(?:astro|css|scss|png|jpe?g|gif|webp|ico|svg)$/i.test(entry)
 ));
 const fullRisk = paths.some((entry) => (
-  /^(?:package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|Dockerfile|compose\.yaml|astro\.config\.mjs|server\.mjs|storage\.mjs|password\.mjs)$/i.test(entry)
+  /^(?:package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|Dockerfile|compose\.yaml|astro\.config\.mjs|server\.mjs|storage\.mjs|password\.mjs|LICENSE|NOTICE|THIRD_PARTY_NOTICES\.md)$/i.test(entry)
   || entry.startsWith('deploy/')
   || entry.startsWith('.github/workflows/')
   || entry === 'public/sw.js'

@@ -10,8 +10,8 @@ export const PUBLIC_BOUNDARY_RECEIPT = '.openlabstock-public-verification.json';
 export const AUDIT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const verificationRoots = [
-  '.dockerignore', '.env.docker.example', '.github', 'astro.config.mjs', 'compose.yaml',
-  'Dockerfile', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', 'package.json', 'password.mjs', 'pnpm-lock.yaml', 'pnpm-workspace.yaml',
+  '.dockerignore', '.env.docker.example', 'astro.config.mjs', 'compose.yaml',
+  'Dockerfile', 'package.json', 'password.mjs', 'pnpm-lock.yaml', 'pnpm-workspace.yaml',
   'server.mjs', 'storage.mjs', 'deploy', 'dist', 'public', 'scripts', 'src', 'tests',
 ];
 

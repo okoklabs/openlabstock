@@ -41,7 +41,7 @@ jobs:
       - name: Match tag to package version
         shell: bash
         run: |
-          expected_tag="$(node -e "const p=require('./package.json');const [date,revision]=p.version.split('-');process.stdout.write(date.replaceAll('.','')+'-'+revision)")"
+          expected_tag="$(node -e "const p=require('./package.json');const [date,revision]=p.version.split('-');const [year,month,day]=date.split('.');process.stdout.write(year+month.padStart(2,'0')+day.padStart(2,'0')+'-'+revision)")"
           test "$GITHUB_REF_NAME" = "$expected_tag" || {
             echo "Tag $GITHUB_REF_NAME does not match package version $expected_tag" >&2
             exit 1
