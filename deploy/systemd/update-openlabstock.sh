@@ -150,7 +150,8 @@ validate_release_tree() {
     [[ "$entry" != *.sqlite && "$entry" != *.sqlite-* && "$entry" != *.log ]] || die "生产包不应包含数据库或日志：$entry"
   done < <(tar -tzf "$package")
   for entry in package.json server.mjs storage.mjs password.mjs dist/index.html scripts/backup.mjs; do
-    tar -tzf "$package" | grep -Fxq "$entry" || die "生产包缺少必需文件：$entry"
+    # Keep grep reading the full tar listing; grep -q can trip pipefail on tar's SIGPIPE.
+    tar -tzf "$package" | grep -Fx "$entry" >/dev/null || die "生产包缺少必需文件：$entry"
   done
 }
 
@@ -450,5 +451,4 @@ case "$command_name" in
     exit 1
     ;;
 esac
-
 

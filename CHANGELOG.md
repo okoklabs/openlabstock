@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [2026.9.2-r62] - 2026-09-02
+
+### Fixed
+
+- 修复 systemd 更新脚本在 `pipefail` 模式下错误报告生产包缺少 `package.json` 的问题。
+
 ## [2026.9.2-r61] - 2026-09-02
 
 ### Changed
