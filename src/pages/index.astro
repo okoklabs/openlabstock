@@ -165,6 +165,14 @@ import {
       .inventory-command-item svg { flex: 0 0 auto; color: var(--muted); }
       .inventory-command-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
       .inventory-command-divider { height: 1px; margin: 6px 0; background: var(--line); }
+      .records-overflow { position: relative; display: none; }
+      .records-command-scrim { position: fixed; inset: 0; z-index: 28; display: none; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; }
+      .records-command-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 29; width: 238px; padding: 6px 0; border: 1px solid #dce4df; border-radius: 8px; visibility: hidden; opacity: 0; background: var(--surface); box-shadow: var(--shadow-2); pointer-events: none; transform: translateY(-5px) scale(.98); transform-origin: top right; transition: opacity .16s ease, transform .2s cubic-bezier(.2, 0, 0, 1), visibility 0s linear .2s; }
+      .records-overflow.open .records-command-scrim { display: block; }
+      .records-overflow.open .records-command-menu { visibility: visible; opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); transition-delay: 0s; }
+      .records-command-item { width: 100%; min-height: 48px; display: flex; align-items: center; gap: 13px; padding: 0 16px; border: 0; border-radius: 0; color: var(--ink); background: transparent; font-size: 14px; font-weight: 600; text-align: left; white-space: nowrap; }
+      .records-command-item svg { flex: 0 0 auto; color: var(--muted); }
+      .records-command-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
       .inventory-action-proxies, .inventory-toolbar-actions { display: none !important; }
       .button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 18px; border: 1px solid var(--line); border-radius: 20px; color: var(--primary-deep); background: transparent; font-size: 13px; font-weight: 700; white-space: nowrap; }
       .button:hover { box-shadow: var(--shadow-1); }
@@ -180,11 +188,11 @@ import {
       .button.danger-filled:hover { background: var(--danger); }
       .text-button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; border: 0; border-radius: 20px; color: var(--primary); background: transparent; font-size: 14px; font-weight: 700; white-space: nowrap; }
       .text-button:disabled { cursor: not-allowed; opacity: .42; }
-      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .stocktake-batch-row, .mobile-nav button) { position: relative; isolation: isolate; overflow: hidden; -webkit-tap-highlight-color: transparent; transition: color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s cubic-bezier(.2, 0, 0, 1); }
-      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .stocktake-batch-row, .mobile-nav button)::before { position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: currentColor; content: ""; opacity: 0; transform: scale(.72); transition: opacity .18s ease, transform .24s cubic-bezier(.2, 0, 0, 1); }
-      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .stocktake-batch-row, .mobile-nav button):not(:disabled):hover::before { opacity: .08; transform: scale(1); }
-      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .stocktake-batch-row, .mobile-nav button):not(:disabled):focus-visible::before { opacity: .1; transform: scale(1); }
-      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .stocktake-batch-row, .mobile-nav button):not(:disabled):active::before { opacity: .12; transform: scale(1); transition-duration: .06s; }
+      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .records-command-item, .stocktake-batch-row, .mobile-nav button) { position: relative; isolation: isolate; overflow: hidden; -webkit-tap-highlight-color: transparent; transition: color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s cubic-bezier(.2, 0, 0, 1); }
+      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .records-command-item, .stocktake-batch-row, .mobile-nav button)::before { position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: currentColor; content: ""; opacity: 0; transform: scale(.72); transition: opacity .18s ease, transform .24s cubic-bezier(.2, 0, 0, 1); }
+      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .records-command-item, .stocktake-batch-row, .mobile-nav button):not(:disabled):hover::before { opacity: .08; transform: scale(1); }
+      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .records-command-item, .stocktake-batch-row, .mobile-nav button):not(:disabled):focus-visible::before { opacity: .1; transform: scale(1); }
+      :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .records-command-item, .stocktake-batch-row, .mobile-nav button):not(:disabled):active::before { opacity: .12; transform: scale(1); transition-duration: .06s; }
       .m3-ripple { position: absolute; z-index: 0; border-radius: 50%; background: currentColor; pointer-events: none; transform: scale(0); animation: m3-ripple .46s cubic-bezier(.2, 0, 0, 1) forwards; }
       @keyframes m3-ripple { 0% { opacity: .16; transform: scale(0); } 65% { opacity: .1; } 100% { opacity: 0; transform: scale(1); } }
       .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 13px; margin-bottom: 25px; }
@@ -355,7 +363,7 @@ import {
       .record-material-icon { width: 28px; height: 28px; flex: 0 0 28px; }
       .record-material-copy { display: grid; gap: 2px; min-width: 0; }
       .record-material-detail { color: var(--muted); font-size: 12px; font-weight: 500; line-height: 1.35; }
-      .record-user-name { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .record-user-name { display: block; min-width: 0; max-width: 100%; line-height: 1.35; overflow-wrap: anywhere; white-space: normal; }
       .records-panel .record-user, .recent-records-panel .record-user { min-width: 108px; width: 120px; }
       .record-quantity { font-weight: 750; white-space: nowrap; }
       .record-quantity.in { color: var(--primary); }
@@ -394,6 +402,14 @@ import {
       .toolbar-spacer { flex: 1; }
       .toolbar-actions { display: flex; align-items: center; gap: 8px; }
       .empty-note { padding: 45px 18px; color: var(--muted); text-align: center; font-size: 12px; }
+      @media (min-width: 761px) {
+        [data-view="transactions"] .view-toolbar { align-items: stretch; }
+        [data-view="transactions"] .view-toolbar > .search,
+        [data-view="transactions"] .view-toolbar > .search input,
+        [data-view="transactions"] .view-toolbar > .m3-select,
+        [data-view="transactions"] .view-toolbar > .m3-select .m3-select-trigger,
+        [data-view="transactions"] .view-toolbar .record-scope { min-height: 48px; height: 48px; }
+      }
       .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(20,30,25,.38); }
       .modal-backdrop.open { display: flex; animation: modal-scrim-in .18s ease-out; }
       .modal { width: min(540px, 100%); max-height: min(740px, calc(100vh - 40px)); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #dce4df; border-radius: 28px; background: #fbfdfb; box-shadow: var(--shadow-2); animation: modal-container-in .24s cubic-bezier(.2, 0, 0, 1); }
@@ -939,11 +955,10 @@ import {
         .inventory-overflow { grid-column: 4; }
         .inventory-overflow > .icon-button { width: 48px; height: 48px; }
         .inventory-command-menu { width: min(260px, calc(100vw - 32px)); }
-        .records-heading-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 9px; }
-        .records-heading-actions > [data-open-modal="in"] { grid-column: 1; grid-row: 1; min-width: 0; }
-        .records-heading-actions > [data-open-modal="out"] { grid-column: 2; grid-row: 1; min-width: 0; }
-        .records-heading-actions > [data-open-scanner] { grid-column: 1; grid-row: 2; width: 100%; }
-        .records-heading-actions > [data-download-records] { grid-column: 2; grid-row: 2; min-width: 0; }
+        .records-heading-actions { display: none; }
+        .records-overflow { display: block; grid-area: more; min-width: 48px; }
+        .records-overflow > .icon-button { width: 48px; height: 48px; }
+        .records-command-menu { width: min(260px, calc(100vw - 32px)); }
         .summary-grid { gap: 9px; margin-bottom: 16px; }
         .summary-card { min-height: 116px; padding: 13px; }
         .summary-card-top { font-size: 10px; }
@@ -991,22 +1006,27 @@ import {
         .records-panel table, .recent-records-panel table, .records-panel tbody, .recent-records-panel tbody { display: block; width: 100%; }
         .records-panel thead, .recent-records-panel thead { display: none; }
         .records-panel tbody, .recent-records-panel tbody { display: grid; gap: 10px; }
-        .records-panel .record-row, .recent-records-panel .record-row { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; grid-template-areas: "type material quantity" "type time user" "type context context" "type note note"; gap: 5px 10px; min-height: 116px; padding: 14px; border: 1px solid #dce4df; border-radius: 8px; background: var(--surface); }
-        .recent-records-panel .record-row { grid-template-areas: "type material quantity" "type time user" "type note note"; min-height: 94px; }
+        .records-panel .record-row, .recent-records-panel .record-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-areas: "type material quantity" "type time user" "type context context" "type note note"; gap: 3px 8px; min-height: 0; padding: 10px 11px; border: 1px solid #dce4df; border-radius: 8px; background: var(--surface); }
+        .recent-records-panel .record-row { grid-template-areas: "type material quantity" "type time user" "type note note"; }
         .records-panel .record-row > td, .recent-records-panel .record-row > td { display: flex; align-items: center; height: auto; min-width: 0; padding: 0; border: 0; }
         .record-type { grid-area: type; align-self: stretch; justify-content: center; border-right: 1px solid #e7ece9 !important; }
-        .record-type .type-chip { align-self: flex-start; justify-content: center; width: 46px; min-height: 30px; }
+        .record-type .type-chip { align-self: flex-start; justify-content: center; width: 38px; min-height: 28px; padding-inline: 3px; font-size: 12px; }
         .record-material { grid-area: material; }
-        .record-material-wrap { min-width: 0; gap: 8px; }
-        .record-material-icon { width: 24px; height: 24px; flex-basis: 24px; }
+        .record-material-wrap { min-width: 0; max-width: 100%; gap: 6px; }
+        .records-panel .record-material-icon, .recent-records-panel .record-material-icon { display: none; }
+        .record-material-copy { min-width: 0; overflow: hidden; }
+        .record-material-detail { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .record-material-wrap strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .record-quantity { grid-area: quantity; justify-self: end; font-size: 13px; }
-        .record-time { grid-area: time; font-size: 11px !important; }
-        .record-user { grid-area: user; justify-self: end; color: var(--muted); font-size: 11px !important; }
-        .record-user { width: auto; min-width: 0; max-width: 160px; }
-        .record-context { grid-area: context; padding-top: 3px !important; color: var(--muted); font-size: 11px !important; }
+        .record-time { grid-area: time; font-size: 12px !important; }
+        .record-user { grid-area: user; justify-self: end; color: var(--muted); font-size: 12px !important; }
+        .record-user { width: auto; min-width: 0; max-width: 130px; }
+        .record-context { grid-area: context; min-width: 0; padding-top: 1px !important; color: var(--muted); font-size: 12px !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .record-context-label { display: inline; color: var(--muted); font-weight: 700; }
-        .record-note { grid-area: note; color: var(--ink); font-size: 12px !important; }
+        .record-note { grid-area: note; min-width: 0; color: var(--ink); font-size: 12px !important; overflow: hidden; }
+        .record-note-content { min-width: 0; gap: 6px; }
+        .record-note-copy { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .record-inline-action { min-height: 30px; padding: 3px 5px; }
         [data-view="audit"] .page-heading { align-items: flex-start; }
         [data-view="audit"] .heading-actions, [data-view="audit"] .heading-actions .button { width: 100%; }
         .audit-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1066,6 +1086,16 @@ import {
         .toolbar-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .toolbar-actions .button { width: 100%; min-width: 0; padding-inline: 10px; font-size: 11px; }
         .toolbar-actions .button:last-child { grid-column: 1 / -1; }
+        /* Records filters stay compact without shrinking their touch targets. */
+        [data-view="transactions"] .view-toolbar { display: grid; grid-template-columns: minmax(124px, .9fr) minmax(0, 1.1fr) 48px; grid-template-areas: "scope search search" "type range more"; align-items: stretch; gap: 8px; }
+        [data-view="transactions"] .view-toolbar .record-scope { grid-area: scope; width: auto; min-width: 0; margin: 0; order: initial; }
+        [data-view="transactions"] .view-toolbar .record-scope .segment { min-width: 0; padding-inline: 4px; font-size: 12px; white-space: nowrap; }
+        [data-view="transactions"] .view-toolbar > .search { grid-area: search; width: auto; min-width: 0; flex: initial; order: initial; }
+        [data-view="transactions"] .view-toolbar > .search input { height: 48px; min-width: 0; padding-inline: 38px 10px; }
+        [data-view="transactions"] .view-toolbar > .m3-select.record-filter-type { grid-area: type; min-width: 0; width: 100%; flex: initial; order: initial; }
+        [data-view="transactions"] .view-toolbar > .m3-select.record-filter-range { grid-area: range; min-width: 0; width: 100%; flex: initial; order: initial; }
+        [data-view="transactions"] .view-toolbar > .m3-select:is(.record-filter-type, .record-filter-range) .m3-select-trigger { height: 48px; min-height: 48px; padding-inline: 12px; }
+        [data-view="transactions"] .view-toolbar > .toolbar-spacer { display: none; }
         .form-grid { grid-template-columns: 1fr; gap: 12px; }
         .field.full { grid-column: auto; }
         .new-material-fields { grid-template-columns: 1fr; }
@@ -1240,8 +1270,8 @@ import {
         .tracking-balance-actions { width: 100%; }
       }
       @media (prefers-reduced-motion: reduce) {
-        :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .mobile-nav button),
-        :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .mobile-nav button)::before { transition-duration: .01ms !important; }
+        :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .records-command-item, .mobile-nav button),
+        :is(.button, .icon-button, .text-button, .material-info-trigger, .nav-item, .quick-action, .segment, .m3-select-trigger, .m3-select-option, .inventory-command-item, .records-command-item, .mobile-nav button)::before { transition-duration: .01ms !important; }
         .m3-ripple { animation-duration: .01ms !important; }
         .modal-backdrop.open, .modal { animation-duration: .01ms !important; }
         .sidebar, .drawer-scrim { transition-duration: .01ms !important; }
@@ -1265,7 +1295,7 @@ import {
       <div class="login-main">
         <div class="login-brand"><span class="brand-mark"><Boxes data-default-brand-icon size={20} strokeWidth={2.2} /><img data-brand-icon alt="" hidden /></span><span><span class="brand-name" data-app-name>OpenLabStock</span><span class="brand-sub" data-lab-name>实验室耗材管理系统</span></span></div>
         <h1>登录内部工作台</h1>
-        <p>入库、出库、库存提醒和流水查询统一在一个工作台完成。使用组内账号登录，无需邮箱。</p>
+        <p>入库、出库、库存预警和流水查询统一在一个工作台完成。使用组内账号登录，无需邮箱。</p>
         <form class="login-form" data-login-form>
           <div class="field"><label for="login-username">账号</label><input id="login-username" name="username" autocomplete="username" required /></div>
           <div class="field"><label for="login-password">密码</label><input id="login-password" name="password" type="password" autocomplete="current-password" required /></div>
@@ -1309,13 +1339,13 @@ import {
             <div class="page-heading"><div><h1>库存总览</h1><p data-dashboard-greeting>这里是实验室耗材管理系统的实时库存情况。</p></div><div class="heading-actions"><button class="button" type="button" data-open-scanner aria-label="扫码登记" title="扫码登记"><ScanLine size={16} /><span class="scan-button-label">扫码登记</span></button><button class="button tonal" type="button" data-open-modal="in"><ArrowDownToLine size={16} /><span class="action-label-full">入库登记</span><span class="action-label-mobile">入库</span></button><button class="button primary" type="button" data-open-modal="out"><ArrowUpFromLine size={16} /><span class="action-label-full">领用 / 使用登记</span><span class="action-label-mobile">领用/使用</span></button></div></div>
             <div class="summary-grid">
               <article class="summary-card"><div class="summary-card-top"><span>耗材种类</span><span class="summary-icon"><Package size={16} /></span></div><div class="summary-value" data-stat-items>0</div><div class="summary-meta" data-stat-items-meta>0 个分类</div></article>
-              <article class="summary-card"><div class="summary-card-top"><span>库存不足</span><span class="summary-icon"><AlertTriangle size={16} /></span></div><div class="summary-value" data-stat-low>0</div><div class="summary-meta warning" data-stat-low-meta>0 种库存正常</div></article>
+              <article class="summary-card"><div class="summary-card-top"><span>库存预警</span><span class="summary-icon"><AlertTriangle size={16} /></span></div><div class="summary-value" data-stat-low>0</div><div class="summary-meta warning" data-stat-low-meta>0 种库存正常</div></article>
               <article class="summary-card"><div class="summary-card-top"><span>本月入库</span><span class="summary-icon"><ArrowDownToLine size={16} /></span></div><div class="summary-value" data-stat-in>0</div><div class="summary-meta positive" data-stat-in-meta>涉及 0 种耗材</div></article>
               <article class="summary-card"><div class="summary-card-top"><span>本月出库</span><span class="summary-icon"><ArrowUpFromLine size={16} /></span></div><div class="summary-value" data-stat-out>0</div><div class="summary-meta" data-stat-out-meta>涉及 0 种耗材</div></article>
             </div>
             <div class="section-row">
-              <section class="panel low-stock-panel"><div class="panel-header"><div><h2>库存不足</h2><p data-low-stock-panel-subtitle>包含缺货与低库存，需及时补货</p></div><button class="text-button" type="button" data-go-view="inventory" data-show-low-stock>在库存中查看</button></div><div class="table-scroll"><table class="stock-table"><thead><tr><th>耗材名称</th><th>当前库存</th><th>安全库存</th><th>库存状态</th></tr></thead><tbody data-low-stock-body><tr><td colspan="4" class="empty-note">正在读取库存不足项</td></tr></tbody></table></div></section>
-              <section class="panel quick-panel"><div class="panel-header"><div><h2>快捷操作</h2><p>常用的库存管理动作</p></div></div><div class="quick-list"><button class="quick-action out" type="button" data-open-modal="out"><span class="quick-action-icon"><ArrowUpFromLine size={16} /></span><span><strong>领用 / 使用登记</strong><span>领取普通耗材，或登记探针等单元状态</span></span><ChevronRight size={15} /></button><button class="quick-action" type="button" data-open-modal="in"><span class="quick-action-icon"><ArrowDownToLine size={16} /></span><span><strong>入库登记</strong><span>采购、归还或调拨入库</span></span><ChevronRight size={15} /></button><button class="quick-action records" type="button" data-go-my-records><span class="quick-action-icon"><ClipboardList size={16} /></span><span><strong>我的记录</strong><span>查看我登记的领用、入库和状态变更</span></span><ChevronRight size={15} /></button><button class="quick-action import" type="button" data-go-view="inventory"><span class="quick-action-icon"><Package size={16} /></span><span><strong>库存管理</strong><span>搜索耗材并查看安全库存</span></span><ChevronRight size={15} /></button></div><div class="notice"><AlertTriangle size={14} /><span data-low-stock-notice>当前库存与有效期预警会在这里显示。</span></div></section>
+              <section class="panel low-stock-panel"><div class="panel-header"><div><h2>库存预警</h2><p data-low-stock-panel-subtitle>需要及时补货的耗材</p></div><button class="text-button" type="button" data-go-view="inventory" data-show-low-stock>在库存中查看</button></div><div class="table-scroll"><table class="stock-table"><thead><tr><th>耗材名称</th><th>当前库存</th><th>安全库存</th><th>库存状态</th></tr></thead><tbody data-low-stock-body><tr><td colspan="4" class="empty-note">正在读取库存预警</td></tr></tbody></table></div></section>
+              <section class="panel quick-panel"><div class="panel-header"><div><h2>快捷操作</h2><p>常用的库存管理动作</p></div></div><div class="quick-list"><button class="quick-action out" type="button" data-open-modal="out"><span class="quick-action-icon"><ArrowUpFromLine size={16} /></span><span><strong>领用 / 使用登记</strong><span>领取普通耗材，或登记探针等单元状态</span></span><ChevronRight size={15} /></button><button class="quick-action" type="button" data-open-modal="in"><span class="quick-action-icon"><ArrowDownToLine size={16} /></span><span><strong>入库登记</strong><span>采购、归还或调拨入库</span></span><ChevronRight size={15} /></button><button class="quick-action records" type="button" data-go-my-records><span class="quick-action-icon"><ClipboardList size={16} /></span><span><strong>我的记录</strong><span>查看我登记的领用、入库和状态变更</span></span><ChevronRight size={15} /></button><button class="quick-action import" type="button" data-go-view="inventory"><span class="quick-action-icon"><Package size={16} /></span><span><strong>库存管理</strong><span>搜索耗材并查看安全库存</span></span><ChevronRight size={15} /></button></div><div class="notice"><AlertTriangle size={14} /><span data-low-stock-notice>当前库存预警会在这里显示。</span></div></section>
             </div>
             <section class="panel expiry-panel is-hidden" data-expiry-panel><div class="panel-header"><div><h2>有效期预警</h2><p data-expiry-panel-subtitle>临期与过期批次需要及时处理</p></div><div class="panel-header-actions"><button class="text-button" type="button" data-show-expiry="expired">查看过期</button><button class="text-button" type="button" data-show-expiry="expiring">查看临期</button></div></div><div class="table-scroll"><table class="stock-table expiry-table"><thead><tr><th>耗材 / 批次</th><th>有效期</th><th>状态</th><th>数量</th></tr></thead><tbody data-expiry-body><tr><td colspan="4" class="empty-note">正在读取有效期预警</td></tr></tbody></table></div></section>
             <section class="panel" style="margin-bottom:18px"><div class="panel-header"><div><h2>出入库趋势</h2><p>根据真实流水汇总的最近 6 个月记录笔数</p></div><span class="status-chip ok">近 6 个月</span></div><div class="chart"><div class="chart-legend"><span><i class="legend-dot"></i>入库</span><span><i class="legend-dot out"></i>出库</span></div><div class="bars" data-trend-bars></div></div></section>
@@ -1324,13 +1354,13 @@ import {
 
           <section class="view" data-view="inventory">
             <div class="page-heading"><div><h1>库存管理</h1><p>维护耗材基础信息，实时掌握可用数量。</p></div><div class="heading-actions inventory-heading-actions"><button class="button" type="button" data-open-scanner aria-label="扫码登记" title="扫码登记"><ScanLine size={16} /><span class="scan-button-label">扫码登记</span></button><button class="button tonal" type="button" data-open-modal="in"><ArrowDownToLine size={16} /><span class="action-label-full">入库登记</span><span class="action-label-mobile">入库</span></button><button class="button primary" type="button" data-open-modal="out"><ArrowUpFromLine size={16} /><span class="action-label-full">领用 / 使用登记</span><span class="action-label-mobile">领用/使用</span></button><div class="inventory-overflow" data-inventory-overflow><button class="icon-button" type="button" title="更多库存操作" aria-label="更多库存操作" aria-haspopup="menu" aria-expanded="false" aria-controls="inventory-command-menu" data-inventory-more><MoreVertical size={19} /></button><button class="inventory-command-scrim" type="button" aria-label="关闭更多库存操作" tabindex="-1" data-inventory-more-scrim></button><div class="inventory-command-menu" id="inventory-command-menu" role="menu" aria-hidden="true" data-inventory-command-menu><button class="inventory-command-item" type="button" role="menuitem" data-inventory-action="batch"><Printer size={18} />批量打印标签</button><button class="inventory-command-item" type="button" role="menuitem" data-inventory-action="export"><FileSpreadsheet size={18} />导出库存统计</button><div class="inventory-command-divider" role="separator" data-inventory-admin-only></div><button class="inventory-command-item" type="button" role="menuitem" data-inventory-action="stocktake" data-inventory-admin-only><ClipboardCheck size={18} />盘点任务</button><button class="inventory-command-item" type="button" role="menuitem" data-inventory-action="add" data-inventory-admin-only><Package size={18} />新增耗材</button><button class="inventory-command-item" type="button" role="menuitem" data-inventory-action="import" data-inventory-admin-only><Upload size={18} />导入库存</button><button class="inventory-command-item" type="button" role="menuitem" data-inventory-action="template" data-inventory-admin-only><Download size={18} />下载导入模板</button></div></div><div class="inventory-action-proxies" aria-hidden="true"><button type="button" tabindex="-1" data-open-batch-labels></button><button type="button" tabindex="-1" data-add-material data-inventory-admin-only></button><button type="button" tabindex="-1" data-open-import data-inventory-admin-only></button><button type="button" tabindex="-1" data-download-template data-inventory-admin-only></button><button type="button" tabindex="-1" data-download-inventory></button></div></div></div>
-            <div class="view-toolbar"><div class="search"><Search size={16} /><label class="sr-only" for="inventory-search">搜索库存</label><input id="inventory-search" placeholder="搜索耗材名称或分类" data-filter="inventory" /></div><select class="filter-select" data-filter-select="stock"><option value="active">全部在用</option><option value="low">库存不足</option><option value="expired">有过期批次</option><option value="expiring">有临期批次</option><option value="ok">库存正常</option><option value="archived" data-material-admin-filter>已归档</option></select><button class="icon-button" type="button" title="查看耗材状态说明" aria-label="查看耗材状态说明" data-open-material-guide><Info size={17} /></button><span class="toolbar-spacer"></span></div>
+            <div class="view-toolbar"><div class="search"><Search size={16} /><label class="sr-only" for="inventory-search">搜索库存</label><input id="inventory-search" placeholder="搜索耗材名称或分类" data-filter="inventory" /></div><select class="filter-select" data-filter-select="stock"><option value="active">全部在用</option><option value="low">库存预警</option><option value="expired">有过期批次</option><option value="expiring">有临期批次</option><option value="ok">库存正常</option><option value="archived" data-material-admin-filter>已归档</option></select><button class="icon-button" type="button" title="查看耗材状态说明" aria-label="查看耗材状态说明" data-open-material-guide><Info size={17} /></button><span class="toolbar-spacer"></span></div>
             <section class="panel inventory-panel"><div class="table-scroll"><table class="data-table"><thead><tr><th>耗材名称</th><th>分类</th><th><span class="inventory-header-full">开放可用 / 总数</span><span class="inventory-header-mobile">可用</span></th><th><span class="inventory-header-full">安全库存</span><span class="inventory-header-mobile">安全</span></th><th>单位</th><th>最近更新</th><th>状态</th><th class="member-actions"><span class="sr-only">库存明细、二维码与管理操作</span></th></tr></thead><tbody data-inventory-body></tbody></table></div></section>
           </section>
 
           <section class="view" data-view="transactions">
             <div class="page-heading"><div><h1>库存活动记录</h1><p data-records-description>查看全部或仅自己的流水；普通耗材记录领用去向，探针等库存单元记录使用状态。</p></div><div class="heading-actions records-heading-actions"><button class="button" type="button" data-open-scanner aria-label="扫码登记" title="扫码登记"><ScanLine size={16} /><span class="scan-button-label">扫码登记</span></button><button class="button tonal" type="button" data-open-modal="in"><ArrowDownToLine size={16} /><span class="action-label-full">入库登记</span><span class="action-label-mobile">入库</span></button><button class="button" type="button" data-download-records><Download size={15} />导出记录</button><button class="button primary" type="button" data-open-modal="out"><ArrowUpFromLine size={16} /><span class="action-label-full">领用 / 使用登记</span><span class="action-label-mobile">领用/使用</span></button></div></div>
-            <div class="view-toolbar"><div class="segmented record-scope" role="group" aria-label="记录范围"><button class="segment active" type="button" data-record-scope="all" aria-pressed="true">全部记录</button><button class="segment" type="button" data-record-scope="mine" aria-pressed="false">我的记录</button></div><div class="search"><Search size={16} /><label class="sr-only" for="record-search">搜索记录</label><input id="record-search" placeholder="搜索耗材、操作人、盒号、位置或备注" data-filter="records" /></div><select class="filter-select" data-record-type><option value="all">全部类型</option><option value="in">入库</option><option value="out">领出库存</option><option value="use">使用登记</option><option value="inventory_event">状态 / 归属变更</option></select><select class="filter-select" data-record-range><option value="30">近 30 天</option><option value="90">近 90 天</option><option value="year">今年以来</option><option value="all">全部时间</option></select><span class="toolbar-spacer"></span></div>
+            <div class="view-toolbar"><div class="segmented record-scope" role="group" aria-label="记录范围"><button class="segment active" type="button" data-record-scope="all" aria-pressed="true">全部记录</button><button class="segment" type="button" data-record-scope="mine" aria-pressed="false">我的记录</button></div><div class="search"><Search size={16} /><label class="sr-only" for="record-search">搜索记录</label><input id="record-search" placeholder="搜索耗材、操作人、盒号、位置或备注" data-filter="records" /></div><select class="filter-select" data-record-type data-record-filter="type"><option value="all">全部类型</option><option value="in">入库</option><option value="out">领出库存</option><option value="use">使用登记</option><option value="inventory_event">状态 / 归属变更</option></select><select class="filter-select" data-record-range data-record-filter="range"><option value="30">近 30 天</option><option value="90">近 90 天</option><option value="year">今年以来</option><option value="all">全部时间</option></select><div class="records-overflow" data-records-overflow><button class="icon-button" type="button" title="更多记录操作" aria-label="更多记录操作" aria-haspopup="menu" aria-expanded="false" aria-controls="records-command-menu" data-records-more><MoreVertical size={19} /></button><button class="records-command-scrim" type="button" aria-label="关闭更多记录操作" tabindex="-1" data-records-more-scrim></button><div class="records-command-menu" id="records-command-menu" role="menu" aria-hidden="true" data-records-command-menu><button class="records-command-item" type="button" role="menuitem" data-records-action="scan"><ScanLine size={18} />扫码登记</button><button class="records-command-item" type="button" role="menuitem" data-records-action="in"><ArrowDownToLine size={18} />入库登记</button><button class="records-command-item" type="button" role="menuitem" data-records-action="out"><ArrowUpFromLine size={18} />领用 / 使用登记</button><button class="records-command-item" type="button" role="menuitem" data-records-action="export"><Download size={18} />导出记录</button></div></div><span class="toolbar-spacer"></span></div>
             <section class="panel records-panel"><div class="records-load-state" data-records-loading hidden><div class="m3-linear-progress" aria-hidden="true"></div><div class="records-load-copy"><span data-records-loading-label>正在加载完整流水</span><button class="button" type="button" data-retry-records hidden>重试</button></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>时间</th><th>类型</th><th>耗材</th><th>数量</th><th>操作人</th><th title="入库为供应商，领用 / 使用为房间号、领用人或项目">来源 / 去向</th><th>备注</th></tr></thead><tbody data-records-body></tbody></table></div><nav class="record-pagination" data-record-pagination hidden aria-label="库存活动记录分页"><button class="icon-button" type="button" data-record-page-previous title="上一页" aria-label="上一页"><ChevronLeft size={18} /></button><span class="record-pagination-summary"><span data-record-page-range>第 0–0 条，共 0 条</span><strong data-record-page-label>第 1 / 1 页</strong></span><button class="icon-button" type="button" data-record-page-next title="下一页" aria-label="下一页"><ChevronRight size={18} /></button></nav></section>
           </section>
 

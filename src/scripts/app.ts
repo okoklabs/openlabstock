@@ -188,6 +188,9 @@ const menuToggle = $<HTMLButtonElement>('[data-menu-toggle]');
 const inventoryOverflow = $('[data-inventory-overflow]');
 const inventoryMoreButton = $<HTMLButtonElement>('[data-inventory-more]');
 const inventoryCommandMenu = $('[data-inventory-command-menu]');
+const recordsOverflow = $('[data-records-overflow]');
+const recordsMoreButton = $<HTMLButtonElement>('[data-records-more]');
+const recordsCommandMenu = $('[data-records-command-menu]');
 let memberActionTargetId = '';
 let materialActionTargetId = '';
 let materialInfoTargetId = '';
@@ -371,7 +374,8 @@ function setM3SelectOpen(select: HTMLSelectElement, open: boolean) {
 function enhanceM3Select(select: HTMLSelectElement) {
   if (m3SelectControllers.has(select)) return;
   const root = document.createElement('div');
-  root.className = `m3-select ${select.classList.contains('filter-select') ? 'toolbar-select' : 'field-select'}`;
+  const recordFilterClass = select.dataset.recordFilter ? ` record-filter-${select.dataset.recordFilter}` : '';
+  root.className = `m3-select ${select.classList.contains('filter-select') ? 'toolbar-select' : 'field-select'}${recordFilterClass}`;
   const trigger = document.createElement('button');
   trigger.type = 'button';
   trigger.className = 'm3-select-trigger';
@@ -531,9 +535,25 @@ function setInventoryMoreOpen(open: boolean, restoreFocus = false, focusFirst = 
   else if (restoreFocus) inventoryMoreButton.focus();
 }
 
+function recordsCommandItems() {
+  return recordsCommandMenu
+    ? $$<HTMLButtonElement>('[data-records-action]', recordsCommandMenu)
+    : [];
+}
+
+function setRecordsMoreOpen(open: boolean, restoreFocus = false, focusFirst = false) {
+  if (!recordsOverflow || !recordsMoreButton || !recordsCommandMenu) return;
+  recordsOverflow.classList.toggle('open', open);
+  recordsMoreButton.setAttribute('aria-expanded', String(open));
+  recordsCommandMenu.setAttribute('aria-hidden', String(!open));
+  if (open && focusFirst) requestAnimationFrame(() => recordsCommandItems()[0]?.focus());
+  else if (restoreFocus) recordsMoreButton.focus();
+}
+
 const switchView = (name = 'dashboard') => {
   if (name === 'audit' && state?.user.role !== 'admin') name = 'dashboard';
   setInventoryMoreOpen(false);
+  setRecordsMoreOpen(false);
   closeM3Menus();
   views.forEach((view) => view.classList.toggle('active', view.dataset.view === name));
   navItems.forEach((item) => item.classList.toggle('active', item.dataset.viewTarget === name));
@@ -548,6 +568,7 @@ const closeModals = () => {
   scannerReturnFocus = null;
   scannerReturnToTransaction = false;
   setInventoryMoreOpen(false);
+  setRecordsMoreOpen(false);
   closeM3Menus();
   if (confirmResolver) {
     const resolve = confirmResolver;
@@ -2517,17 +2538,19 @@ function transactionRows(records: Transaction[], recent = false) {
     const chip = `<span class="type-chip ${record.type}">${record.type === 'in' ? '入库' : '领用'}</span>`;
     const userName = record.userName || '历史成员';
     const user = `<span class="record-user-name" title="${escapeHtml(userName)}">${escapeHtml(userName)}</span>`;
+    const counterparty = String(record.counterparty ?? '').trim();
+    const note = String(record.note ?? '').trim();
     const scope = record.accessScope === 'user' ? `自用 · ${record.ownerName || '历史成员'}` : record.accessScope === 'shared' ? '开放使用' : '';
     const inventoryDetail = [record.correctionOfId ? '更正记录' : record.operation === 'dispose' ? '处置' : '', record.inventoryUnitLabel, record.statusName, scope].filter(Boolean).join(' · ');
     const material = `<div class="record-material-wrap"><span class="item-icon record-material-icon" aria-hidden="true">${materialIcon}</span><span class="record-material-copy"><strong>${escapeHtml(record.materialName)}</strong>${inventoryDetail ? `<small class="record-material-detail">${escapeHtml(inventoryDetail)}</small>` : ''}</span></div>`;
-    if (recent) return `<tr class="record-row"><td class="record-time">${formatTime(record.occurredAt)}</td><td class="record-type">${chip}</td><td class="record-material">${material}</td><td class="record-quantity ${record.type}">${sign}${formatNumber(record.quantity)} ${escapeHtml(record.unit)}</td><td class="record-user">${user}</td><td class="record-note">${escapeHtml(record.note || '-')}</td></tr>`;
+    if (recent) return `<tr class="record-row"><td class="record-time">${formatTime(record.occurredAt)}</td><td class="record-type">${chip}</td><td class="record-material">${material}</td><td class="record-quantity ${record.type}">${sign}${formatNumber(record.quantity)} ${escapeHtml(record.unit)}</td><td class="record-user">${user}</td><td class="record-note" title="${escapeHtml(note || '未填写备注')}">${escapeHtml(note || '-')}</td></tr>`;
     const attributes = `data-record-type="${record.type}" data-occurred-at="${escapeHtml(record.occurredAt)}"`;
     const correctedQuantity = record.correctedQuantity;
     const corrected = correctedQuantity != null;
     const canCorrect = record.sourceType === 'manual' && !record.correctionOfId && !corrected && (record.userId === state?.user.id || state?.user.role === 'admin');
     const correctionIcon = document.querySelector('[data-correction-icon-template]')?.innerHTML ?? '';
     const action = canCorrect ? `<button class="text-button record-inline-action" type="button" data-correct-transaction="${escapeHtml(record.id)}">${correctionIcon}<span>更正</span></button>` : corrected ? `<span class="record-correction-state">已冲销 ${formatNumber(correctedQuantity)} ${escapeHtml(record.unit)}</span>` : '';
-    return `<tr class="record-row" ${attributes}><td class="record-time">${formatTime(record.occurredAt)}</td><td class="record-type">${chip}</td><td class="record-material">${material}</td><td class="record-quantity ${record.type}">${sign}${formatNumber(record.quantity)} ${escapeHtml(record.unit)}</td><td class="record-user">${user}</td><td class="record-context"><span class="record-context-label">来源 / 去向：</span>${escapeHtml(record.counterparty || '-')}</td><td class="record-note"><div class="record-note-content"><span class="record-note-copy">${escapeHtml(record.note || '-')}</span>${action}</div></td></tr>`;
+    return `<tr class="record-row" ${attributes}><td class="record-time">${formatTime(record.occurredAt)}</td><td class="record-type">${chip}</td><td class="record-material">${material}</td><td class="record-quantity ${record.type}">${sign}${formatNumber(record.quantity)} ${escapeHtml(record.unit)}</td><td class="record-user">${user}</td><td class="record-context" title="${escapeHtml(counterparty || '未填写来源 / 去向')}"><span class="record-context-label">来源 / 去向：</span>${escapeHtml(counterparty || '-')}</td><td class="record-note" title="${escapeHtml(note || '未填写备注')}"><div class="record-note-content"><span class="record-note-copy">${escapeHtml(note || '-')}</span>${action}</div></td></tr>`;
   }).join('');
 }
 
@@ -2550,7 +2573,8 @@ function inventoryEventRows(events: InventoryEvent[]) {
     const chipLabel = event.eventType === 'use' ? '使用' : event.eventType === 'use_correction' ? '更正' : '变更';
     const contextLabel = useEvent ? '使用位置 / 项目：' : '变更内容：';
     const context = useEvent ? event.counterparty || '-' : change;
-    return `<tr class="record-row" data-record-type="${useEvent ? 'use' : 'inventory_event'}" data-occurred-at="${escapeHtml(event.occurredAt)}"><td class="record-time">${formatTime(event.occurredAt)}</td><td class="record-type"><span class="type-chip adjustment">${chipLabel}</span></td><td class="record-material">${material}</td><td class="record-quantity">${formatNumber(event.quantity)}${unit ? ` ${escapeHtml(unit)}` : ''}</td><td class="record-user">${user}</td><td class="record-context"><span class="record-context-label">${contextLabel}</span>${escapeHtml(context)}</td><td class="record-note"><div class="record-note-content"><span class="record-note-copy">${escapeHtml(event.note || '-')}</span>${correctionAction}${detailAction}</div></td></tr>`;
+    const note = String(event.note ?? '').trim();
+    return `<tr class="record-row" data-record-type="${useEvent ? 'use' : 'inventory_event'}" data-occurred-at="${escapeHtml(event.occurredAt)}"><td class="record-time">${formatTime(event.occurredAt)}</td><td class="record-type"><span class="type-chip adjustment">${chipLabel}</span></td><td class="record-material">${material}</td><td class="record-quantity">${formatNumber(event.quantity)}${unit ? ` ${escapeHtml(unit)}` : ''}</td><td class="record-user">${user}</td><td class="record-context" title="${escapeHtml(context)}"><span class="record-context-label">${contextLabel}</span>${escapeHtml(context)}</td><td class="record-note" title="${escapeHtml(note || '未填写备注')}"><div class="record-note-content"><span class="record-note-copy">${escapeHtml(note || '-')}</span>${correctionAction}${detailAction}</div></td></tr>`;
   }).join('');
 }
 
@@ -3807,6 +3831,51 @@ inventoryCommandMenu?.addEventListener('click', (event) => {
   const selector = sourceSelectors[item.dataset.inventoryAction ?? ''];
   setInventoryMoreOpen(false, true);
   if (selector) $<HTMLButtonElement>(selector)?.click();
+});
+recordsMoreButton?.addEventListener('click', (event) => {
+  setRecordsMoreOpen(!recordsOverflow?.classList.contains('open'), false, event.detail === 0);
+});
+recordsMoreButton?.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    setRecordsMoreOpen(true, false, true);
+  } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault();
+    setRecordsMoreOpen(true);
+    requestAnimationFrame(() => {
+      const items = recordsCommandItems();
+      items[event.key === 'ArrowDown' ? 0 : items.length - 1]?.focus();
+    });
+  } else if (event.key === 'Escape' && recordsOverflow?.classList.contains('open')) {
+    event.preventDefault();
+    setRecordsMoreOpen(false, true);
+  }
+});
+$<HTMLButtonElement>('[data-records-more-scrim]')?.addEventListener('click', () => setRecordsMoreOpen(false, true));
+recordsCommandMenu?.addEventListener('keydown', (event) => {
+  const items = recordsCommandItems();
+  const current = items.indexOf(document.activeElement as HTMLButtonElement);
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    setRecordsMoreOpen(false, true);
+  } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault();
+    const offset = event.key === 'ArrowDown' ? 1 : -1;
+    items[(current + offset + items.length) % items.length]?.focus();
+  } else if (event.key === 'Home' || event.key === 'End') {
+    event.preventDefault();
+    items[event.key === 'Home' ? 0 : items.length - 1]?.focus();
+  }
+});
+recordsCommandMenu?.addEventListener('click', (event) => {
+  const item = (event.target as Element).closest<HTMLButtonElement>('[data-records-action]');
+  if (!item) return;
+  setRecordsMoreOpen(false, true);
+  const action = item.dataset.recordsAction;
+  if (action === 'scan') $<HTMLButtonElement>('[data-view="transactions"] [data-open-scanner]')?.click();
+  else if (action === 'in') $<HTMLButtonElement>('[data-view="transactions"] [data-open-modal="in"]')?.click();
+  else if (action === 'out') $<HTMLButtonElement>('[data-view="transactions"] [data-open-modal="out"]')?.click();
+  else if (action === 'export') $<HTMLButtonElement>('[data-view="transactions"] [data-download-records]')?.click();
 });
 $$<HTMLButtonElement>('[data-go-view]').forEach((item) => item.addEventListener('click', () => switchView(item.dataset.goView)));
 $<HTMLButtonElement>('[data-go-all-records]')?.addEventListener('click', () => {
