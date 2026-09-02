@@ -394,6 +394,14 @@ import {
       .toolbar-spacer { flex: 1; }
       .toolbar-actions { display: flex; align-items: center; gap: 8px; }
       .empty-note { padding: 45px 18px; color: var(--muted); text-align: center; font-size: 12px; }
+      @media (min-width: 761px) {
+        [data-view="transactions"] .view-toolbar { align-items: stretch; }
+        [data-view="transactions"] .view-toolbar > .search,
+        [data-view="transactions"] .view-toolbar > .search input,
+        [data-view="transactions"] .view-toolbar > .m3-select,
+        [data-view="transactions"] .view-toolbar > .m3-select .m3-select-trigger,
+        [data-view="transactions"] .view-toolbar .record-scope { min-height: 48px; height: 48px; }
+      }
       .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(20,30,25,.38); }
       .modal-backdrop.open { display: flex; animation: modal-scrim-in .18s ease-out; }
       .modal { width: min(540px, 100%); max-height: min(740px, calc(100vh - 40px)); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #dce4df; border-radius: 28px; background: #fbfdfb; box-shadow: var(--shadow-2); animation: modal-container-in .24s cubic-bezier(.2, 0, 0, 1); }
