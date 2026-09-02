@@ -17,4 +17,7 @@ backups/
 playwright-report/
 test-results/
 .openlabstock-verification.json
+.openlabstock-docs-verification.json
+.openlabstock-auto-verification.json
+.openlabstock-public-verification.json
 TODO.private.md

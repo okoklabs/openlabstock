@@ -1,7 +1,8 @@
-import { existsSync, lstatSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PUBLIC_BOUNDARY_RECEIPT, repositoryState } from './verification-state.mjs';
 
 const rootDir = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const requiredFiles = [
@@ -12,7 +13,7 @@ const requiredFiles = [
 const forbiddenPathPatterns = [
   /(^|\/)docs\/private(?:\/|$)/i,
   /(^|\/)docs\/DEPLOYMENT_OPERATIONS\.md$/i,
-  /(^|\/)(?:\.sysulab-verification|\.openlabstock-verification)\.json$/i,
+  /(^|\/)(?:\.sysulab-(?:docs-)?verification|\.openlabstock-(?:auto-|docs-|public-)?verification)\.json$/i,
   /(?:\.sqlite(?:-(?:shm|wal))?|\.tar\.gz|\.manifest\.txt|\.log)$/i,
 ];
 const forbiddenContent = [
@@ -56,7 +57,7 @@ for (const file of collect(rootDir)) {
   const name = relative(file);
   // verify.mjs writes this ignored receipt locally; it is excluded from source
   // control and production archives, so do not treat a local run as a leak.
-  if (name === '.openlabstock-verification.json' || name === '.sysulab-verification.json') {
+  if (/^\.(?:sysulab-(?:docs-)?verification|openlabstock-(?:auto-|docs-|public-)?verification)\.json$/i.test(name)) {
     if (trackedFiles?.has(name)) failures.push(`验证回执不能被提交：${name}`);
     continue;
   }
@@ -83,3 +84,11 @@ if (failures.length) {
   process.exit(1);
 }
 console.log(`Public boundary check passed: ${requiredFiles.length} governance files and ${collect(rootDir).length} files checked`);
+const state = repositoryState(rootDir);
+writeFileSync(path.join(rootDir, PUBLIC_BOUNDARY_RECEIPT), `${JSON.stringify({
+  format: 1,
+  fingerprint: state.fingerprint,
+  files: state.files.length,
+  verifiedAt: new Date().toISOString(),
+}, null, 2)}\n`, 'utf8');
+console.log(`Public-boundary receipt: ${PUBLIC_BOUNDARY_RECEIPT}`);

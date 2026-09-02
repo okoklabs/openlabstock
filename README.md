@@ -127,16 +127,18 @@ OpenLabStock 当前定位是单实验室或单组织的库存工作台，不试�
 
 ## 快速启动
 
-要求 Node.js `>=22.12.0`，以及仓库声明的 pnpm 版本。
+先选择你的目标。终端用户不需要先运行测试或生产依赖审计；这些命令属于开发与发布门禁。
+
+### 本机试用
+
+要求 Node.js `>=22.12.0`，以及仓库声明的 pnpm 版本。下面的命令会构建并启动本地演示实例：
 
 ```bash
 git clone https://github.com/okoklabs/openlabstock.git
 cd openlabstock
 corepack enable
 pnpm install --frozen-lockfile
-pnpm run verify:quick
-pnpm run build
-pnpm run start
+pnpm run dev
 ```
 
 打开 <http://127.0.0.1:4388/>。仅本地非生产数据库会创建两个演示账号：
@@ -144,17 +146,29 @@ pnpm run start
 - 系统所有者：`admin` / `admin123`
 - 普通成员：`student` / `demo123`
 
-生产模式不会创建这些演示密码。第一次生产启动必须通过文档规定的环境变量设置独立的所有者密码。运行数据默认保存在被 Git 忽略的 `data/` 目录。
+生产模式不会创建这些演示密码。运行数据默认保存在被 Git 忽略的 `data/` 目录。
+
+### 单机正式部署
+
+Linux 服务器优先使用 Docker 单实例路线，自动生成初始密码、持久化数据并提供更新、备份和回滚命令：
+
+```bash
+git clone https://github.com/okoklabs/openlabstock.git /opt/openlabstock-docker
+cd /opt/openlabstock-docker
+bash deploy/docker/openlabstock.sh init
+```
+
+脚本输出初始 `admin` 密码后，登录并立即修改。已有 systemd、反向代理或需要手工控制目录的维护者，再阅读 [`DEPLOYMENT.md`](./DEPLOYMENT.md) 的 systemd 路线。
 
 ### 选择安装路径
 
 | 目标 | 推荐入口 | 适合谁 |
 | --- | --- | --- |
-| 本机试用或开发 | 上面的 `pnpm` 快速启动 | 想先体验流程、修改代码或运行测试的人 |
+| 本机试用或开发 | 上面的 `pnpm run dev` | 想先体验流程或修改代码的人 |
 | 单台 Linux 服务器 | [`deploy/docker/README.md`](./deploy/docker/README.md) 的 Docker `init` | 希望自动生成初始密码、持久化数据并用脚本更新/回滚的团队 |
 | 已有 systemd 和反向代理 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) 与 [`deploy/systemd/README.md`](./deploy/systemd/README.md) | 需要把程序、SQLite 数据和备份分开管理的维护者 |
 
-首次正式部署建议使用 GitHub Release 中附带的生产包和 SHA-256 清单，而不是直接从某个工作分支压缩源码。当前项目仍是公开预览；在全新 Linux 环境完成安装、升级、备份、恢复和回滚演练后，再把版本标记为稳定发行。
+当前项目仍是公开预览；在全新 Linux 环境完成安装、升级、备份、恢复和回滚演练后，再把版本标记为稳定发行。正式环境应使用固定版本的 GitHub Release 包和 SHA-256 清单，不要从任意工作分支直接部署。
 
 ## 部署与运维
 
@@ -175,11 +189,13 @@ OpenLabStock 默认只监听 `127.0.0.1:4388`，公网访问应通过受控的 H
 | 运维 | 原生 systemd 或单实例 Docker、健康检查、一致性备份和受控恢复 |
 
 ```bash
-pnpm run verify:quick   # 日常：文档、许可证、类型和回归测试
-pnpm run verify         # 完整构建、测试、审计和发布验证
-pnpm run check:docs     # Markdown 本地链接检查
-pnpm run check:public   # 公共仓库边界与治理文件检查
+pnpm run verify:auto    # 日常：根据实际变更自动选择最小充分门禁
+pnpm run verify:status  # 发布前查看哪些验证凭据仍可复用
+pnpm run verify         # 高风险改动或正式发布的完整门禁
+pnpm run release:prepare -- --next # 自动升版、验证、打包和生产烟测
 ```
+
+同一工作树没有变化时，`verify:auto` 不会重复检查。运行代码变化只重跑类型检查、构建和测试；许可证检查仅在依赖或许可文件变化时重跑，生产依赖审计在依赖不变时 24 小时内复用。正式发布的 `--next` 自动递增当天修订号并生成生产包和 manifest；失败后不加 `--next` 即可重试同一版本。
 
 修改共享行为前，请先阅读[系统架构](./docs/BUILD_ARCHITECTURE.md)、[库存追踪模型](./docs/INVENTORY_TRACKING.md)、[二维码流程](./docs/QR_CODE_WORKFLOW.md)和[工程工作流](./docs/ENGINEERING_WORKFLOW.md)。
 

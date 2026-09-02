@@ -50,6 +50,7 @@
           <a href="#scan-flow">扫码登记</a>
           <a href="#capabilities">产品能力</a>
           <a href="#open-source">开源特点</a>
+          <a class="nav-cta" href="https://github.com/okoklabs/openlabstock" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
           <button class="presentation-button" type="button" title="进入全屏演示" data-presentation-start>
             <span aria-hidden="true">⛶</span><span>全屏演示</span>
           </button>
@@ -58,7 +59,7 @@
     </header>
 
     <div class="presentation-toolbar" role="group" aria-label="演示控制">
-      <span class="presentation-count" aria-live="polite" data-slide-count>01 / 08</span>
+      <span class="presentation-count" aria-live="polite" data-slide-count>01 / 09</span>
       <button type="button" aria-label="上一页" title="上一页" data-slide-prev>←</button>
       <button type="button" aria-label="下一页" title="下一页" data-slide-next>→</button>
       <button type="button" aria-label="退出全屏演示" title="退出全屏演示" data-presentation-exit>×</button>
@@ -77,6 +78,7 @@
             <div class="hero-actions">
               <a class="button button-primary" href="#scan-flow">看扫码登记如何工作</a>
               <a class="button button-secondary" href="#capabilities">浏览产品能力 <span aria-hidden="true">→</span></a>
+              <a class="button button-secondary" href="https://github.com/okoklabs/openlabstock" target="_blank" rel="noreferrer">查看 GitHub <span aria-hidden="true">↗</span></a>
             </div>
             <dl class="hero-facts" aria-label="产品特性">
               <div><dt>部署</dt><dd>自主部署 / 托管</dd></div>
@@ -114,9 +116,9 @@
         <div class="section-shell">
           <div class="section-heading reveal">
             <p class="section-index">01 / 现实</p>
-            <h2 id="problems-title">同一间实验室，<br />常常有四份库存。</h2>
+            <h2 id="problems-title">同一间实验室，<br />库存信息却总是对不上。</h2>
             <p>
-              表格里的、柜子里的、刚被领走的，以及大家记忆里的。问题不在于谁不认真，而在于工具没有跟上真实工作流。
+              表格里的数字、柜子里的实物、已经领走但尚未登记的数量，以及大家凭记忆补上的数字。问题不在于谁不认真，而在于工具没有跟上真实工作流。
             </p>
           </div>
 
@@ -296,6 +298,10 @@
             <div class="license-row">
               <span>AGPL-3.0-only</span><span>代码可审查</span><span>部署可选择</span><span>数据可迁移</span>
             </div>
+            <div class="open-links">
+              <a class="button button-light" href="https://github.com/okoklabs/openlabstock" target="_blank" rel="noreferrer">查看 GitHub 仓库 <span aria-hidden="true">↗</span></a>
+              <a class="button button-outline-light" href="https://github.com/okoklabs/openlabstock/releases" target="_blank" rel="noreferrer">查看发布页 <span aria-hidden="true">↗</span></a>
+            </div>
           </div>
 
           <div class="deploy-panel reveal" data-delay="1" aria-label="OpenLabStock 开源特点">
@@ -306,7 +312,37 @@
               <article class="open-feature"><span>03 / CHOICE</span><strong>部署可选</strong><p>可以自主部署，也可以选择托管、升级与专业支持。</p></article>
               <article class="open-feature"><span>04 / PORTABILITY</span><strong>数据可迁移</strong><p>保留清晰的导出与备份路径，服务选择不等于数据锁定。</p></article>
             </div>
-            <p>开源产品，也可以有可靠、持续的专业服务。</p>
+            <p>当前为公开预览版；先用合成数据评估，再按部署文档进入正式环境。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="getting-started" id="get-started" aria-labelledby="get-started-title" data-slide data-slide-title="开始使用">
+        <div class="section-shell">
+          <div class="section-heading section-heading-wide reveal">
+            <p class="section-index">06 / START HERE</p>
+            <h2 id="get-started-title">从看懂，到真正用起来。</h2>
+            <p>不需要先搭一套复杂基础设施。选择最接近当前阶段的入口，沿着同一份公开文档继续。</p>
+          </div>
+          <div class="start-grid reveal" data-delay="1">
+            <article>
+              <span class="start-number">01</span>
+              <h3>先试用</h3>
+              <p>克隆仓库，在本机用合成数据启动，先体验扫码、入库、领用和盘点流程。</p>
+              <a href="https://github.com/okoklabs/openlabstock#快速启动" target="_blank" rel="noreferrer">打开快速启动 <span aria-hidden="true">↗</span></a>
+            </article>
+            <article>
+              <span class="start-number">02</span>
+              <h3>正式部署</h3>
+              <p>单机可选 systemd 或 Docker；数据库和备份独立保存，升级前自动备份，失败可回滚。</p>
+              <a href="https://github.com/okoklabs/openlabstock/blob/main/DEPLOYMENT.md" target="_blank" rel="noreferrer">查看部署文档 <span aria-hidden="true">↗</span></a>
+            </article>
+            <article>
+              <span class="start-number">03</span>
+              <h3>参与贡献</h3>
+              <p>先阅读贡献规则和安全渠道。修复问题、补充文档和提出建议都欢迎，核心代码按公开流程维护。</p>
+              <a href="https://github.com/okoklabs/openlabstock/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer">了解贡献方式 <span aria-hidden="true">↗</span></a>
+            </article>
           </div>
         </div>
       </section>
@@ -319,7 +355,8 @@
           <p>为需要认真管理库存，又不想把工作流变复杂的实验室而做。</p>
           <div class="hero-actions final-actions">
             <a class="button button-primary" href="#top">重新认识产品</a>
-            <a class="button button-secondary" href="#open-source">查看开源特点</a>
+            <a class="button button-secondary" href="#get-started">开始使用</a>
+            <a class="button button-secondary" href="https://github.com/okoklabs/openlabstock" target="_blank" rel="noreferrer">访问 GitHub <span aria-hidden="true">↗</span></a>
           </div>
         </div>
       </section>
@@ -329,6 +366,7 @@
       <div class="section-shell footer-inner">
         <a class="brand footer-brand" href="#top"><img src="assets/openlabstock-icon.png" alt="" width="32" height="32" /><span>OpenLabStock</span></a>
         <p>开源、透明、可自主部署的实验室耗材管理系统</p>
+        <a class="footer-link" href="https://github.com/okoklabs/openlabstock" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
         <span>© 2026 OpenLabStock</span>
       </div>
     </footer>

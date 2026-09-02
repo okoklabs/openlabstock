@@ -1,6 +1,7 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DOCUMENTATION_RECEIPT, documentationState } from './verification-state.mjs';
 
 const rootDir = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const ignoredDirectories = new Set(['.git', '.astro', 'node_modules', 'dist', 'data', 'backups']);
@@ -47,3 +48,12 @@ if (failures.length) {
 }
 
 console.log(`Markdown local links: ${markdownFiles.length} files checked`);
+
+const state = documentationState(rootDir, markdownFiles);
+writeFileSync(path.join(rootDir, DOCUMENTATION_RECEIPT), `${JSON.stringify({
+  format: 1,
+  fingerprint: state.fingerprint,
+  files: state.files.length,
+  verifiedAt: new Date().toISOString(),
+}, null, 2)}\n`, 'utf8');
+console.log(`Documentation receipt: ${DOCUMENTATION_RECEIPT}`);

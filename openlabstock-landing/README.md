@@ -26,13 +26,16 @@
 
 ## 设计调研
 
-设计调研日期：2026-08-14；公开仓库与发布状态复核：2026-09-02。
+调研日期：2026-09-02。
 
 - [Linear](https://linear.app/)：参考“真实产品界面就是首要视觉”的表达、克制导航和分章节编号。
 - [Supabase](https://supabase.com/)：参考把开源身份放在主叙事中，而非只做页脚标签；产品截图承担能力说明。
 - [PostHog](https://posthog.com/)：参考高信息密度与鲜明但不浮夸的品牌语气。
 - [Cal.com](https://cal.com/)：参考浅色基底、清楚的大标题和产品展示节奏。
 - [Quartzy](https://www.quartzy.com/)：用于了解实验室软件常见的库存、采购和移动端痛点表达；本站文案进一步聚焦 OpenLabStock 已真实交付的能力。
+- [GitHub Releases 文档](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository)：参考“源码仓库用于协作、Release 用于固定版本、变更摘要和可验证资产”的入口分工。
+- [Home Assistant 安装文档](https://www.home-assistant.io/installation/)：参考按用户目标提供多条安装路径，而不是把 Docker、系统安装和试用步骤混在一个长命令块里。
+- [Snipe-IT 文档](https://snipe-it.readme.io/docs)：参考把首次部署、升级、备份和故障恢复拆成独立任务，降低第一次安装时的认知负担。
 
 最终没有照搬任何页面。视觉以现有 OpenLabStock 的绿色、Material 3 工作台和真实截图为基础，增加琥珀预警色与浅蓝收束区，避免整页只剩一种绿色。
 
@@ -41,4 +44,16 @@
 - “微信扫一扫”表述为扫码直达确认表单，不声称扫码即改变库存。
 - 没有使用未经验证的客户数量、节省时间比例、客户评价或商业托管承诺。
 - 开源许可写明为当前真实的 `AGPL-3.0-only`。
-- 公共仓已以公开预览形式提供；页面仍没有放置未经维护承诺的在线演示 CTA，源码入口以根目录 README 和公开仓库链接为准。
+- 页面直接链接公开源码仓库、发布页、快速启动、部署和贡献文档；当前文案明确这是公开预览，不把未完成的托管服务写成现成产品。
+
+## 公开入口与安装路径
+
+官网的主 CTA 只保留三个可兑现动作：
+
+1. **先看流程**：从产品截图和扫码登记说明理解工作流。
+2. **先试用**：进入公开仓库的快速启动，在本机用合成数据体验。
+3. **正式部署**：进入部署文档，选择单机 systemd 或 Docker；生产数据和备份始终独立于程序目录。
+
+公开仓库地址：<https://github.com/okoklabs/openlabstock>。
+
+GitHub Release 不是安装的硬性前提，但建议在一次全新 Linux 安装、升级、备份、恢复和回滚演练通过后，再以版本标签和 Release 附上生产包、清单、SHA-256 与变更摘要。这样普通用户可以从仓库试用，运维人员可以从 Release 取得经过验证的发布包，二者都不需要从临时分支猜版本。

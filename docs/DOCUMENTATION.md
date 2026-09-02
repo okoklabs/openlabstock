@@ -18,12 +18,12 @@
 
 ### 开发者与 AI
 
-1. [`AGENTS.md`](../AGENTS.md)：数据、权限、界面和发布硬约束；这是面向 AI 和维护者的公开工程规则，不是终端用户手册，也不包含私有运维信息。
-2. [`BUILD_ARCHITECTURE.md`](./BUILD_ARCHITECTURE.md)：当前技术架构和数据模型。
-3. [`ENGINEERING_WORKFLOW.md`](./ENGINEERING_WORKFLOW.md)：开发、验证、发布和回滚的唯一流程。
-4. [`TODO.md`](../TODO.md)：当前短期收件箱；不是全部需求数据库。
-5. [`ROADMAP.md`](../ROADMAP.md)：阶段方向和触发条件；不是交付承诺。
-6. [`PRODUCT_REVIEW.md`](../PRODUCT_REVIEW.md)：成熟产品先例与业务取舍。
+1. 首次进入先读 [`AGENTS.md`](../AGENTS.md)、[`README.md`](../README.md) 和 [`TODO.md`](../TODO.md)：掌握硬约束、产品入口和当前未交付事项。
+2. 架构、API、数据库或权限改动再读 [`BUILD_ARCHITECTURE.md`](./BUILD_ARCHITECTURE.md)。
+3. 验证、发布或回滚时再读 [`ENGINEERING_WORKFLOW.md`](./ENGINEERING_WORKFLOW.md)。
+4. 产品方向变化时读 [`ROADMAP.md`](../ROADMAP.md)；需要成熟产品依据时读 [`PRODUCT_REVIEW.md`](../PRODUCT_REVIEW.md)。
+
+同一任务内不要反复读取未变化的长文档。上下文恢复时先看 `git status`、最近提交和 `TODO.md`，再从最后一个未完成步骤继续；修改完成后运行 `pnpm run verify:auto`，正式发布前才查看 `pnpm run verify:status`。
 
 `AGENTS.md` 在 AI 辅助开发的公共项目中是可选但有价值的约束入口；本项目保留它，是为了让外部维护者和 AI 在修改库存、权限、迁移或界面时遵守同一组不可破坏规则。它不记录聊天内容、临时思考、生产拓扑或凭据。只做用户部署或使用时可以跳过该文件，从 [`README.md`](../README.md) 开始。
 

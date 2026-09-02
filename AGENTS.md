@@ -1,12 +1,13 @@
 # OpenLabStock AI 开发与设计指引
 
-本文件是 AI 或新维护者进入 `openlabstock/` 后的第一阅读入口。修改前同时阅读：
+本文件是 AI 或新维护者进入 `openlabstock/` 后的第一阅读入口。首次进入仓库或上下文已丢失时先读 `README.md` 和 `TODO.md`；不要在每个小改动或用户说“继续”时机械重读全部长文档。随后只按变更领域补读：
 
-- `docs/BUILD_ARCHITECTURE.md`
-- `docs/ENGINEERING_WORKFLOW.md`
-- `docs/REPOSITORY_GOVERNANCE.md`
-- `README.md`
-- `TODO.md`，先确认是否存在尚未交付的用户问题；新问题插入时不得遗忘旧事项。
+- 架构、API、数据库和权限：`docs/BUILD_ARCHITECTURE.md`
+- 验证、发布和回滚：`docs/ENGINEERING_WORKFLOW.md`
+- 公共仓库、开源和信息边界：`docs/REPOSITORY_GOVERNANCE.md`
+- 其余领域文档由 `docs/DOCUMENTATION.md` 索引；同一任务中内容未变化时复用已读结论。
+
+新问题插入时不得遗忘 `TODO.md` 中仍未交付的事项，但也不要为一次局部修复重新进行整库产品、许可或部署审计。
 
 ## 1. 项目边界
 
@@ -109,10 +110,17 @@
 
 验证按风险分级，避免每个小改动重复执行发布级流程：
 
-- 日常代码改动运行 `pnpm run verify:quick`，即类型检查和回归测试；纯文档改动只检查链接、命令和受影响内容，不要求构建应用。
+- 日常修改完成后运行 `pnpm run verify:auto`；它根据实际变更自动选择文档、界面、快速或完整门禁。同一工作树没有变化时直接复用，不要求 Agent 手工判断并重复串联。
 - 合并到主分支前由 CI 运行 `pnpm run verify`，即 `check + build + test + audit`。
 - 数据库迁移、认证、权限、备份恢复、二维码、Docker 或共享库存写入等高风险改动，本地也必须运行完整 `pnpm run verify`。
 - 正式发布必须先运行一次完整 `pnpm run verify`，再制作发布包并做一次独立解包启动、空库 / 升级库和健康检查。独立解包阶段只做生产烟测，不重复执行已经通过的完整测试套件；只有运行时代码或锁文件在验证后发生变化时才重新运行 `pnpm run verify`。
+
+### Agent / 维护者检查节奏
+
+- 日常只需 `pnpm run verify:auto`；正式发布前再用 `pnpm run verify:status` 查看运行、文档、许可证、公共边界和 24 小时依赖审计凭据。
+- 许可证检查仅在依赖或许可文件变化时重跑；生产依赖审计在依赖不变时 24 小时内复用。不要因 Agent 重启、上下文恢复或用户说“继续”而重新审计。
+- `release:prepare` 已包含验证和打包，不要先手动运行完整验证再重复打包流程。
+- 公共边界与 Markdown 链接也保存内容指纹；只有相关文件变化时才重跑。
 
 界面改动在日常阶段检查受影响流程；正式发布前实际登录检查桌面和 `390 x 844` 手机截图、横向溢出、弹窗对齐、下拉菜单、按钮状态和控制台错误。输入法、摄像头、PWA 等真机特有问题继续在对应设备验收，不要求无关补丁重复验证。
 

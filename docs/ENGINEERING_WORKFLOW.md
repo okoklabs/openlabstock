@@ -36,27 +36,29 @@
 | 变更类型 | 开发中 | 完成前门禁 | 额外验收 |
 | --- | --- | --- | --- |
 | 纯文档 | 直接编辑 | `pnpm run check:docs` | 核对命令和链接 |
-| 普通前端/文案 | 受影响页面 | `pnpm run verify:quick` | 受影响桌面流程；响应式改动再查 `390 x 844` |
+| 纯样式、布局、文案或 Astro 模板 | 受影响页面 | `pnpm run verify:ui` | 受影响桌面流程；响应式改动再查 `390 x 844` |
+| 前端行为或共享脚本 | 相关页面 | `pnpm run verify:quick` | 受影响桌面流程；响应式改动再查 `390 x 844` |
 | 普通后端逻辑 | 相关 API 测试 | `pnpm run verify:quick` | 核对错误口径和事务边界 |
 | 数据库、认证、权限、恢复、共享库存写入 | 最小回归 | `pnpm run verify` | 旧库迁移、越权或失败路径 |
 | 二维码、PWA、输入法、摄像头 | 最小回归 | `pnpm run verify` | 按对应文档做真机或浏览器专项验收 |
 | Docker/部署脚本 | ShellCheck/配置检查 | `pnpm run verify` | 有 Docker Engine 时运行隔离 smoke |
 | 正式发布 | 不增加新代码 | 见下一节 | 自动包烟测 + 生产健康检查 |
 
-`verify:quick` 不生成发布凭据；它用于日常反馈。只有完整 `verify` 能授权当前代码制作正式包。
+日常修改完成后直接运行 `pnpm run verify:auto`。它根据相对上次本地凭据的实际文件变化自动选择 `check:docs`、`verify:ui`、`verify:quick` 或完整 `verify`；同一工作树没有变化时直接复用。单项命令保留给定位失败原因，不需要 Agent 每轮手工串联。
 
-GitHub `Quality` 在完整验证后运行 `pnpm run test:e2e`，以桌面和 `390 x 844` 手机视口检查登录、二维码定位、确认登记及库存只写入一次。首次在本机运行前执行 `pnpm exec playwright install chromium`；测试只使用系统临时目录中的隔离数据库，失败截图、trace 和 HTML 报告位于被 Git 忽略的 Playwright 输出目录。
+完整验证分别保存运行代码、文档、公共边界和依赖检查凭据。运行代码变化只重跑类型检查、构建和测试；许可证检查仅在依赖或许可文件变化时重跑；`pnpm audit --prod` 在依赖不变时 24 小时内复用。`pnpm run verify:status` 用于发布前查看各项状态；验证工具异常或需要主动刷新时才使用 `pnpm run verify -- --force`。
+
+GitHub `Quality` 在完整验证已经生成 `dist` 后直接运行 `pnpm run test:e2e`，不重复构建；需要脱离完整门禁单独运行时使用 `pnpm run test:e2e:standalone`。浏览器测试以桌面和 `390 x 844` 手机视口检查登录、二维码定位、确认登记及库存只写入一次。首次在本机运行前执行 `pnpm exec playwright install chromium`。
 
 ## 4. 正式发布
 
 发布前先完成受影响界面验收，并在打包前递增 `package.json` 版本。之后只需：
 
 ```powershell
-pnpm run verify
-pnpm run release -- --manifest OpenLabStock-production-<发布标签>.manifest.txt
+pnpm run release:prepare -- --next
 ```
 
-`verify` 依次执行公共仓库边界、文档链接、Astro/TypeScript、构建、API 回归和生产依赖审计，并生成未纳入 Git 的代码指纹凭据。`release` 会：
+`--next` 会按本机日期自动递增当天修订号。`release:prepare` 随后串联完整验证与打包，不需要维护者传递状态或手写包名；失败后不加 `--next` 即可重试当前版本。`release` 默认同时生成同名生产包和 manifest，并会：
 
 1. 拒绝缺少凭据、版本不一致或验证后代码发生变化的发布；
 2. 拒绝覆盖已有版本的压缩包或清单，要求先递增版本或选择新的输出路径；
@@ -65,7 +67,7 @@ pnpm run release -- --manifest OpenLabStock-production-<发布标签>.manifest.t
 5. 校验健康接口、公开版本、所有者登录、结构版本、空库存和 SQLite 完整性；
 6. 输出 SHA-256 和清单。
 
-文档可以在完整验证后继续修正，因为它不改变运行产物；发布脚本仍会重新执行秒级文档检查。运行代码、测试、依赖、构建配置或部署脚本变化后，验证凭据立即失效，必须重新运行 `pnpm run verify`。
+文档可以在完整验证后继续修正，因为它不改变运行产物；发布脚本只补做失效的公共边界或链接检查。运行代码、测试、依赖、构建配置或部署脚本变化后，对应凭据立即失效；`release:prepare` 会自动补做所需项目。
 
 上传生产包后仍需执行一致性备份、暂存目录切换、本地和公网健康检查。生产部署不会由本地发布脚本自动触发，避免误操作。
 

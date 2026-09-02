@@ -286,11 +286,13 @@ curl -I https://www.openlabstock.com
 
 网页内容变化不需要重启或重载 Caddy，只需替换 `/var/www/openlabstock` 中的静态文件。
 
+建议先在本机打开 `index.html`，检查桌面和 `390 x 844` 手机视口，再上传整个站点目录。官网页面会链接公开应用仓库；应用本身仍按应用仓库的 Release 和部署文档更新，不能把宣传页目录当成应用发布包。
+
 在本机 PowerShell 上传到服务器临时目录：
 
 ```powershell
 ssh <SSH_USER>@<SERVER_IP> "mkdir -p /tmp/openlabstock-upload"
-scp -r "C:\path\to\openlabstock-landing\*" <SSH_USER>@<SERVER_IP>:/tmp/openlabstock-upload/
+scp -r "C:\Users\HCL\Documents\CodexProjects\openlabstock\openlabstock-landing\*" <SSH_USER>@<SERVER_IP>:/tmp/openlabstock-upload/
 ```
 
 登录服务器，将临时目录同步到专用网页目录：

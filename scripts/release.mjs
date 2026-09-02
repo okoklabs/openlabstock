@@ -3,7 +3,18 @@ import { existsSync, lstatSync, readFileSync, readdirSync, unlinkSync, writeFile
 import { join, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { readVerificationReceipt, verificationState } from './verification-state.mjs';
+import {
+  AUDIT_MAX_AGE_MS,
+  dependencyState,
+  documentationState,
+  evidenceIsFresh,
+  licenseState,
+  readDocumentationReceipt,
+  readPublicBoundaryReceipt,
+  readVerificationReceipt,
+  repositoryState,
+  verificationState,
+} from './verification-state.mjs';
 
 const rootDir = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const packageJsonPath = join(rootDir, 'package.json');
@@ -21,11 +32,11 @@ const args = process.argv.slice(2).filter((argument) => argument !== '--');
 const outputArgIndex = args.indexOf('--output');
 const manifestArgIndex = args.indexOf('--manifest');
 const outputValue = outputArgIndex >= 0 ? args[outputArgIndex + 1] : `OpenLabStock-production-${releaseTag}.tar.gz`;
-const manifestValue = manifestArgIndex >= 0 ? args[manifestArgIndex + 1] : '';
+const manifestValue = manifestArgIndex >= 0 ? args[manifestArgIndex + 1] : `OpenLabStock-production-${releaseTag}.manifest.txt`;
 if (!outputValue || outputValue.startsWith('--')) throw new Error('--output requires a file path');
-if (manifestArgIndex >= 0 && (!manifestValue || manifestValue.startsWith('--'))) throw new Error('--manifest requires a file path');
+if (!manifestValue || manifestValue.startsWith('--')) throw new Error('--manifest requires a file path');
 const outputPath = resolve(rootDir, outputValue);
-const manifestPath = manifestValue ? resolve(rootDir, manifestValue) : '';
+const manifestPath = resolve(rootDir, manifestValue);
 
 if (args.includes('--help') || args.includes('-h')) {
   console.log('Usage: pnpm run release [--output path.tar.gz] [--manifest path.txt]');
@@ -36,20 +47,47 @@ if (args.includes('--help') || args.includes('-h')) {
 if (existsSync(outputPath)) {
   throw new Error(`Release archive already exists: ${relative(rootDir, outputPath)}. Increment package.json version or choose a new --output path.`);
 }
-if (manifestPath && existsSync(manifestPath)) {
+if (existsSync(manifestPath)) {
   throw new Error(`Release manifest already exists: ${relative(rootDir, manifestPath)}. Increment package.json version or choose a new --manifest path.`);
 }
 
-const docsCheck = spawnSync(process.execPath, ['scripts/check-docs.mjs'], { cwd: rootDir, encoding: 'utf8', stdio: 'inherit' });
-if (docsCheck.error) throw docsCheck.error;
-if (docsCheck.status !== 0) process.exit(docsCheck.status ?? 1);
+const releaseChecks = [
+  {
+    label: 'Public-boundary',
+    script: 'scripts/check-public-boundary.mjs',
+    fresh: () => readPublicBoundaryReceipt(rootDir)?.fingerprint === repositoryState(rootDir).fingerprint,
+  },
+  {
+    label: 'Documentation',
+    script: 'scripts/check-docs.mjs',
+    fresh: () => readDocumentationReceipt(rootDir)?.fingerprint === documentationState(rootDir).fingerprint,
+  },
+];
+for (const checkDefinition of releaseChecks) {
+  if (checkDefinition.fresh()) {
+    console.log(`${checkDefinition.label} checks reused.`);
+    continue;
+  }
+  const check = spawnSync(process.execPath, [checkDefinition.script], { cwd: rootDir, encoding: 'utf8', stdio: 'inherit' });
+  if (check.error) throw check.error;
+  if (check.status !== 0) process.exit(check.status ?? 1);
+}
 
 const receipt = readVerificationReceipt(rootDir);
 if (!receipt) throw new Error('No verification receipt found. Run pnpm run verify before creating a release.');
 const currentVerification = verificationState(rootDir);
+const currentDependencies = dependencyState(rootDir);
+const currentLicenses = licenseState(rootDir);
 if (receipt.version !== version) throw new Error(`Verified version ${receipt.version ?? '(unknown)'} does not match package version ${version}. Run pnpm run verify again.`);
+if (receipt.node !== process.version) throw new Error(`Verified Node ${receipt.node ?? '(unknown)'} does not match ${process.version}. Run pnpm run verify again.`);
 if (receipt.fingerprint !== currentVerification.fingerprint) {
   throw new Error('Runtime, tests, dependencies, build output, or deployment files changed after verification. Run pnpm run verify again.');
+}
+if (!evidenceIsFresh(receipt.licenses, currentLicenses)) {
+  throw new Error('License verification evidence is missing or stale. Run pnpm run verify again.');
+}
+if (!evidenceIsFresh(receipt.audit, currentDependencies, { maxAgeMs: AUDIT_MAX_AGE_MS, node: process.version })) {
+  throw new Error('Production dependency audit is missing, stale, or older than 24 hours. Run pnpm run verify again.');
 }
 
 const allowedRoots = [
@@ -156,5 +194,5 @@ const manifest = [
   ...archivedFiles,
   '',
 ].join('\n');
-if (manifestPath) writeFileSync(manifestPath, manifest, 'utf8');
+writeFileSync(manifestPath, manifest, 'utf8');
 console.log(manifest);

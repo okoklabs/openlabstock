@@ -13,8 +13,7 @@ Closes #
 
 ## 验证
 
-- [ ] 已运行 `pnpm run verify:quick`
-- [ ] 按风险矩阵需要时已运行 `pnpm run verify`
+- [ ] `pnpm run verify:auto` 已通过；正式发布使用了 `release:prepare`
 - [ ] 界面改动已检查桌面和 `390 x 844` 手机视口
 - [ ] 已增加或更新相应测试和文档
 

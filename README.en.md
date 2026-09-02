@@ -105,16 +105,18 @@ OpenLabStock currently targets a single laboratory or organization. It is not in
 
 ## Quick start
 
-Requirements: Node.js `>=22.12.0` and the repository-declared pnpm version.
+Choose a target first. End users do not need to run tests or production dependency audits before trying the application; those commands belong to development and release gates.
+
+### Local trial
+
+Requirements: Node.js `>=22.12.0` and the repository-declared pnpm version. These commands build and start a local demo instance:
 
 ```bash
 git clone https://github.com/okoklabs/openlabstock.git
 cd openlabstock
 corepack enable
 pnpm install --frozen-lockfile
-pnpm run verify:quick
-pnpm run build
-pnpm run start
+pnpm run dev
 ```
 
 Open <http://127.0.0.1:4388/>. A local non-production database includes two demonstration accounts:
@@ -122,17 +124,29 @@ Open <http://127.0.0.1:4388/>. A local non-production database includes two demo
 - System owner: `admin` / `admin123`
 - Member: `student` / `demo123`
 
-Production mode never creates these demo credentials. A first production start requires an independent owner password through the documented environment variable.
+Production mode never creates these demo credentials. Runtime data defaults to the Git-ignored `data/` directory.
+
+### Single-host production
+
+For a Linux server, the Docker single-instance route is the shortest path. It generates the initial password, persists data, and provides scripted update, backup, and rollback commands:
+
+```bash
+git clone https://github.com/okoklabs/openlabstock.git /opt/openlabstock-docker
+cd /opt/openlabstock-docker
+bash deploy/docker/openlabstock.sh init
+```
+
+After the script prints the initial `admin` password, sign in and change it immediately. Operators with an existing systemd service, reverse proxy, or manual directory policy should use the systemd route in [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
 ### Choose an installation path
 
 | Goal | Recommended entry | Best for |
 | --- | --- | --- |
-| Local trial or development | The `pnpm` quick start above | Exploring the workflow, changing code, or running tests |
+| Local trial or development | The `pnpm run dev` path above | Exploring the workflow or changing code |
 | One Linux server | [`deploy/docker/README.md`](./deploy/docker/README.md) and Docker `init` | Teams that want generated initial credentials, persistent volumes, and scripted updates/rollback |
 | Existing systemd and reverse proxy | [`DEPLOYMENT.md`](./DEPLOYMENT.md) and [`deploy/systemd/README.md`](./deploy/systemd/README.md) | Operators who keep the application, SQLite data, and backups separate |
 
-For a first production deployment, prefer the production archive and SHA-256 manifest attached to a GitHub Release instead of compressing an arbitrary working branch. The project is still a public preview; move to a stable release after a clean Linux installation, upgrade, backup, restore, and rollback rehearsal has passed.
+The project is still a public preview; move to a stable release after a clean Linux installation, upgrade, backup, restore, and rollback rehearsal has passed. Production should use a fixed GitHub Release artifact and SHA-256 manifest, not an arbitrary working branch.
 
 ## Deployment and verification
 
@@ -145,10 +159,13 @@ For a first production deployment, prefer the production archive and SHA-256 man
 - [QR workflow](./docs/QR_CODE_WORKFLOW.md)
 
 ```bash
-pnpm run verify:quick   # Docs, licenses, types, and regression tests
-pnpm run verify         # Full build, tests, audit, and release verification
-pnpm run check:docs     # Markdown local-link validation
+pnpm run verify:auto     # Select the smallest sufficient gate from the actual changes
+pnpm run verify:status   # Show reusable evidence before a release
+pnpm run verify          # Full gate for high-risk changes or releases
+pnpm run release:prepare -- --next # Bump, verify, package, and smoke-test
 ```
+
+With no repository changes, `verify:auto` repeats nothing. Runtime changes rerun type checks, the build, and regression tests; license checks rerun only when dependency or license inputs change, and the production dependency audit is reused for 24 hours while dependencies remain unchanged. `release:prepare -- --next` increments the day's revision and creates both the archive and manifest; retry without `--next` after a failure.
 
 ## Project status and license
 
