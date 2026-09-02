@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -16,7 +16,6 @@ import {
 
 const rootDir = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const metadata = JSON.parse(readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
-const runtimeState = verificationState(rootDir);
 const runtimeReceipt = readVerificationReceipt(rootDir);
 const dependencies = dependencyState(rootDir);
 const licenses = licenseState(rootDir);
@@ -25,9 +24,11 @@ const docsReceipt = readDocumentationReceipt(rootDir);
 const publicState = repositoryState(rootDir);
 const publicReceipt = readPublicBoundaryReceipt(rootDir);
 
+const distExists = existsSync(path.join(rootDir, 'dist'));
 const runtimeFresh = [1, 2].includes(runtimeReceipt?.format)
   && runtimeReceipt.version === metadata.version
-  && runtimeReceipt.fingerprint === runtimeState.fingerprint
+  && distExists
+  && runtimeReceipt.fingerprint === verificationState(rootDir).fingerprint
   && runtimeReceipt.node === process.version;
 const docsFresh = docsReceipt?.format === 1 && docsReceipt.fingerprint === docsState.fingerprint;
 const publicFresh = publicReceipt?.format === 1 && publicReceipt.fingerprint === publicState.fingerprint;

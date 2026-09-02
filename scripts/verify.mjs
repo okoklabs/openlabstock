@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -57,14 +57,14 @@ if (!force && documentationIsFresh()) {
   console.log(`Documentation checks reused: ${receipt.fingerprint} (${receipt.verifiedAt})`);
 } else run('check:docs', ['run', 'check:docs']);
 
-const state = verificationState(rootDir);
 const dependencies = dependencyState(rootDir);
 const licenses = licenseState(rootDir);
 const existing = readVerificationReceipt(rootDir);
 const runtimeIsFresh = !force && existing
   && [1, 2].includes(existing.format)
   && existing.version === metadata.version
-  && existing.fingerprint === state.fingerprint
+  && existsSync(path.join(rootDir, 'dist'))
+  && existing.fingerprint === verificationState(rootDir).fingerprint
   && existing.node === process.version;
 const licensesAreFresh = !force && evidenceIsFresh(existing?.licenses, licenses);
 const auditIsFresh = !force && evidenceIsFresh(existing?.audit, dependencies, {
