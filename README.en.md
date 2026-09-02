@@ -124,6 +124,16 @@ Open <http://127.0.0.1:4388/>. A local non-production database includes two demo
 
 Production mode never creates these demo credentials. A first production start requires an independent owner password through the documented environment variable.
 
+### Choose an installation path
+
+| Goal | Recommended entry | Best for |
+| --- | --- | --- |
+| Local trial or development | The `pnpm` quick start above | Exploring the workflow, changing code, or running tests |
+| One Linux server | [`deploy/docker/README.md`](./deploy/docker/README.md) and Docker `init` | Teams that want generated initial credentials, persistent volumes, and scripted updates/rollback |
+| Existing systemd and reverse proxy | [`DEPLOYMENT.md`](./DEPLOYMENT.md) and [`deploy/systemd/README.md`](./deploy/systemd/README.md) | Operators who keep the application, SQLite data, and backups separate |
+
+For a first production deployment, prefer the production archive and SHA-256 manifest attached to a GitHub Release instead of compressing an arbitrary working branch. The project is still a public preview; move to a stable release after a clean Linux installation, upgrade, backup, restore, and rollback rehearsal has passed.
+
 ## Deployment and verification
 
 - [Deployment overview](./DEPLOYMENT.md)

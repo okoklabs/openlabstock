@@ -271,7 +271,6 @@ import {
       .role-chip.admin { color: #31537f; background: var(--info-soft); }
       .role-chip.inventory { color: var(--primary-deep); background: var(--primary-soft); }
       .role-chip.member { color: var(--muted); background: var(--surface-container); }
-      .user-cell { display: flex; align-items: center; gap: 8px; }
       .mini-avatar { width: 23px; height: 23px; display: grid; place-items: center; border-radius: 50%; color: var(--primary-deep); background: var(--surface-tint); font-size: 9px; font-weight: 750; }
       .member-actions { width: 52px; text-align: right !important; }
       .material-row-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; }
@@ -355,8 +354,7 @@ import {
       .record-material-wrap { display: flex; align-items: center; gap: 10px; min-width: 180px; }
       .record-material-copy { display: grid; gap: 2px; min-width: 0; }
       .record-material-detail { color: var(--muted); font-size: 12px; font-weight: 500; line-height: 1.35; }
-      .record-material-icon { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; color: var(--primary-deep); background: var(--primary-soft); font-size: 11px; font-weight: 750; }
-      .record-material-icon.out { color: #34506f; background: var(--info-soft); }
+      .record-user-name { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .record-quantity { font-weight: 750; white-space: nowrap; }
       .record-quantity.in { color: var(--primary); }
       .record-quantity.out { color: var(--info); }
@@ -872,13 +870,12 @@ import {
         .records-panel .record-type { grid-area: type; align-self: stretch; justify-content: center; border-right: 1px solid #e7ece9 !important; }
         .records-panel .record-type .type-chip { align-self: flex-start; justify-content: center; width: 46px; min-height: 30px; }
         .records-panel .record-material { grid-area: material; }
-        .records-panel .record-material-wrap { min-width: 0; gap: 8px; }
+        .records-panel .record-material-wrap { min-width: 0; gap: 0; }
         .records-panel .record-material-wrap strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .records-panel .record-material-icon { display: none; }
         .records-panel .record-quantity { grid-area: quantity; justify-self: end; font-size: 13px; }
         .records-panel .record-time { grid-area: time; font-size: 12px; }
         .records-panel .record-user { grid-area: user; justify-self: end; color: var(--muted); font-size: 12px; }
-        .records-panel .record-user .mini-avatar { width: 20px; height: 20px; }
+        .records-panel .record-user { max-width: 160px; }
         .records-panel .record-context { grid-area: context; padding-top: 3px !important; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
         .records-panel .record-context-label { display: inline; color: var(--muted); font-weight: 700; }
         .records-panel .record-note { grid-area: note; color: var(--ink); font-size: 12px; }
@@ -996,13 +993,12 @@ import {
         .record-type { grid-area: type; align-self: stretch; justify-content: center; border-right: 1px solid #e7ece9 !important; }
         .record-type .type-chip { align-self: flex-start; justify-content: center; width: 46px; min-height: 30px; }
         .record-material { grid-area: material; }
-        .record-material-wrap { min-width: 0; gap: 8px; }
+        .record-material-wrap { min-width: 0; gap: 0; }
         .record-material-wrap strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .record-material-icon { display: none; }
         .record-quantity { grid-area: quantity; justify-self: end; font-size: 13px; }
         .record-time { grid-area: time; font-size: 11px !important; }
         .record-user { grid-area: user; justify-self: end; color: var(--muted); font-size: 11px !important; }
-        .record-user .mini-avatar { width: 20px; height: 20px; }
+        .record-user { max-width: 160px; }
         .record-context { grid-area: context; padding-top: 3px !important; color: var(--muted); font-size: 11px !important; }
         .record-context-label { display: inline; color: var(--muted); font-weight: 700; }
         .record-note { grid-area: note; color: var(--ink); font-size: 12px !important; }
@@ -1215,7 +1211,7 @@ import {
       .stock-table th, .transaction-table th, .data-table th { font-size: 12px; }
       .user-meta strong, .stock-item strong, .quick-action strong, .directory-person-name strong { font-size: 14px; }
       .topbar-link, .page-heading p, .filter-select, .toolbar-select .m3-select-trigger { font-size: 13px; }
-      .item-avatar, .mini-avatar, .record-material-icon, .notification-item > span:first-child { font-size: 11px; }
+      .item-avatar, .mini-avatar, .notification-item > span:first-child { font-size: 11px; }
       :is(.page-heading, .panel-header, .summary-card-top, .quick-action, .notification-item, .directory-person-top) > * { min-width: 0; }
       :is(.button, .text-button, .quick-action) > svg { flex: 0 0 auto; }
       .records-load-copy > span, .startup-status { overflow-wrap: anywhere; }

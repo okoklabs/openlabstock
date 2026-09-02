@@ -146,6 +146,16 @@ pnpm run start
 
 生产模式不会创建这些演示密码。第一次生产启动必须通过文档规定的环境变量设置独立的所有者密码。运行数据默认保存在被 Git 忽略的 `data/` 目录。
 
+### 选择安装路径
+
+| 目标 | 推荐入口 | 适合谁 |
+| --- | --- | --- |
+| 本机试用或开发 | 上面的 `pnpm` 快速启动 | 想先体验流程、修改代码或运行测试的人 |
+| 单台 Linux 服务器 | [`deploy/docker/README.md`](./deploy/docker/README.md) 的 Docker `init` | 希望自动生成初始密码、持久化数据并用脚本更新/回滚的团队 |
+| 已有 systemd 和反向代理 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) 与 [`deploy/systemd/README.md`](./deploy/systemd/README.md) | 需要把程序、SQLite 数据和备份分开管理的维护者 |
+
+首次正式部署建议使用 GitHub Release 中附带的生产包和 SHA-256 清单，而不是直接从某个工作分支压缩源码。当前项目仍是公开预览；在全新 Linux 环境完成安装、升级、备份、恢复和回滚演练后，再把版本标记为稳定发行。
+
 ## 部署与运维
 
 - [部署概览](./DEPLOYMENT.md)：Node/systemd、HTTPS、持久数据、备份、更新和回滚边界。
