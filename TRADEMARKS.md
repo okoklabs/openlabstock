@@ -8,4 +8,4 @@ You may not use project identifiers to misrepresent the origin of software or se
 
 This policy does not restrict rights that applicable trademark or unfair-competition law independently permits, including nominative fair use. It does not claim that every identifier is registered in every jurisdiction. Logo assets from third parties remain subject to their own licenses.
 
-The final public repository should identify the party responsible for trademark permissions after the legal steward is confirmed. Until then, no separate trademark license is offered.
+The public preview identifies the project steward in the repository governance and licensing materials. No separate trademark license is offered; any future permission guidance will be published after the legal steward and mark ownership are confirmed.

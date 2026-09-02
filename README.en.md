@@ -129,6 +129,7 @@ Production mode never creates these demo credentials. A first production start r
 - [Deployment overview](./DEPLOYMENT.md)
 - [Docker deployment](./deploy/docker/README.md)
 - [Production package contract](./deploy/PRODUCTION.md)
+- [Documentation map](./docs/DOCUMENTATION.md)
 - [System architecture](./docs/BUILD_ARCHITECTURE.md)
 - [Inventory tracking model](./docs/INVENTORY_TRACKING.md)
 - [QR workflow](./docs/QR_CODE_WORKFLOW.md)

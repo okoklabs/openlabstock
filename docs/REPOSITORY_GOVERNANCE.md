@@ -1,6 +1,6 @@
 # 仓库与文档治理
 
-状态：已采用。最后更新：2026-08-14。
+状态：已采用。最后更新：2026-09-02。
 
 ## 1. 决策摘要
 
@@ -8,7 +8,7 @@
 
 | 仓库 | 可见性 | 主要职责 | 是否拥有应用源码 |
 | --- | --- | --- | --- |
-| GitHub `okoklabs/openlabstock` | Public | 可构建的 OpenLabStock 应用、公共文档、Issue、Release 和贡献治理 | 是，公开后成为唯一主仓 |
+| GitHub `okoklabs/openlabstock` | Public | 可构建的 OpenLabStock 应用、公共文档、Issue、Release 和贡献治理 | 是，公开预览与稳定版均以此为唯一主仓 |
 | 受控的私有运营仓库或系统 | Private | OpenLabStock 生产运维、客户实例、商业材料、私密安全事件和内部 AI 上下文 | 否，只引用发布版本或镜像 |
 
 `okoklabs/openlabstock` 是通用应用源码的唯一来源。通用应用改动必须在本仓库完成；私有运营仓库不得复制一套可独立演化的应用代码。
@@ -156,13 +156,14 @@ openlabstock-operations/
 
 ## 9. 成熟项目对照
 
-2026-08-14 对公开仓库根结构做了轻量核对：
+2026-09-02 对公开仓库根结构和若干成熟项目进行了轻量核对：
 
 | 项目 | 根目录治理文档 | 对本项目的启示 |
 | --- | --- | --- |
 | [Snipe-IT](https://github.com/grokability/snipe-it) | README、LICENSE、CONTRIBUTING、SECURITY、CODE_OF_CONDUCT | 公共使用、许可、贡献和安全入口彼此独立 |
 | [InvenTree](https://github.com/inventree/InvenTree) | 上述文件以及 AGENTS、CHANGELOG，另有 `docs/` | AI/维护者规则可以公开；版本变化与开发文档各有入口 |
 | [eLabFTW](https://github.com/elabftw/elabftw) | README、LICENSE、CONTRIBUTING、SECURITY、CHANGELOG，另有 `documentation/` | 根目录保持项目治理入口，详细说明进入文档目录 |
+| [Home Assistant](https://github.com/home-assistant/core)、[Directus](https://github.com/directus/directus)、[Appwrite](https://github.com/appwrite/appwrite) | README、LICENSE、CONTRIBUTING、SECURITY、CODE_OF_CONDUCT，并公开 `AGENTS.md` 或同类 AI 维护规则 | AI 规则可以公开，但应只写可复用的工程约束；真实运维和敏感上下文仍放私有系统 |
 
 这些项目并不要求把生产拓扑、客户或商业材料放进公共应用仓库。OpenLabStock 应采用相同的职责分离，同时保留符合自身 SQLite、实验室权限和部署方式的文档内容。
 

@@ -44,7 +44,7 @@ Run `pnpm run check:licenses` after every dependency change. The check intention
 
 ## Distribution Requirement
 
-Before the first public Release, generate and review a bundle-level notice inventory for the actual Linux and browser artifacts. Preserve package copyright notices and license texts required by MIT, ISC, Apache-2.0, LGPL, MPL, Creative Commons and any other applicable terms. In particular:
+Before the first stable Release, generate and review a bundle-level notice inventory for the actual Linux and browser artifacts. Preserve package copyright notices and license texts required by MIT, ISC, Apache-2.0, LGPL, MPL, Creative Commons and any other applicable terms. In particular:
 
 - verify whether Apache-licensed packages ship an upstream `NOTICE` file that must be reproduced;
 - verify which dependencies are actually incorporated into minified browser chunks, because the current chunks do not retain readable license comments;

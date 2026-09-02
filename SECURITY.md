@@ -13,7 +13,7 @@ Security fixes are normally made on the latest released version. Older versions 
 
 Do not disclose a suspected vulnerability in a public Issue, Discussion, pull request, screenshot, or chat log.
 
-Use GitHub's [private vulnerability reporting](https://github.com/okoklabs/openlabstock/security/advisories/new). The public repository must not be launched until this channel has been enabled and tested by the maintainers.
+Use GitHub's [private vulnerability reporting](https://github.com/okoklabs/openlabstock/security/advisories/new). The project is currently a public preview; maintainers must enable and test this channel before declaring a stable release or actively soliciting security reports.
 
 Include, where possible:
 
