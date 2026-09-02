@@ -43,9 +43,11 @@ function collect(directory) {
 }
 
 const failures = [];
-let trackedFiles = null;
+let repositoryFiles = null;
 try {
-  trackedFiles = new Set(execFileSync('git', ['ls-files', '-z'], { cwd: rootDir }).toString().split('\0').filter(Boolean));
+  repositoryFiles = new Set(execFileSync('git', [
+    'ls-files', '-z', '--cached', '--others', '--exclude-standard',
+  ], { cwd: rootDir }).toString().split('\0').filter(Boolean));
 } catch {
   // A source archive has no Git index; CI and normal checkouts do.
 }
@@ -53,12 +55,16 @@ for (const required of requiredFiles) {
   if (!existsSync(path.join(rootDir, required))) failures.push(`缺少公共治理文件：${required}`);
 }
 
-for (const file of collect(rootDir)) {
+const filesToInspect = repositoryFiles
+  ? [...repositoryFiles].map((name) => path.join(rootDir, name)).filter(existsSync)
+  : collect(rootDir);
+
+for (const file of filesToInspect) {
   const name = relative(file);
   // verify.mjs writes this ignored receipt locally; it is excluded from source
   // control and production archives, so do not treat a local run as a leak.
   if (/^\.(?:sysulab-(?:docs-)?verification|openlabstock-(?:auto-|docs-|public-)?verification)\.json$/i.test(name)) {
-    if (trackedFiles?.has(name)) failures.push(`验证回执不能被提交：${name}`);
+    if (repositoryFiles?.has(name)) failures.push(`验证回执不能被提交：${name}`);
     continue;
   }
   if (forbiddenPathPatterns.some((pattern) => pattern.test(name))) failures.push(`公共仓库禁止路径：${name}`);
@@ -83,7 +89,7 @@ if (failures.length) {
   console.error(failures.map((failure) => `- ${failure}`).join('\n'));
   process.exit(1);
 }
-console.log(`Public boundary check passed: ${requiredFiles.length} governance files and ${collect(rootDir).length} files checked`);
+console.log(`Public boundary check passed: ${requiredFiles.length} governance files and ${filesToInspect.length} repository files checked`);
 const state = repositoryState(rootDir);
 writeFileSync(path.join(rootDir, PUBLIC_BOUNDARY_RECEIPT), `${JSON.stringify({
   format: 1,

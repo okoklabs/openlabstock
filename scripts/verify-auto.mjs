@@ -15,6 +15,7 @@ const pnpmScript = process.env.npm_execpath ?? '';
 const pnpmCommand = pnpmScript ? process.execPath : (process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm');
 const pnpmArgs = (args) => pnpmScript ? [pnpmScript, ...args] : args;
 const force = process.argv.slice(2).includes('--force');
+const requireFull = process.argv.slice(2).includes('--full');
 
 function gitList(args) {
   try {
@@ -53,7 +54,7 @@ function run(label, args) {
 
 const before = repositoryState(rootDir);
 const existing = readAutoVerificationReceipt(rootDir);
-if (!force && existing?.format === 1 && existing.fingerprint === before.fingerprint && existing.node === process.version) {
+if (!force && !requireFull && existing?.format === 1 && existing.fingerprint === before.fingerprint && existing.node === process.version) {
   console.log(`Automatic verification reused: ${existing.gate} (${existing.verifiedAt})`);
   console.log('No repository inputs changed, so no checks were repeated.');
   process.exit(0);
@@ -76,7 +77,7 @@ const fullRisk = paths.some((entry) => (
 ));
 
 let gate = 'verify';
-if (!force && existing?.gitHead && paths.length > 0) {
+if (!force && !requireFull && existing?.gitHead && paths.length > 0) {
   if (docsOnly) gate = 'check:docs';
   else if (uiOnly) gate = 'verify:ui';
   else if (!fullRisk) gate = 'verify:quick';
@@ -84,6 +85,7 @@ if (!force && existing?.gitHead && paths.length > 0) {
 
 console.log(`Changed paths: ${paths.length || 'unknown'}`);
 console.log(`Selected gate: ${gate}`);
+if (requireFull) console.log('Full gate requested; reusable verification evidence will still be honored.');
 if (gate === 'check:docs' && metadata.scripts?.['check:public']) run('check:public', ['run', 'check:public']);
 run(gate, ['run', gate, ...(force && gate === 'verify' ? ['--', '--force'] : [])]);
 if (docsChanged && !['check:docs', 'verify'].includes(gate)) run('check:docs', ['run', 'check:docs']);

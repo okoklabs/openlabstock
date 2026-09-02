@@ -26,5 +26,5 @@ if (nextVersion) {
   if (result.error) throw result.error;
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
-run('verify', ['run', 'verify']);
+run('verify:auto', ['run', 'verify:auto', '--', '--full']);
 run('release', ['run', 'release', '--', ...releaseArgs]);
