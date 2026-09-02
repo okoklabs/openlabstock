@@ -2511,6 +2511,7 @@ function consumeInventoryLink() {
 
 function transactionRows(records: Transaction[], recent = false) {
   if (!records.length) return `<tr><td colspan="${recent ? 6 : 7}" class="empty-note">暂无库存活动记录</td></tr>`;
+  const materialIcon = document.querySelector('[data-material-icon-template]')?.innerHTML ?? '';
   return records.map((record) => {
     const sign = record.type === 'in' ? '+' : '-';
     const chip = `<span class="type-chip ${record.type}">${record.type === 'in' ? '入库' : '领用'}</span>`;
@@ -2518,7 +2519,7 @@ function transactionRows(records: Transaction[], recent = false) {
     const user = `<span class="record-user-name" title="${escapeHtml(userName)}">${escapeHtml(userName)}</span>`;
     const scope = record.accessScope === 'user' ? `自用 · ${record.ownerName || '历史成员'}` : record.accessScope === 'shared' ? '开放使用' : '';
     const inventoryDetail = [record.correctionOfId ? '更正记录' : record.operation === 'dispose' ? '处置' : '', record.inventoryUnitLabel, record.statusName, scope].filter(Boolean).join(' · ');
-    const material = `<div class="record-material-wrap"><span class="record-material-copy"><strong>${escapeHtml(record.materialName)}</strong>${inventoryDetail ? `<small class="record-material-detail">${escapeHtml(inventoryDetail)}</small>` : ''}</span></div>`;
+    const material = `<div class="record-material-wrap"><span class="item-icon record-material-icon" aria-hidden="true">${materialIcon}</span><span class="record-material-copy"><strong>${escapeHtml(record.materialName)}</strong>${inventoryDetail ? `<small class="record-material-detail">${escapeHtml(inventoryDetail)}</small>` : ''}</span></div>`;
     if (recent) return `<tr class="record-row"><td class="record-time">${formatTime(record.occurredAt)}</td><td class="record-type">${chip}</td><td class="record-material">${material}</td><td class="record-quantity ${record.type}">${sign}${formatNumber(record.quantity)} ${escapeHtml(record.unit)}</td><td class="record-user">${user}</td><td class="record-note">${escapeHtml(record.note || '-')}</td></tr>`;
     const attributes = `data-record-type="${record.type}" data-occurred-at="${escapeHtml(record.occurredAt)}"`;
     const correctedQuantity = record.correctedQuantity;
@@ -2531,10 +2532,11 @@ function transactionRows(records: Transaction[], recent = false) {
 }
 
 function inventoryEventRows(events: InventoryEvent[]) {
+  const materialIcon = document.querySelector('[data-material-icon-template]')?.innerHTML ?? '';
   return events.map((event) => {
     const unit = state?.materials.find((material) => material.id === event.materialId)?.unit ?? '';
     const detail = [event.inventoryUnitLabel || '库存单元', event.fromStatusName].filter(Boolean).join(' · ');
-    const material = `<div class="record-material-wrap"><span class="record-material-copy"><strong>${escapeHtml(event.materialName)}</strong><small class="record-material-detail">${escapeHtml(detail)}</small></span></div>`;
+    const material = `<div class="record-material-wrap"><span class="item-icon record-material-icon" aria-hidden="true">${materialIcon}</span><span class="record-material-copy"><strong>${escapeHtml(event.materialName)}</strong><small class="record-material-detail">${escapeHtml(detail)}</small></span></div>`;
     const change = eventChangeLabel(event);
     const userName = event.userName || '历史成员';
     const user = `<span class="record-user-name" title="${escapeHtml(userName)}">${escapeHtml(userName)}</span>`;
