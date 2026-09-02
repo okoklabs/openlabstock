@@ -295,6 +295,16 @@ tar -czf OpenLabStock-website-YYYYMMDD-rN.tar.gz -C .\openlabstock-landing index
 scp -P 22 .\OpenLabStock-website-YYYYMMDD-rN.tar.gz <SSH_USER>@<SERVER_IP>:/tmp/
 ```
 
+Windows 维护者也可以使用仓库内的 `publish-website.ps1`，把上传、远端校验、旧站备份、原子替换和 HTTPS 检查合并为一次操作：
+
+```powershell
+pwsh -File .\openlabstock-landing\publish-website.ps1 `
+  -SshTarget <SSH_USER>@<SERVER_IP> `
+  -Archive .\OpenLabStock-website-YYYYMMDD-rN.tar.gz
+```
+
+脚本只发送静态网页压缩包，不读取或保存 SSH 密码；服务器端会把旧站保留为 `/var/www/openlabstock-backup-时间戳`。执行账号必须有权写入 `/var/www/openlabstock`，失败时不会替换旧站。
+
 登录服务器，在临时目录校验文件后同步到专用网页目录：
 
 ```bash
