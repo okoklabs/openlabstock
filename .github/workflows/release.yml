@@ -3,7 +3,7 @@ name: Publish Preview Release
 on:
   push:
     tags:
-      - '20??????-r*'
+      - '20*-r*'
 
 permissions:
   contents: write
