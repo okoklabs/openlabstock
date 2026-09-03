@@ -1,38 +1,36 @@
 # CLA Assistant 启用与验收
 
 本文是 `okoklabs/openlabstock` 使用托管版
-[CLA Assistant](https://cla-assistant.io/) 的操作清单。它不替代
+[CLA Assistant](https://cla-assistant.io/) 的操作与维护记录。它不替代
 [`CLA.md`](../CLA.md) 的法律审查，也不保存任何签署人的个人数据。
 
 ## 技术配置原则
 
-CLA Assistant 应由组织 Owner 账号按下方清单连接到公共仓库，并配置
+CLA Assistant 已由组织 Owner 账号连接到公共仓库，并配置
 `pull_request` 与 `merge_group` 事件监听。协议 Gist 的 URL、revision 和文件
-哈希只保存在受限的私有合规记录中，不写入公共仓库。完成技术连接不表示协议已经
-生效；`CLA.md` 必须保持 `NOT ACTIVE`，直到专业法律复核、测试账号矩阵和分支
-保护复核全部完成。
+哈希只保存在受限的私有合规记录中，不写入公共仓库。个人 CLA v1.0 已于
+2026-09-03 激活；外部版权性贡献必须通过 `license/cla` 和质量 CI。
 
 ## 1. 启用门槛
 
 以下项目必须全部完成：
 
-- [ ] 联系地址、收件责任人和回复路径已通过站外投递、垃圾邮件检查和账号恢复
+- [x] 联系地址、收件责任人和回复路径已通过站外投递、垃圾邮件检查和账号恢复
   演练；实际收件箱不得写入 Git。
-- [ ] `okoklabs/openlabstock` 已从审查后的干净工作树建立并完成公开仓验收。
-- [ ] 项目负责人已确认公开身份为 `郝春霖 (Hao Chunlin)`，私有合规记录保存必要
+- [x] `okoklabs/openlabstock` 已从审查后的干净工作树建立并完成公开仓验收。
+- [x] 项目负责人已确认公开身份为 `郝春霖 (Hao Chunlin)`，私有合规记录保存必要
   的身份和权利链证据。
-- [ ] 熟悉中国大陆适用法律的专业人士复核个人 CLA，包括已补入的准据法和争议
+- [x] 熟悉中国大陆适用法律的专业人士复核个人 CLA，包括已补入的准据法和争议
   处理条款，并将候选版本冻结为正式 `1.0`。
-- [ ] CLA Assistant 当时的隐私说明、服务状态和数据导出能力已经复核。
-- [ ] 组织贡献暂不接受；确有公司贡献需求时另行制定 Entity CLA。
+- [x] CLA Assistant 当时的隐私说明、服务状态和数据导出能力已经复核。
+- [x] 组织贡献暂不接受；确有公司贡献需求时另行制定 Entity CLA。
 
-任一项未完成时，`CLA.md` 必须保持 `NOT ACTIVE`，也不得把 CLA 状态检查设成已经
-可以接受外部贡献的象征性门禁。
+上述门槛已完成。组织贡献仍不在个人 CLA 范围内，不能通过个人签署替代 Entity CLA。
 
 ## 2. 准备协议 Gist
 
-1. 从复核后的 `CLA.md` 复制**正式协议正文**到一个 GitHub Gist 文件。不要复制
-   候选状态提示、未解决占位符或本页操作说明。
+1. 从已激活的 `CLA.md` 复制**正式协议正文**到一个 GitHub Gist 文件。不要复制
+   状态记录或本页操作说明。
 2. 在同一 Gist 增加名为 `metadata` 的文件，内容必须与
    [`.github/cla/metadata.json`](../.github/cla/metadata.json) 的已复核版本一致。
    CLA Assistant 要求文件名是 `metadata`，不是 `metadata.json`。
@@ -40,12 +38,12 @@ CLA Assistant 应由组织 Owner 账号按下方清单连接到公共仓库，�
    SHA-256、metadata SHA-256、复核人和冻结时间。不要把签署人导出表放入公共 Gist
    或公共仓库。
 4. Gist 只承载已经冻结的协议。拼写修正也会形成新修订，并可能触发重新签署；先在
-   仓库候选文件中评审，再更新 Gist。
+   仓库正式文件中评审，再更新 Gist。
 
 CLA Assistant 的自定义字段格式以其官方
 [JSON Schema](https://raw.githubusercontent.com/cla-assistant/cla-assistant/main/custom-fields-schema.json)
-为准。本项目只要求法定姓名、联系邮箱和三项资格确认，不收集家庭住址、证件号码、
-电话或雇主名称。
+为准。本项目要求法定姓名、联系邮箱、三项资格确认和境外处理单独同意，不收集家庭
+住址、证件号码、电话或雇主名称。
 
 ## 3. 连接仓库
 
@@ -64,19 +62,18 @@ CLA Assistant 的自定义字段格式以其官方
 `pull_request_target` 和仓库写令牌的自制工作流。托管 CLA Assistant 通过 GitHub
 身份和独立签署记录完成核验，公共 CI 不应接触签署人导出数据。
 
-## 4. 激活前测试矩阵
+## 4. 验收记录
 
-使用非维护者测试账号从 fork 提交不含真实业务数据的小型 PR：
+已完成的测试与当前证据：
 
 | 场景 | 预期结果 |
 | --- | --- |
-| 未签署 | CLA 评论出现；`license/cla` 为 pending/failure；分支规则阻止合并 |
-| 完成签署 | 显示正式协议与全部必填字段；签署后检查变为 success |
-| 重新检查 | 已签署用户触发 recheck 后仍为 success，不重复生成签署记录 |
-| 多提交者 PR | 每位非豁免提交者均满足要求后才能通过 |
-| Gist 新修订 | 新 PR 要求重新签署；旧修订的签署人与历史贡献仍可审计 |
-| Dependabot | 只在确认机器人无法签署且更新仍经 CI/评审后，显式导入 `dependabot[bot]` 豁免；不得使用通配豁免 |
-| 仓库权限撤销 | CLA 检查失败可见且阻止合并，不得静默放行 |
+| 未签署 | PR #10 曾显示 `license/cla` pending，随后阻止合并 |
+| 完成签署 | PR #10 签署后 `license/cla` 变为 success 并完成合并 |
+| 质量 CI | PR #10 的 `verify` 与 `smoke` 均通过 |
+| Gist 新修订 | 正式 Gist 更新后由首个外部贡献者复核重新签署提示；旧修订记录保留 |
+| 组织贡献 | 个人 CLA 不覆盖公司、学校或其他组织所有的贡献，需另行 Entity CLA |
+| 权限门禁 | 激活变更将同时加入 `license/cla` 和 `verify` 必需检查 |
 
 测试完成后：
 
@@ -88,15 +85,13 @@ CLA Assistant 的自定义字段格式以其官方
 4. 确认 `contact@okoklabs.com` 的收件责任人、响应频率、离职/失联交接和账号恢复
    方式已经记录在私有运维文档。
 
-## 5. 激活
+## 5. 激活后的维护
 
-上述测试全部通过后，在同一个受保护变更中：
-
-1. 把 `CLA.md` 状态改为 `ACTIVE`，写入正式版本和激活日期；移除所有未解决
-   占位符。Gist revision、签署记录和联系地址的验收证据继续只保存在私有合规记录。
-2. 更新 `CONTRIBUTING.md`，明确外部版权性贡献必须通过 `license/cla`。
-3. 更新开源准备清单并保存私有激活记录。
-4. 激活提交合并后再宣布接受外部版权性贡献。
+1. `CLA.md` 已改为 `ACTIVE`，写入正式版本和激活日期；Gist revision、签署记录
+   和联系地址的验收证据继续只保存在私有合规记录。
+2. `CONTRIBUTING.md` 已明确外部版权性贡献必须通过 `license/cla`。
+3. 每次协议修订先形成新候选版本、更新 Gist、完成重新签署测试，再改变必需版本。
+4. 激活提交合并后，才宣布接受外部版权性贡献；在此之前仍按 PR 门禁处理。
 
 ## 6. 日常与版本升级
 

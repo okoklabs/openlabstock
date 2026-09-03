@@ -1,21 +1,19 @@
 # OpenLabStock Individual Contributor License Agreement
 
-**Candidate version:** 1.0 (frozen review candidate)
+**Agreement version:** 1.0
 **Project:** OpenLabStock
 **License recipient and project steward:** 郝春霖 (Hao Chunlin), an individual
-**Planned contact:** `contact@okoklabs.com`
+**Contact:** `contact@okoklabs.com`
+**Activation date:** 2026-09-03
 
-> **STATUS: FROZEN FOR PROFESSIONAL REVIEW; NOT ACTIVE AND NOT CURRENTLY
-> ACCEPTING SIGNATURES.** Do not treat a pull-request checkbox, commit, email,
-> or other submission as acceptance of this candidate. The agreement will
-> become available for acceptance only after the contact address is verified,
-> the public repository and designated signing service are configured, the
-> governing-law provision is finalized, and the required `license/cla` check is
-> tested. This candidate was frozen by the Project Steward on 2026-09-01
-> for professional legal review. Until review and activation are complete,
-> maintainers must not merge external copyrightable contributions.
+> **STATUS: ACTIVE as of 2026-09-03.** This version is available for acceptance
+> only through the designated CLA Assistant signing service. A pull-request
+> checkbox, commit, email, or other submission is not a substitute for that
+> signing record. The Project Steward has recorded completion of an external
+> professional review of this complete v1.0 text; supporting evidence is kept
+> privately and is not part of the public repository.
 
-This candidate is based on the structure and licensing approach of the
+This agreement is based on the structure and licensing approach of the
 [Harmony Agreements](https://www.harmonyagreements.org/) and is adapted for an
 AGPL and alternative-commercial-licensing project. It is not a substitute for
 legal advice. The English agreement below is intended to be the controlling
@@ -27,7 +25,7 @@ This Individual Contributor License Agreement (the **Agreement**) documents
 the rights granted by an individual contributor (**You**) to 郝春霖 (Hao
 Chunlin), an individual, as the OpenLabStock project steward (**We**, **Us**, or
 the **Project Steward**). It is a legally binding agreement when accepted
-through the designated signing service after activation. Please read it
+through the designated signing service. Please read it
 carefully.
 
 ### 1. Definitions
@@ -153,7 +151,7 @@ You represent that:
 The Project Steward and the designated signing service may process the minimum
 identity, contact, agreement-version, timestamp, repository, and pull-request
 data reasonably needed to operate the signing check and preserve an auditable
-rights chain. The current planned workflow and data practices are described in
+rights chain. The current workflow and data practices are described in
 the [CLA privacy notice](https://github.com/okoklabs/openlabstock/blob/main/docs/legal/CLA_PRIVACY_NOTICE.md).
 Signing records are not part of the public source repository. Public pull
 requests may show Your GitHub identity and whether the CLA check passed.
@@ -187,13 +185,12 @@ This section is operational and is not a signature block.
 
 | Field | Current value |
 | --- | --- |
-| Agreement status | Frozen review candidate; not active; signatures are not accepted |
-| Candidate version | 1.0 |
+| Agreement status | Active; signatures accepted through CLA Assistant |
+| Agreement version | 1.0 |
 | License recipient | 郝春霖 (Hao Chunlin), individual |
 | Intended public repository | `okoklabs/openlabstock` |
-| Planned signing service | CLA Assistant hosted service |
-| Planned contact | `contact@okoklabs.com` |
-| Governing law and forum | Draft confirmed by the Project Steward: mainland China law; competent court at the Project Steward's domicile; professional review pending |
-| Candidate freeze date | 2026-09-01 |
-| Activation date | Not set |
-| Authoritative agreement revision | Not set |
+| Signing service | CLA Assistant hosted service |
+| Contact | `contact@okoklabs.com` (receiving verified) |
+| Governing law and forum | People's Republic of China mainland law; competent court at the Project Steward's domicile, subject to mandatory law |
+| Activation date | 2026-09-03 |
+| Authoritative agreement revision | Recorded in private activation evidence and the designated Gist revision |
