@@ -30,5 +30,11 @@
     "description": "The notice explains the signing data and retention workflow. / 该说明解释签署数据和保留流程。",
     "type": "boolean",
     "required": true
+  },
+  "internationalTransfer": {
+    "title": "I consent to the processing and international transfer of signing data as described in the CLA privacy notice. / 我同意按照 CLA 隐私说明处理并向境外服务商传输签署数据。",
+    "description": "The designated signing service may process signing data outside mainland China. / 指定签署服务可能在中国大陆境外处理签署数据。",
+    "type": "boolean",
+    "required": true
   }
 }

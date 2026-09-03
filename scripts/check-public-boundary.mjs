@@ -82,8 +82,9 @@ for (const file of filesToInspect) {
 const packageJson = JSON.parse(readFileSync(path.join(rootDir, 'package.json'), 'utf8'));
 if (packageJson.license !== 'AGPL-3.0-only') failures.push(`package.json license 必须为 AGPL-3.0-only：${packageJson.license ?? '(empty)'}`);
 const cla = readFileSync(path.join(rootDir, 'CLA.md'), 'utf8');
-if (!/NOT ACTIVE/i.test(cla)) failures.push('CLA.md 必须在门禁完成前保持 NOT ACTIVE');
-if (/\bACTIVE\b/i.test(cla.replace(/NOT ACTIVE/gi, ''))) failures.push('CLA.md 不应在候选阶段出现独立 ACTIVE 状态');
+const claIsActive = /^> \*\*STATUS: ACTIVE as of \d{4}-\d{2}-\d{2}\./m.test(cla)
+  && /\| Agreement status \| Active; signatures accepted through CLA Assistant \|/i.test(cla);
+if (!claIsActive) failures.push('CLA.md 必须明确标记为已激活的 v1.0 协议');
 
 if (failures.length) {
   console.error(failures.map((failure) => `- ${failure}`).join('\n'));

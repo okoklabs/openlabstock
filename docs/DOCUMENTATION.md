@@ -38,7 +38,7 @@
 1. [`REPOSITORY_GOVERNANCE.md`](./REPOSITORY_GOVERNANCE.md)：公共应用仓库、私有运营仓库、任务系统和信息边界。
 2. [`GOVERNANCE.md`](../GOVERNANCE.md)、[`CONTRIBUTING.md`](../CONTRIBUTING.md)与 [`SECURITY.md`](../SECURITY.md)：公共治理、贡献和漏洞报告入口。
 3. [`CHANGELOG.md`](../CHANGELOG.md)：用户可感知的已发布变化。
-4. [`CLA.md`](../CLA.md)、[`legal/CLA_GUIDE.zh-CN.md`](./legal/CLA_GUIDE.zh-CN.md)与 [`CLA_ASSISTANT_SETUP.md`](./CLA_ASSISTANT_SETUP.md)：个人贡献授权候选文本、中文解释和签署系统启用门禁。
+4. [`CLA.md`](../CLA.md)、[`legal/CLA_GUIDE.zh-CN.md`](./legal/CLA_GUIDE.zh-CN.md)与 [`CLA_ASSISTANT_SETUP.md`](./CLA_ASSISTANT_SETUP.md)：已激活的个人贡献授权文本、中文解释和签署系统验收记录。
 
 ## 单一事实来源
 

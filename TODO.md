@@ -5,7 +5,7 @@
 ## Now
 
 - [ ] `[PUBLIC]` 完成从公开预览转为 Stable 的产品门禁：复核代码与品牌权利链，在全新 Linux 环境完成安装、升级、备份、恢复和回滚演练，并完成真实手机专项验收。
-- [ ] `[PUBLIC]` 在合并首个外部版权性代码贡献前，专业复核并定稿个人 CLA，启用并测试 CLA Assistant 与相应分支规则；该事项不阻止公开预览、Issue、文档建议或普通用户按 AGPL 试用和部署。
+- [ ] `[PUBLIC]` 用非维护者测试账号完成正式 Gist 新修订后的重新签署验收，并把测试证据保存在私有合规记录；在此之前不接受公司或学校所有的贡献。
 - [ ] `[PUBLIC]` 启用并测试 GitHub Private Vulnerability Reporting，补齐公开安全报告入口。
 - [ ] `[PUBLIC]` 配置并测试 `conduct@okoklabs.com` 后，移除行为准则中的待启用说明。
 - [ ] `[PUBLIC]` 在全新 Linux 环境从 GitHub Release 完成下载校验、安装、空库启动、旧库升级、备份、恢复和回滚演练。

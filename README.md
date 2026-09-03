@@ -237,7 +237,7 @@ OpenLabStock 已经可以按 **Public Preview / 公开预览** 对外介绍、�
 
 OpenLabStock 原始源代码采用 [GNU AGPL v3.0 only](./LICENSE)，SPDX 标识为 `AGPL-3.0-only`。第三方组件继续适用各自许可证，见 [NOTICE](./NOTICE) 和 [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)。
 
-AGPL 允许商业使用，但网络部署、修改和再分发需要遵守源代码可得性义务。项目计划提供单独的商业许可，但目前**尚未开放签约**。当前 [CLA](./CLA.md) 也仍处于**未启用**状态，不能视为已签署协议。
+AGPL 允许商业使用，但网络部署、修改和再分发需要遵守源代码可得性义务。项目计划提供单独的商业许可，但目前**尚未开放签约**。[个人贡献者 CLA v1.0](./CLA.md) 已于 2026-09-03 启用，用于确认外部版权性贡献的授权；它不代表商业许可已经开始销售，也不覆盖未经授权的公司或学校所有贡献。
 
 - [贡献指南](./CONTRIBUTING.md)
 - [安全策略](./SECURITY.md)
