@@ -172,7 +172,7 @@ With no repository changes, `verify:auto` repeats nothing. Runtime changes rerun
 
 OpenLabStock can be presented, demonstrated, and tested publicly as a **Public Preview**. The application is functional and regression-tested, but clean Linux installation, upgrade, backup, restore, rollback, and real-device checks are not all complete, so it should not yet be described as Stable or ready for critical production data without evaluation. Use synthetic data first and review the [roadmap](./ROADMAP.md) and [current tasks](./TODO.md). The CLA is an external-code-contribution and future commercial-relicensing gate; it does not prevent users from viewing, evaluating, or self-hosting the AGPL application.
 
-Source code is licensed under [GNU AGPL v3.0 only](./LICENSE), SPDX `AGPL-3.0-only`. Third-party components retain their own licenses; see [NOTICE](./NOTICE) and [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md). A separate commercial license is planned but is **not currently available**, and the draft [CLA](./CLA.md) is **not active**.
+Source code is licensed under [GNU AGPL v3.0 only](./LICENSE), SPDX `AGPL-3.0-only`. Third-party components retain their own licenses; see [NOTICE](./NOTICE) and [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md). A separate commercial license is planned but is **not currently available**. The [Individual CLA v1.0](./CLA.md) became active on 2026-09-03 for copyrightable external contributions; it does not itself sell a commercial license or cover contributions owned by an employer, school, or other organization.
 
 - [Contributing](./CONTRIBUTING.md)
 - [Security policy](./SECURITY.md)
