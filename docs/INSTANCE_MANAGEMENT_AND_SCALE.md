@@ -77,6 +77,27 @@ pnpm run instance-agent -- plan rollback --target-version 2026.9.1-r57 --reason 
 
 `status` 和 `backup` 会输出结构化实例回执；`plan update` 与 `plan rollback` 只生成带 `approvalRequired: true` 的任务 JSON，不会自行执行发布或回滚。每个任务有稳定的 `idempotencyKey`、24 小时 `expiresAt` 和“先备份、再健康检查”的前置条件；控制面重试时应按幂等键去重，并拒绝执行过期任务。任务回执默认写入数据目录下的 `instance-tasks/`，文件使用原子替换和受限权限。未来私有控制面应消费这些明确动作，并由部署适配器执行已经审核的任务；不要把网页输入直接拼接为 shell 命令。任务 JSON 只包含实例 ID、版本、校验和、时间和结果摘要，不包含库存、成员、数据库内容或凭据。
 
+公共仓库还提供 `scripts/instance-registry.mjs` 的纯数据协议，供私有控制面或其他部署适配器复用。实例记录只允许保存：
+
+```json
+{
+  "format": 1,
+  "kind": "openlabstock.instance",
+  "instanceId": "lab-a-prod",
+  "displayName": "实验室 A",
+  "domain": "inventory.example.org",
+  "lifecycle": "active",
+  "desiredVersion": "2026.9.3-r3",
+  "observedVersion": "2026.9.3-r2",
+  "health": { "status": "healthy", "observedAt": "2026-09-18T02:00:00.000Z", "latencyMs": 42 },
+  "backup": { "status": "ok", "observedAt": "2026-09-18T01:55:00.000Z", "ageSeconds": 300, "bytes": 4096, "schemaVersion": 16 },
+  "task": null,
+  "updatedAt": "2026-09-18T02:00:01.000Z"
+}
+```
+
+记录不接受库存、成员、流水、数据库内容、令牌或任意 shell 字段。`desiredVersion` 表示控制面要求的版本，`observedVersion` 表示实例健康检查实际报告的版本；两者可以暂时不同，后台应显示差异并等待任务收敛，而不是直接覆盖其中一个。域名只保存主机名，不携带协议、路径或凭据。
+
 任务状态只允许按下面的单向状态机流转，部署适配器不能跳过批准或重复执行终态任务：
 
 ```text
