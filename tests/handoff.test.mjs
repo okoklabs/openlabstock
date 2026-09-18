@@ -22,6 +22,7 @@ test('handoff captures complete history, dirty changes and restores safely', asy
     git(repository, ['init', '-b', 'main']);
     git(repository, ['config', 'user.email', 'handoff-test@example.invalid']);
     git(repository, ['config', 'user.name', 'Handoff Test']);
+    git(repository, ['remote', 'add', 'origin', 'https://user:secret@example.invalid/private/repository.git']);
     await writeFile(path.join(repository, '.gitignore'), 'data/\n.openlabstock-*.json\n');
     await writeFile(path.join(repository, 'package.json'), '{"name":"handoff-fixture","version":"1.0.0"}\n');
     await writeFile(path.join(repository, 'README.md'), 'initial\n');
@@ -42,6 +43,10 @@ test('handoff captures complete history, dirty changes and restores safely', asy
     assert.deepEqual(created.metadata.untrackedFiles, ['notes.txt']);
     assert.equal((await readFile(`${output}.sha256`, 'utf8')).includes(created.archiveHash), true);
     assert.match(created.metadata.runtime.node, /^v\d+/);
+    assert.deepEqual(created.metadata.remotes, [
+      { name: 'origin', kind: 'fetch', url: 'https://example.invalid/<redacted>' },
+      { name: 'origin', kind: 'push', url: 'https://example.invalid/<redacted>' },
+    ]);
     await assert.rejects(
       createHandoff({ root: repository, output: path.join(repository, 'inside.tar.gz') }),
       /Handoff output must be outside the repository/,

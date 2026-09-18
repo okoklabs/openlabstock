@@ -162,11 +162,10 @@ function sanitizeRemote(raw) {
   const value = String(raw).trim();
   try {
     const url = new URL(value);
-    url.username = '';
-    url.password = '';
-    return url.toString().replace(/\/$/, '');
+    return `${url.protocol}//${url.host}/<redacted>`;
   } catch {
-    return value.replace(/\/\/[^/@\s]+@/g, '//');
+    const sshMatch = /^(?:[^@/\s]+@)?([^:/\s]+):/.exec(value);
+    return sshMatch ? `ssh://${sshMatch[1]}/<redacted>` : '<redacted remote>';
   }
 }
 
