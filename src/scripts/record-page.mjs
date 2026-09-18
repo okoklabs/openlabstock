@@ -21,6 +21,7 @@ export function buildRecordPageUrl({
   scope = 'all',
   query = '',
   from = '',
+  to = '',
 } = {}) {
   const parameters = new URLSearchParams({
     mode: 'page',
@@ -30,6 +31,7 @@ export function buildRecordPageUrl({
   });
   if (query) parameters.set('q', query);
   if (from) parameters.set('from', from);
+  if (to) parameters.set('to', to);
   if (cursor) parameters.set('cursor', cursor);
   return `/api/transactions?${parameters}`;
 }

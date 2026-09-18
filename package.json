@@ -27,6 +27,7 @@
   "packageManager": "pnpm@11.16.0",
   "scripts": {
     "backup": "node scripts/backup.mjs",
+    "instance-agent": "node scripts/instance-agent.mjs",
     "benchmark:capacity": "node scripts/benchmark-capacity.mjs",
     "release": "node scripts/release.mjs",
     "release:prepare": "node scripts/prepare-release.mjs",
@@ -49,9 +50,9 @@
     "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
-    "@astrojs/react": "6.0.2",
+    "@astrojs/react": "6.0.6",
     "@zxing/browser": "^0.2.1",
-    "astro": "7.1.6",
+    "astro": "7.3.3",
     "lucide-react": "1.28.0",
     "qrcode": "^1.5.4",
     "react": "19.2.8",

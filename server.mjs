@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { mkdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -10,6 +10,7 @@ import { createLoginProtection } from './src/server/login-attempts.mjs';
 import { encodeRecordCursor, recordPageOptions } from './src/server/record-query.mjs';
 import { normalizedMaterialName, planQuantityImport } from './src/server/quantity-import.mjs';
 import { EXPIRY_WARNING_DAYS, inventoryExpiryInfo, normalizeExpiryDate } from './src/server/inventory-expiry.mjs';
+import { normalizeInstanceId, readLatestBackupStatus } from './src/server/instance-health.mjs';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const packageMetadata = JSON.parse(await readFile(path.join(rootDir, 'package.json'), 'utf8'));
@@ -45,6 +46,8 @@ const databaseUploadMaxBytes = Number(process.env.DATABASE_UPLOAD_MAX_BYTES ?? 1
 const bootstrapTransactionLimit = 30;
 const maxExpiryWarningDays = 3650;
 const backupDir = path.resolve(process.env.BACKUP_DIR ?? path.join(dataDir, 'backups'));
+const healthDetailToken = String(process.env.HEALTH_DETAIL_TOKEN ?? '');
+const instanceId = normalizeInstanceId(process.env.INSTANCE_ID);
 const restoreAuthorizations = new Map();
 const staticFileCache = new Map();
 let maintenanceMode = false;
@@ -182,6 +185,13 @@ function createDefaultStore() {
     inventoryUnitBalances: [],
     inventoryEvents: [],
   };
+}
+
+function healthTokenMatches(suppliedToken) {
+  if (!healthDetailToken || !suppliedToken) return false;
+  const expected = createHash('sha256').update(healthDetailToken).digest();
+  const supplied = createHash('sha256').update(String(suppliedToken)).digest();
+  return timingSafeEqual(expected, supplied);
 }
 
 function parseExpiryWarningDays(value, fallback = EXPIRY_WARNING_DAYS) {
@@ -1307,7 +1317,27 @@ function formatBootstrap(store, user) {
   };
 }
 
-function formatExportSnapshot(store, user, exportedAt) {
+function recordExportMatches(item, source, filter = {}) {
+  const type = filter.type ?? 'all';
+  if (filter.userId && item.userId !== filter.userId) return false;
+  if (filter.from && item.occurredAt < filter.from) return false;
+  if (filter.to && item.occurredAt > filter.to) return false;
+  if (source === 'transaction') {
+    if (type !== 'all' && type !== item.type) return false;
+  } else if (type !== 'all') {
+    const isUse = ['use', 'use_correction'].includes(item.eventType);
+    if ((type === 'use' && !isUse) || (type === 'inventory_event' && isUse) || !['use', 'inventory_event'].includes(type)) return false;
+  }
+  if (filter.query) {
+    const searchable = source === 'transaction'
+      ? [item.materialName, item.inventoryUnitLabel, item.positionCode, item.statusName, item.ownerName, item.userName, item.groupName, item.counterparty, item.note]
+      : [item.materialName, item.inventoryUnitLabel, item.fromPositionCode, item.toPositionCode, item.fromStatusName, item.toStatusName, item.fromOwnerName, item.toOwnerName, item.userName, item.groupName, item.counterparty, item.note];
+    if (!searchable.join(' ').toLocaleLowerCase('zh-CN').includes(filter.query.toLocaleLowerCase('zh-CN'))) return false;
+  }
+  return true;
+}
+
+function formatExportSnapshot(store, user, exportedAt, recordFilter = {}) {
   // Export snapshots are read directly from SQLite and bypass the request
   // store normalizer; normalize once so legacy or hand-edited expiry values
   // cannot make the export path fail while regular API reads remain resilient.
@@ -1319,10 +1349,10 @@ function formatExportSnapshot(store, user, exportedAt) {
     .map((unit) => inventoryUnitPayload(store, unit))
     .sort((left, right) => left.displayLabel.localeCompare(right.displayLabel, 'zh-CN', { numeric: true }));
   const transactions = [...store.transactions]
-    .filter((record) => canViewAllTransactions(user) || record.userId === user.id)
+    .filter((record) => recordExportMatches(record, 'transaction', { ...recordFilter, userId: recordFilter.userId || (canViewAllTransactions(user) ? '' : user.id) }))
     .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) || right.id.localeCompare(left.id));
   const inventoryEvents = [...store.inventoryEvents]
-    .filter((event) => canViewAllTransactions(user) || event.userId === user.id)
+    .filter((event) => recordExportMatches(event, 'event', { ...recordFilter, userId: recordFilter.userId || (canViewAllTransactions(user) ? '' : user.id) }))
     .sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) || right.id.localeCompare(left.id));
   return {
     exportedAt,
@@ -1342,7 +1372,35 @@ function formatExportSnapshot(store, user, exportedAt) {
 }
 
 async function handleApi(request, response, url) {
-  if (url.pathname === '/api/health' && request.method === 'GET') return sendJson(response, 200, { ok: true, version: appVersion });
+  if (url.pathname === '/api/health' && request.method === 'GET') {
+    if (url.searchParams.get('detail') !== '1') return sendJson(response, 200, { ok: true, version: appVersion });
+    const suppliedToken = String(request.headers['x-openlabstock-health-token'] ?? '');
+    if (!healthTokenMatches(suppliedToken)) return sendJson(response, 401, { error: '健康诊断未授权' });
+    const database = (requestStorage.getStore() ?? storage.readView).healthCheck();
+    let databaseBytes = null;
+    try {
+      databaseBytes = (await stat(storage.databasePath)).size;
+    } catch {
+      databaseBytes = null;
+    }
+    const ok = database.integrity === 'ok' && database.foreignKeys;
+    const backup = await readLatestBackupStatus(backupDir);
+    return sendJson(response, ok ? 200 : 503, {
+      format: 1,
+      ok,
+      instanceId: instanceId || null,
+      observedAt: new Date().toISOString(),
+      version: appVersion,
+      schemaVersion: database.schemaVersion,
+      uptimeSeconds: Math.floor(process.uptime()),
+      database: {
+        integrity: database.integrity,
+        foreignKeys: database.foreignKeys,
+        bytes: databaseBytes,
+      },
+      backup,
+    });
+  }
 
   if (url.pathname === '/api/brand-icon' && (request.method === 'GET' || request.method === 'HEAD')) {
     const view = requestStorage.getStore() ?? storage.readView;

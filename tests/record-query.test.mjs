@@ -10,7 +10,13 @@ test('服务端记录分页协议校验游标、筛选与本人范围', () => {
     userId: 'user-1',
     canViewAll: true,
   });
-  assert.deepEqual(all, { pageSize: 60, query: '', type: 'all', from: '', userId: '', cursor: null });
+  assert.deepEqual(all, { pageSize: 60, query: '', type: 'all', from: '', to: '', userId: '', cursor: null });
+
+  const bounded = recordPageOptions(new URL('http://localhost/api/transactions?mode=page&from=2026-08-01T00:00:00.000Z&to=2026-08-31T23:59:59.999Z'), {
+    userId: 'user-1', canViewAll: true,
+  });
+  assert.equal(bounded.to, '2026-08-31T23:59:59.999Z');
+  assert.throws(() => recordPageOptions(new URL('http://localhost/api/transactions?from=2026-09-01T00:00:00.000Z&to=2026-08-31T23:59:59.999Z'), { userId: 'user-1', canViewAll: true }), /不能晚于/);
 
   const mine = recordPageOptions(new URL('http://localhost/api/transactions?mode=page&scope=mine&type=use&pageSize=25'), {
     userId: 'user-1',

@@ -697,6 +697,17 @@ function rowsToSettings(database) {
     : null;
 }
 
+function healthCheck(database) {
+  const schemaVersion = Number(database.prepare("SELECT value FROM metadata WHERE key = 'schema_version'").get()?.value ?? 0);
+  const quickCheck = String(database.prepare('PRAGMA quick_check(1)').get()?.quick_check ?? 'unknown');
+  const foreignKeyViolations = database.prepare('PRAGMA foreign_key_check').all();
+  return {
+    schemaVersion,
+    integrity: quickCheck,
+    foreignKeys: foreignKeyViolations.length === 0,
+  };
+}
+
 function materialFromRow(row) {
   return {
     id: row.id,
@@ -1733,6 +1744,7 @@ export async function openStorage({ dataDir, createDefaultStore, normalizeStore,
     readStore: () => rowsToStore(readDatabase),
     readCurrentInventoryStore: () => rowsToStore(readDatabase, { includeHistory: false }),
     readStoreSnapshot: () => readStoreSnapshot(readDatabase),
+    healthCheck: () => healthCheck(readDatabase),
     readSettings: () => rowsToSettings(readDatabase),
     readMaterials: () => rowsToMaterials(readDatabase),
     readGroup: (groupId) => rowToGroup(readDatabase, groupId),
@@ -1760,6 +1772,7 @@ export async function openStorage({ dataDir, createDefaultStore, normalizeStore,
       transactionSnapshot = structuredClone(current);
       return current;
     },
+    healthCheck: () => healthCheck(writeDatabase),
     readSettings: () => rowsToSettings(writeDatabase),
     readMaterials: () => rowsToMaterials(writeDatabase),
     readGroup: (groupId) => rowToGroup(writeDatabase, groupId),

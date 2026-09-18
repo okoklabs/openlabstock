@@ -1,4 +1,5 @@
-import { mkdir, readdir, stat, unlink } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import { mkdir, readdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
@@ -18,30 +19,61 @@ await mkdir(backupDir, { recursive: true });
 
 const timestamp = new Date().toISOString().replace(/[-:.]/g, '');
 const backupPath = path.join(backupDir, `labstock-${timestamp}.sqlite`);
+const temporaryPath = `${backupPath}.partial-${process.pid}-${randomUUID()}`;
+const manifestPath = `${backupPath}.json`;
+const temporaryManifestPath = `${manifestPath}.partial-${process.pid}-${randomUUID()}`;
 const quoteSqlString = (value) => `'${String(value).replaceAll("'", "''")}'`;
 
 const source = new DatabaseSync(sourcePath);
 try {
   source.exec('PRAGMA busy_timeout = 10000;');
-  source.exec(`VACUUM INTO ${quoteSqlString(backupPath)}`);
+  source.exec(`VACUUM INTO ${quoteSqlString(temporaryPath)}`);
 } finally {
   source.close();
 }
 
-const backup = new DatabaseSync(backupPath, { readOnly: true });
+let manifest;
 try {
-  const integrity = backup.prepare('PRAGMA integrity_check').get();
-  if (integrity?.integrity_check !== 'ok') throw new Error(`备份完整性校验失败：${integrity?.integrity_check ?? '未知错误'}`);
-  const initialized = backup.prepare("SELECT value FROM metadata WHERE key = 'initialized'").get();
-  if (!initialized) throw new Error('备份缺少初始化标记');
-} finally {
-  backup.close();
+  const backup = new DatabaseSync(temporaryPath, { readOnly: true });
+  try {
+    const integrity = backup.prepare('PRAGMA integrity_check').get();
+    if (integrity?.integrity_check !== 'ok') throw new Error(`备份完整性校验失败：${integrity?.integrity_check ?? '未知错误'}`);
+    const foreignKeyViolation = backup.prepare('PRAGMA foreign_key_check').get();
+    if (foreignKeyViolation) throw new Error(`备份外键校验失败：${JSON.stringify(foreignKeyViolation)}`);
+    const initialized = backup.prepare("SELECT value FROM metadata WHERE key = 'initialized'").get();
+    if (!initialized) throw new Error('备份缺少初始化标记');
+    const schemaVersion = Number(backup.prepare("SELECT value FROM metadata WHERE key = 'schema_version'").get()?.value ?? 0);
+    if (!Number.isInteger(schemaVersion) || schemaVersion < 1) throw new Error('备份缺少有效的数据库结构版本');
+    const bytes = (await stat(temporaryPath)).size;
+    const sha256 = createHash('sha256').update(await readFile(temporaryPath)).digest('hex').toUpperCase();
+    manifest = {
+      format: 1,
+      createdAt: new Date().toISOString(),
+      database: path.basename(backupPath),
+      bytes,
+      sha256,
+      schemaVersion,
+      integrity: 'ok',
+      foreignKeys: true,
+    };
+  } finally {
+    backup.close();
+  }
+  await rename(temporaryPath, backupPath);
+  await writeFile(temporaryManifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  await rename(temporaryManifestPath, manifestPath);
+} catch (error) {
+  await unlink(temporaryPath).catch(() => undefined);
+  await unlink(temporaryManifestPath).catch(() => undefined);
+  await unlink(backupPath).catch(() => undefined);
+  await unlink(manifestPath).catch(() => undefined);
+  throw error;
 }
 
 const cutoff = Date.now() - retentionDays * 86_400_000;
 let removed = 0;
 for (const entry of await readdir(backupDir, { withFileTypes: true })) {
-  if (!entry.isFile() || !/^labstock-\d{8}T\d{9}Z\.sqlite$/.test(entry.name)) continue;
+  if (!entry.isFile() || !/^labstock-\d{8}T\d{9}Z\.sqlite(?:\.json)?$/.test(entry.name)) continue;
   const candidate = path.join(backupDir, entry.name);
   if ((await stat(candidate)).mtimeMs < cutoff) {
     await unlink(candidate);
@@ -51,4 +83,6 @@ for (const entry of await readdir(backupDir, { withFileTypes: true })) {
 
 console.log(`备份完成：${backupPath}`);
 console.log(`SQLite integrity_check：ok`);
+console.log(`SHA-256：${manifest.sha256}`);
+console.log(`备份清单：${manifestPath}`);
 console.log(`保留策略：${retentionDays} 天，本次清理 ${removed} 个旧备份`);

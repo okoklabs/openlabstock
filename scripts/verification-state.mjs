@@ -10,9 +10,10 @@ export const PUBLIC_BOUNDARY_RECEIPT = '.openlabstock-public-verification.json';
 export const AUDIT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const verificationRoots = [
-  '.dockerignore', '.env.docker.example', 'astro.config.mjs', 'compose.yaml',
-  'Dockerfile', 'package.json', 'password.mjs', 'pnpm-lock.yaml', 'pnpm-workspace.yaml',
-  'server.mjs', 'storage.mjs', 'deploy', 'dist', 'public', 'scripts', 'src', 'tests',
+  '.dockerignore', '.env.docker.example', '.github', 'astro.config.mjs', 'compose.yaml',
+  'Dockerfile', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', 'AGENTS.md', 'package.json',
+  'password.mjs', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'server.mjs', 'storage.mjs',
+  'deploy', 'dist', 'public', 'scripts', 'src', 'tests',
 ];
 
 const dependencyRoots = ['pnpm-lock.yaml', 'pnpm-workspace.yaml'];
@@ -100,7 +101,7 @@ export function documentationState(rootDir, files) {
 }
 
 function collectMarkdownFiles(directory) {
-  const ignoredDirectories = new Set(['.git', '.astro', 'node_modules', 'dist', 'data', 'backups']);
+  const ignoredDirectories = new Set(['.git', '.astro', 'node_modules', 'dist', 'data', 'backups', 'handoffs']);
   const files = [];
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     if (entry.isDirectory() && ignoredDirectories.has(entry.name)) continue;

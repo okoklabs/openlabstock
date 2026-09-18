@@ -15,7 +15,16 @@ export function readTransactionsResponse({
     const { store, exportedAt } = view.readStoreSnapshot();
     const user = store.users.find((candidate) => candidate.id === session.userId && candidate.active);
     if (!user) return response(401, { error: '账号已停用' });
-    return response(200, formatExportSnapshot(store, user, exportedAt));
+    let filter;
+    try {
+      filter = recordPageOptions(url, {
+        userId: user.id,
+        canViewAll: canViewAllTransactions(user),
+      });
+    } catch (error) {
+      return response(error.statusCode ?? 400, { error: error.message });
+    }
+    return response(200, formatExportSnapshot(store, user, exportedAt, filter));
   }
 
   const user = view.readActiveUser(session.userId);

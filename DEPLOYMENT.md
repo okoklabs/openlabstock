@@ -69,9 +69,12 @@ HOST=127.0.0.1
 PORT=4388
 DATA_DIR=/var/lib/openlabstock
 BACKUP_DIR=/var/lib/openlabstock/backups
+INSTANCE_ID=example-lab-prod
 INITIAL_ADMIN_PASSWORD=replace-with-a-unique-long-password
 TRUST_PROXY=1
 COOKIE_SECURE=1
+# Optional; only a private control plane should send this header.
+HEALTH_DETAIL_TOKEN=replace-with-a-random-secret
 ```
 
 `INITIAL_ADMIN_PASSWORD` 只用于空库创建第一个系统所有者。首次启动成功并修改密码后，应从环境文件移除该明文值。
@@ -89,6 +92,17 @@ curl --fail --show-error http://127.0.0.1:4388/api/health
 ```
 
 服务以无登录权限的 `openlabstock` 用户运行，只允许写入数据目录。
+
+普通健康地址只证明应用存活。若要供私有实例控制面检查数据库结构和最近备份，配置
+`INSTANCE_ID` 与 `HEALTH_DETAIL_TOKEN` 后使用授权请求；响应不包含库存、成员或流水内容：
+
+```bash
+curl --fail --show-error \
+  -H 'X-OpenLabStock-Health-Token: replace-with-a-random-secret' \
+  'http://127.0.0.1:4388/api/health?detail=1'
+```
+
+详细检查会返回应用版本、实例 ID、SQLite 完整性、结构版本、数据库大小和最近备份清单状态。
 
 ### 自动更新与回滚
 

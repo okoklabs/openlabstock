@@ -45,11 +45,21 @@ export function recordPageOptions(url, { userId, canViewAll }) {
       throw badRequest('记录时间范围无效');
     }
   }
+  const to = String(url.searchParams.get('to') ?? '');
+  if (to) {
+    try {
+      if (new Date(to).toISOString() !== to) throw new Error('invalid');
+    } catch {
+      throw badRequest('记录时间范围无效');
+    }
+  }
+  if (from && to && from > to) throw badRequest('记录起始时间不能晚于结束时间');
   return {
     pageSize: requestedPageSize,
     query,
     type,
     from,
+    to,
     userId: !canViewAll || scope === 'mine' ? userId : '',
     cursor: decodeRecordCursor(url.searchParams.get('cursor')),
   };

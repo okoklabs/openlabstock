@@ -2067,6 +2067,34 @@ test('完整的耗材、权限和成员管理流程', async () => {
   }
 });
 
+test('详细健康检查需要授权且不包含业务数据', async () => {
+  const detailDataDir = await mkdtemp(path.join(os.tmpdir(), 'labstock-health-detail-'));
+  const detailOrigin = `http://127.0.0.1:${await freePort()}`;
+  let detailServer;
+  try {
+    detailServer = await startServer(detailOrigin, detailDataDir, {
+      INSTANCE_ID: 'test-lab-prod',
+      HEALTH_DETAIL_TOKEN: 'health-test-secret',
+    });
+    const denied = await fetch(`${detailOrigin}/api/health?detail=1`);
+    assert.equal(denied.status, 401);
+    const authorized = await fetch(`${detailOrigin}/api/health?detail=1`, {
+      headers: { 'X-OpenLabStock-Health-Token': 'health-test-secret' },
+    });
+    assert.equal(authorized.status, 200);
+    const payload = await authorized.json();
+    assert.equal(payload.ok, true);
+    assert.equal(payload.instanceId, 'test-lab-prod');
+    assert.equal(payload.format, 1);
+    assert.equal(payload.database.integrity, 'ok');
+    assert.equal(Object.hasOwn(payload, 'materials'), false);
+    assert.equal(Object.hasOwn(payload, 'transactions'), false);
+  } finally {
+    await stopServer(detailServer);
+    await rm(detailDataDir, { recursive: true, force: true });
+  }
+});
+
 test('旧角色约束会自动迁移并保留所有者与账号数据', async () => {
   const legacyDataDir = await mkdtemp(path.join(os.tmpdir(), 'labstock-schema-v1-'));
   const origin = `http://127.0.0.1:${await freePort()}`;

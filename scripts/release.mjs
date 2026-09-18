@@ -15,6 +15,7 @@ import {
   repositoryState,
   verificationState,
 } from './verification-state.mjs';
+import { releaseBaseState } from './release-version.mjs';
 
 const rootDir = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const packageJsonPath = join(rootDir, 'package.json');
@@ -32,11 +33,14 @@ const args = process.argv.slice(2).filter((argument) => argument !== '--');
 const outputArgIndex = args.indexOf('--output');
 const manifestArgIndex = args.indexOf('--manifest');
 const outputValue = outputArgIndex >= 0 ? args[outputArgIndex + 1] : `OpenLabStock-production-${releaseTag}.tar.gz`;
-const manifestValue = manifestArgIndex >= 0 ? args[manifestArgIndex + 1] : `OpenLabStock-production-${releaseTag}.manifest.txt`;
+const manifestValue = manifestArgIndex >= 0 ? args[manifestArgIndex + 1] : '';
 if (!outputValue || outputValue.startsWith('--')) throw new Error('--output requires a file path');
-if (!manifestValue || manifestValue.startsWith('--')) throw new Error('--manifest requires a file path');
+if (manifestArgIndex >= 0 && (!manifestValue || manifestValue.startsWith('--'))) throw new Error('--manifest requires a file path');
 const outputPath = resolve(rootDir, outputValue);
-const manifestPath = resolve(rootDir, manifestValue);
+const manifestPath = manifestValue ? resolve(rootDir, manifestValue) : '';
+
+const releaseBase = releaseBaseState(rootDir, version);
+if (releaseBase.issues.length) throw new Error(releaseBase.issues.join(' '));
 
 if (args.includes('--help') || args.includes('-h')) {
   console.log('Usage: pnpm run release [--output path.tar.gz] [--manifest path.txt]');
@@ -47,7 +51,7 @@ if (args.includes('--help') || args.includes('-h')) {
 if (existsSync(outputPath)) {
   throw new Error(`Release archive already exists: ${relative(rootDir, outputPath)}. Increment package.json version or choose a new --output path.`);
 }
-if (existsSync(manifestPath)) {
+if (manifestPath && existsSync(manifestPath)) {
   throw new Error(`Release manifest already exists: ${relative(rootDir, manifestPath)}. Increment package.json version or choose a new --manifest path.`);
 }
 
@@ -148,7 +152,7 @@ for (const excluded of excludedReleasePaths) {
 }
 const required = [
   'dist/index.html', 'server.mjs', 'storage.mjs', 'password.mjs', 'scripts/backup.mjs',
-  'scripts/reset-owner-password.mjs', 'package.json', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md',
+  'scripts/instance-agent.mjs', 'scripts/reset-owner-password.mjs', 'package.json', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md',
 ];
 for (const entry of required) {
   if (!files.includes(entry)) throw new Error(`Release file list is missing required entry: ${entry}`);
@@ -194,5 +198,5 @@ const manifest = [
   ...archivedFiles,
   '',
 ].join('\n');
-writeFileSync(manifestPath, manifest, 'utf8');
+if (manifestPath) writeFileSync(manifestPath, manifest, 'utf8');
 console.log(manifest);
