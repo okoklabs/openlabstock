@@ -23,6 +23,18 @@ export const TASK_TTL_MS = 24 * 60 * 60 * 1000;
 
 export const AGENT_FORMAT = 1;
 export const ALLOWED_ACTIONS = Object.freeze(['status', 'backup', 'update', 'rollback']);
+export const TASK_STATUSES = Object.freeze(['planned', 'approved', 'running', 'succeeded', 'failed', 'expired']);
+
+const TASK_TRANSITIONS = Object.freeze({
+  planned: Object.freeze(['approved', 'failed', 'expired']),
+  approved: Object.freeze(['running', 'failed', 'expired']),
+  running: Object.freeze(['succeeded', 'failed', 'expired']),
+  succeeded: Object.freeze([]),
+  failed: Object.freeze([]),
+  expired: Object.freeze([]),
+});
+
+const TERMINAL_TASK_STATUSES = new Set(['succeeded', 'failed', 'expired']);
 
 function stableJson(value) {
   if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
@@ -150,6 +162,93 @@ export function createTask({ instanceId, action, parameters, now = new Date(), t
     },
     parameters,
   };
+}
+
+function taskTimestamp(value, field) {
+  const timestamp = Date.parse(String(value ?? ''));
+  if (!Number.isFinite(timestamp)) throw new AgentError('INVALID_TASK', `${field} 不是有效时间`);
+  return timestamp;
+}
+
+function assertTask(task) {
+  if (!task || typeof task !== 'object' || Array.isArray(task)) {
+    throw new AgentError('INVALID_TASK', '任务必须是对象');
+  }
+  if (task.format !== AGENT_FORMAT || task.kind !== 'openlabstock.instance-task') {
+    throw new AgentError('INVALID_TASK', '任务格式或类型无效');
+  }
+  if (!taskIdPattern.test(String(task.taskId ?? '')) || !instanceIdPattern.test(String(task.instanceId ?? ''))) {
+    throw new AgentError('INVALID_TASK', '任务 ID 或实例 ID 无效');
+  }
+  if (!TASK_STATUSES.includes(task.status)) throw new AgentError('INVALID_TASK', '任务状态无效');
+  taskTimestamp(task.createdAt, 'createdAt');
+  taskTimestamp(task.expiresAt, 'expiresAt');
+}
+
+function transitionTimestamp(task, key, now) {
+  if (task[key] !== undefined) return task[key];
+  return now.toISOString();
+}
+
+function normalizeTaskError(error) {
+  if (!error || typeof error !== 'object' || Array.isArray(error)) {
+    throw new AgentError('INVALID_TASK', '失败状态必须包含错误摘要');
+  }
+  const code = String(error.code ?? '').trim();
+  const message = String(error.message ?? '').trim();
+  if (!code || !message || code.length > 80 || message.length > 500 || /[\u0000-\u001f\u007f]/.test(code + message)) {
+    throw new AgentError('INVALID_TASK', '错误摘要无效');
+  }
+  return { code, message };
+}
+
+/**
+ * Apply one explicit state transition to a planned instance task.
+ * The returned task is immutable-by-convention: callers receive a new object,
+ * and terminal tasks cannot be changed by a later retry.
+ */
+export function transitionTask(task, nextStatus, { now = new Date(), error, result } = {}) {
+  assertTask(task);
+  if (!TASK_STATUSES.includes(nextStatus)) throw new AgentError('INVALID_TASK', '目标任务状态无效');
+  if (!(now instanceof Date) || Number.isNaN(now.valueOf())) throw new AgentError('INVALID_TASK', '状态变更时间无效');
+  if (task.status === nextStatus) return { ...task };
+  if (TERMINAL_TASK_STATUSES.has(task.status)) {
+    throw new AgentError('INVALID_TASK_TRANSITION', '终态任务不能再次变更');
+  }
+  const expiresAt = taskTimestamp(task.expiresAt, 'expiresAt');
+  const taskIsExpired = now.valueOf() >= expiresAt;
+  if (taskIsExpired && nextStatus !== 'expired') {
+    throw new AgentError('TASK_EXPIRED', '任务已过期，不能批准或执行');
+  }
+  if (nextStatus === 'expired' && !taskIsExpired) {
+    throw new AgentError('TASK_NOT_EXPIRED', '任务尚未到期，不能标记为 expired');
+  }
+  if (!TASK_TRANSITIONS[task.status].includes(nextStatus)) {
+    throw new AgentError('INVALID_TASK_TRANSITION', `${task.status} 不能变更为 ${nextStatus}`);
+  }
+  if (nextStatus === 'failed' && !error) {
+    throw new AgentError('INVALID_TASK', '失败状态必须包含错误摘要');
+  }
+
+  const updated = { ...task, status: nextStatus };
+  if (nextStatus === 'approved') updated.approvedAt = transitionTimestamp(task, 'approvedAt', now);
+  if (nextStatus === 'running') updated.startedAt = transitionTimestamp(task, 'startedAt', now);
+  if (TERMINAL_TASK_STATUSES.has(nextStatus)) updated.completedAt = now.toISOString();
+  if (nextStatus === 'expired') updated.expiredAt = now.toISOString();
+  if (nextStatus === 'failed') updated.error = normalizeTaskError(error);
+  if (nextStatus === 'succeeded' && result !== undefined) {
+    if (!result || typeof result !== 'object' || Array.isArray(result)) {
+      throw new AgentError('INVALID_TASK', '成功结果必须是对象');
+    }
+    updated.result = result;
+  }
+  return updated;
+}
+
+export function expireTask(task, now = new Date()) {
+  assertTask(task);
+  if (TERMINAL_TASK_STATUSES.has(task.status) || !isTaskExpired(task, now)) return { ...task };
+  return transitionTask(task, 'expired', { now });
 }
 
 export function isTaskExpired(task, now = new Date()) {

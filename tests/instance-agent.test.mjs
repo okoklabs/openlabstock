@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createTask, isTaskExpired, parseArgs, validateBackupManifest, validatePlan, AGENT_FORMAT, TASK_TTL_MS } from '../scripts/instance-agent.mjs';
+import { createTask, expireTask, isTaskExpired, parseArgs, transitionTask, validateBackupManifest, validatePlan, AGENT_FORMAT, TASK_TTL_MS } from '../scripts/instance-agent.mjs';
 
 const sha256 = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
@@ -75,4 +75,55 @@ test('backup receipt requires the manifest to match the actual SQLite artifact',
   }).sha256, manifest.sha256);
   assert.throws(() => validateBackupManifest(manifest, { size: 4, sha256: manifest.sha256 }), /不一致/);
   assert.throws(() => validateBackupManifest({ ...manifest, database: '../outside.sqlite' }, { size: 3, sha256: manifest.sha256 }), /数据库字段无效/);
+});
+
+test('instance task transitions enforce approval and preserve timestamps', () => {
+  const created = createTask({
+    instanceId: 'example-lab-prod',
+    action: 'update',
+    parameters: { version: '2026.9.1-r66', sha256 },
+    taskId: 'task-transition-001',
+    now: new Date('2026-09-18T00:00:00.000Z'),
+  });
+  const approved = transitionTask(created, 'approved', { now: new Date('2026-09-18T01:00:00.000Z') });
+  assert.equal(approved.status, 'approved');
+  assert.equal(approved.approvedAt, '2026-09-18T01:00:00.000Z');
+  assert.equal(created.status, 'planned');
+  assert.throws(() => transitionTask(created, 'running', { now: new Date('2026-09-18T01:00:00.000Z') }), /不能变更/);
+  assert.throws(() => transitionTask(created, 'expired', { now: new Date('2026-09-18T01:00:00.000Z') }), /尚未到期/);
+
+  const running = transitionTask(approved, 'running', { now: new Date('2026-09-18T02:00:00.000Z') });
+  const succeeded = transitionTask(running, 'succeeded', {
+    now: new Date('2026-09-18T02:05:00.000Z'),
+    result: { version: '2026.9.1-r66', health: 'ok' },
+  });
+  assert.equal(succeeded.startedAt, '2026-09-18T02:00:00.000Z');
+  assert.equal(succeeded.completedAt, '2026-09-18T02:05:00.000Z');
+  assert.deepEqual(succeeded.result, { version: '2026.9.1-r66', health: 'ok' });
+  assert.throws(() => transitionTask(succeeded, 'failed', { now: new Date('2026-09-18T03:00:00.000Z'), error: { code: 'LATE', message: 'late retry' } }), /终态/);
+});
+
+test('instance task failure and expiration are explicit and terminal', () => {
+  const created = createTask({
+    instanceId: 'example-lab-prod',
+    action: 'rollback',
+    parameters: { targetVersion: '2026.9.1-r57' },
+    taskId: 'task-transition-002',
+    now: new Date('2026-09-18T00:00:00.000Z'),
+  });
+  const failed = transitionTask(created, 'failed', {
+    now: new Date('2026-09-18T01:00:00.000Z'),
+    error: { code: 'APPROVAL_DENIED', message: '维护者拒绝执行该任务' },
+  });
+  assert.deepEqual(failed.error, { code: 'APPROVAL_DENIED', message: '维护者拒绝执行该任务' });
+  assert.throws(() => transitionTask(created, 'failed', { now: new Date('2026-09-18T01:00:00.000Z') }), /错误摘要/);
+
+  const expiring = createTask({
+    instanceId: 'example-lab-prod', action: 'update', parameters: { version: '2026.9.1-r66', sha256 },
+    taskId: 'task-transition-003', now: new Date('2026-09-18T00:00:00.000Z'),
+  });
+  const expired = expireTask(expiring, new Date('2026-09-19T00:00:00.000Z'));
+  assert.equal(expired.status, 'expired');
+  assert.equal(expired.expiredAt, '2026-09-19T00:00:00.000Z');
+  assert.throws(() => transitionTask(expired, 'approved', { now: new Date('2026-09-19T00:01:00.000Z') }), /终态/);
 });
