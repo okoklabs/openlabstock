@@ -136,6 +136,7 @@ flowchart LR
 | `storage.mjs` | SQLite 表结构、事务、增量保存和旧 JSON 迁移 |
 | `password.mjs` | 服务端与恢复工具共用的 scrypt 密码哈希实现 |
 | `scripts/backup.mjs` | SQLite 一致性备份、校验和保留策略 |
+| `scripts/handoff.mjs` | AI / 维护者代码交接包，包含 Git bundle、干净 archive、工作树补丁和校验清单 |
 | `scripts/reset-owner-password.mjs` | 在服务器终端恢复系统所有者密码并清除其旧会话 |
 | `scripts/generate-pwa-icons.py` | 可重复生成普通、Apple 与 maskable PWA PNG 图标 |
 | `tests/api.test.mjs` | API、权限、并发、会话和生产初始化测试 |

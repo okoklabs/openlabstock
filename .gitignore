@@ -4,6 +4,7 @@ dist/
 .astro/
 data/
 backups/
+handoffs/
 .env
 .env.*
 !.env.example
