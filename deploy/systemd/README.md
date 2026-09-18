@@ -2,6 +2,20 @@
 
 本目录提供单台 Linux 服务器上的 Node.js + systemd 首次安装、更新和回滚脚本。脚本只切换程序目录；SQLite 数据和备份目录必须位于程序目录之外，因此不会被发布包覆盖。
 
+普通维护者不必手工上传两个文件。Release 附带的 [`deploy/openlabstock.sh`](../openlabstock.sh) 会下载固定版本、核对 manifest、调用本目录脚本，并在更新失败时自动恢复：
+
+```bash
+RELEASE=YYYYMMDD-rN
+curl --fail --location --retry 3 \
+  "https://github.com/okoklabs/openlabstock/releases/download/${RELEASE}/OpenLabStock-install.sh" \
+  -o /tmp/OpenLabStock-install.sh
+chmod 755 /tmp/OpenLabStock-install.sh
+sudo bash /tmp/OpenLabStock-install.sh install --release "$RELEASE" --mode systemd
+sudo bash /tmp/OpenLabStock-install.sh update --release "$RELEASE" --mode systemd
+```
+
+下面的 `install-openlabstock.sh` 和 `update-openlabstock.sh` 仍保留，用于离线生产包、非标准目录和逐步排查。
+
 ## 默认目录
 
 ```text

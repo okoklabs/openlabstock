@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [ValidateSet('menu', 'configure', 'update', 'backup', 'rollback', 'status', 'doctor', 'prune')]
+  [ValidateSet('menu', 'configure', 'update', 'backup', 'handoff', 'rollback', 'status', 'doctor', 'prune')]
   [string]$Action = 'menu'
 )
 
@@ -185,6 +185,12 @@ function Invoke-Pnpm([string[]]$Arguments) {
   if ($LASTEXITCODE -ne 0) { throw "pnpm command failed with exit code $LASTEXITCODE." }
 }
 
+function Invoke-Handoff {
+  Write-Host "`nCreating a code handoff package outside the repository..." -ForegroundColor Cyan
+  Invoke-Pnpm @('run', 'handoff')
+  Write-Host "`nThe handoff archive contains source, Git history, documentation, current worktree changes and checksums.`nIt deliberately excludes databases, .env files, logs, node_modules and credentials." -ForegroundColor Green
+}
+
 function Build-Release {
   $packagePath = Join-Path $repositoryRoot 'package.json'
   $originalPackage = Get-Content -LiteralPath $packagePath -Raw
@@ -262,20 +268,22 @@ function Show-Menu {
   Write-Host "`nOpenLabStock operations" -ForegroundColor Green
   Write-Host '1. Build and update'
   Write-Host '2. Backup database'
-  Write-Host '3. Rollback application'
-  Write-Host '4. Show status'
-  Write-Host '5. Check deployment readiness'
-  Write-Host '6. Configure connection'
-  Write-Host '7. Prune old application directories'
+  Write-Host '3. Create code handoff package'
+  Write-Host '4. Rollback application'
+  Write-Host '5. Show status'
+  Write-Host '6. Check deployment readiness'
+  Write-Host '7. Configure connection'
+  Write-Host '8. Prune old application directories'
   Write-Host '0. Exit'
   switch (Read-Host 'Choose an action') {
     '1' { return 'update' }
     '2' { return 'backup' }
-    '3' { return 'rollback' }
-    '4' { return 'status' }
-    '5' { return 'doctor' }
-    '6' { return 'configure' }
-    '7' { return 'prune' }
+    '3' { return 'handoff' }
+    '4' { return 'rollback' }
+    '5' { return 'status' }
+    '6' { return 'doctor' }
+    '7' { return 'configure' }
+    '8' { return 'prune' }
     default { return 'exit' }
   }
 }
@@ -286,6 +294,11 @@ try {
   if ($Action -eq 'configure') {
     Get-RemoteConfig -Edit | Out-Null
     Write-Host "`nConfiguration saved to $configPath" -ForegroundColor Green
+    exit 0
+  }
+  if ($Action -eq 'handoff') {
+    Require-Command 'node'
+    Invoke-Handoff
     exit 0
   }
   Require-Command 'ssh'

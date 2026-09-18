@@ -63,6 +63,9 @@ jobs:
         run: |
           archive="OpenLabStock-production-${GITHUB_REF_NAME}.tar.gz"
           manifest="OpenLabStock-production-${GITHUB_REF_NAME}.manifest.txt"
+          installer="OpenLabStock-install.sh"
+          cp deploy/openlabstock.sh "$installer"
+          chmod 755 "$installer"
           cat > "$RUNNER_TEMP/release-notes.md" <<'EOF'
           ## Public Preview
 
@@ -70,9 +73,11 @@ jobs:
 
           下载生产包时请同时下载 manifest，并在解压前核对其中的 SHA-256。
 
+          也可以下载同一 Release 的 `OpenLabStock-install.sh`，按部署文档用固定标签自动完成下载、校验、安装或更新。
+
           This is a public preview, not a stable release. Evaluate with synthetic data first and review the deployment, backup, restore, and security documentation before production use.
           EOF
-          gh release create "$GITHUB_REF_NAME" "$archive" "$manifest" \
+          gh release create "$GITHUB_REF_NAME" "$archive" "$manifest" "$installer" \
             --verify-tag \
             --prerelease \
             --title "OpenLabStock Public Preview ${GITHUB_REF_NAME}" \

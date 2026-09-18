@@ -140,6 +140,20 @@ sudo bash deploy/docker/openlabstock.sh init
 
 After the script prints the initial `admin` password, sign in and change it immediately. Operators with an existing systemd service, reverse proxy, or manual directory policy should use the systemd route in [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
+For the shortest fixed-version path, download the Release installer. It downloads the matching archive and manifest, verifies SHA-256, and delegates to the tested systemd or Docker workflow:
+
+```bash
+RELEASE=YYYYMMDD-rN
+curl --fail --location --retry 3 \
+  "https://github.com/okoklabs/openlabstock/releases/download/${RELEASE}/OpenLabStock-install.sh" \
+  -o /tmp/OpenLabStock-install.sh
+chmod 755 /tmp/OpenLabStock-install.sh
+sudo bash /tmp/OpenLabStock-install.sh install --release "$RELEASE" --mode docker
+sudo bash /tmp/OpenLabStock-install.sh update --release "$RELEASE" --mode docker
+```
+
+Use `--mode systemd` for a native systemd deployment. The installer never follows an unpinned `latest` release; updates back up SQLite first and recover the previous application directory if health checks fail.
+
 ### Choose an installation path
 
 | Goal | Recommended entry | Best for |

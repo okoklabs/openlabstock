@@ -161,6 +161,33 @@ sudo bash deploy/docker/openlabstock.sh init
 
 脚本输出初始 `admin` 密码后，登录并立即修改。已有 systemd、反向代理或需要手工控制目录的维护者，再阅读 [`DEPLOYMENT.md`](./DEPLOYMENT.md) 的 systemd 路线。
 
+#### 最短固定版本安装路径
+
+不想手工上传生产包和 manifest 时，可以从 GitHub Release 下载一个固定版本的安装器。安装器会自动下载同版本生产包和清单，核对 SHA-256，然后调用项目内经过验证的 systemd / Docker 脚本；它不会追踪未知的 `latest`，也不会跳过数据库备份。
+
+```bash
+RELEASE=YYYYMMDD-rN
+curl --fail --location --retry 3 \
+  "https://github.com/okoklabs/openlabstock/releases/download/${RELEASE}/OpenLabStock-install.sh" \
+  -o /tmp/OpenLabStock-install.sh
+chmod 755 /tmp/OpenLabStock-install.sh
+sudo bash /tmp/OpenLabStock-install.sh install --release "$RELEASE" --mode systemd
+```
+
+已有 systemd 部署时更新为另一个固定版本：
+
+```bash
+sudo bash /tmp/OpenLabStock-install.sh update --release "$RELEASE" --mode systemd
+```
+
+如果使用 Docker，把最后的 `--mode systemd` 改为 `--mode docker`。安装器会保留 Docker 的 `.env` 和数据卷；更新失败时恢复旧程序目录并重新启动旧版本。安装或更新完成后可直接运行：
+
+```bash
+sudo bash /tmp/OpenLabStock-install.sh status --mode systemd
+```
+
+高级维护者仍可以直接使用 [`deploy/systemd/`](./deploy/systemd/) 和 [`deploy/docker/`](./deploy/docker/) 中的脚本，处理自定义目录或离线生产包。
+
 #### 最短 Docker 安装路径
 
 下面是一条完整的首次安装路径。先把 `RELEASE` 改成 Releases 页面上要安装的固定标签；当前公开预览示例为 `20260902-r64`。安装过程不会自动追踪或替换到未知的最新版本：
@@ -189,7 +216,7 @@ sudo bash deploy/docker/openlabstock.sh init
 4. 打印耗材二维码，扫码只定位耗材，数量、来源 / 去向仍由用户确认后登记。
 5. 先用合成数据做一次入库、领用、盘点和备份，再导入真实库存。
 
-更新时不要重新运行 `init`；在程序目录执行 `bash deploy/docker/openlabstock.sh update`，失败时执行 `rollback`。每次更新前脚本会先备份数据卷。
+更新时不要重新运行 `init`；在程序目录执行 `bash deploy/docker/openlabstock.sh update`，失败时执行 `rollback`。每次更新前脚本会先备份数据卷。若希望自动下载并校验固定 Release，优先使用上面的 `OpenLabStock-install.sh update`。
 
 ### 选择安装路径
 

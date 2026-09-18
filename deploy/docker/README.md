@@ -12,6 +12,15 @@
 
 ## 首次安装
 
+普通维护者可以使用 Release 附带的统一安装器，自动下载固定版本、校验 SHA-256 并进入本目录的 Docker 流程：
+
+```bash
+sudo bash /tmp/OpenLabStock-install.sh install --release YYYYMMDD-rN --mode docker
+sudo bash /tmp/OpenLabStock-install.sh update --release YYYYMMDD-rN --mode docker
+```
+
+需要离线包、逐步排查或自定义 Compose 目录时，再直接运行本页的 `openlabstock.sh`。
+
 服务器先按 Docker 官方文档安装 Docker Engine 与 Compose v2 插件。从 [GitHub Releases](https://github.com/okoklabs/openlabstock/releases) 下载同一标签的生产包和 manifest，并按根目录 [`DEPLOYMENT.md`](../../DEPLOYMENT.md#获取固定版本) 校验 SHA-256。把生产包解压到独立目录，例如 `/opt/openlabstock-docker`，然后运行：
 
 ```bash

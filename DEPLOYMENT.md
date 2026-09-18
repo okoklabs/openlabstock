@@ -32,6 +32,29 @@ printf '%s  %s\n' "$EXPECTED" "$ARCHIVE" | sha256sum --check -
 
 只有看到校验结果为 `OK` 才继续解压。生产包不包含数据库、备份、环境变量或账号信息。
 
+### 推荐：固定版本安装器
+
+如果不想手工复制生产包和 manifest，可以直接下载 Release 附带的 `OpenLabStock-install.sh`。它仍然执行同样的清单校验，只是把下载、校验、首次安装 / 更新和失败恢复串成一个入口：
+
+```bash
+RELEASE=YYYYMMDD-rN
+curl --fail --location --retry 3 \
+  "https://github.com/okoklabs/openlabstock/releases/download/${RELEASE}/OpenLabStock-install.sh" \
+  -o /tmp/OpenLabStock-install.sh
+chmod 755 /tmp/OpenLabStock-install.sh
+sudo bash /tmp/OpenLabStock-install.sh install --release "$RELEASE" --mode systemd
+```
+
+已有部署更新时只需把 `install` 换成 `update`。Docker 部署把 `--mode systemd` 改成 `--mode docker`。脚本只接受形如 `YYYYMMDD-rN` 的固定标签，不接受模糊的 `latest`；更新前会生成一致性备份，健康检查失败会恢复旧程序目录。状态、备份、回滚和就绪检查也可以通过同一个入口执行：
+
+```bash
+sudo bash /tmp/OpenLabStock-install.sh status --mode systemd
+sudo bash /tmp/OpenLabStock-install.sh backup --mode systemd
+sudo bash /tmp/OpenLabStock-install.sh rollback --mode systemd
+```
+
+自定义目录、离线包或需要逐步排查时，再使用下面的原生 systemd / Docker 脚本。
+
 ## 本机运行
 
 要求 Node.js `>=22.12.0` 与仓库声明的 pnpm 版本：

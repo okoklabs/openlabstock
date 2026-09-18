@@ -45,7 +45,7 @@ pnpm run handoff -- create --no-untracked
 
 Linux/macOS 使用同一组命令。脚本会在打包前检查仓库根目录、HEAD、Git bundle、干净源码 archive 和路径安全性，并在包内写入校验清单；归档先写入临时文件，验证完成后才原子改名，已经存在的同名包不会被覆盖。
 
-Windows 维护者也可以双击仓库根目录的 `handoff-backup.cmd`。它只调用同一个 `pnpm run handoff`，不会维护第二套备份逻辑。
+Windows 维护者也可以双击仓库根目录的 `handoff-backup.cmd`，或在 `deploy\windows\OpenLabStock-Operations.cmd` 菜单中选择“生成代码交接包”。两个入口都只调用同一个 `pnpm run handoff`，不会维护第二套备份逻辑；如果 `pnpm` 不在 PATH，会自动尝试仓库声明的 Corepack 版本。
 
 ## 交给别人或 AI 前先检查
 
