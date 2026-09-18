@@ -15,7 +15,7 @@ function git(cwd, args) {
 test('handoff captures complete history, dirty changes and restores safely', async () => {
   const workspace = await mkdtemp(path.join(os.tmpdir(), 'openlabstock-handoff-test-'));
   const repository = path.join(workspace, 'repo');
-  const output = path.join(workspace, 'handoff.tar.gz');
+  const output = path.join(workspace, 'openlabstock-handoff-20260918T000000Z.tar.gz');
   const restored = path.join(workspace, 'restored');
   try {
     await mkdir(repository, { recursive: true });
@@ -48,8 +48,12 @@ test('handoff captures complete history, dirty changes and restores safely', asy
       { name: 'origin', kind: 'push', url: 'https://example.invalid/<redacted>' },
     ]);
     await assert.rejects(
-      createHandoff({ root: repository, output: path.join(repository, 'inside.tar.gz') }),
+      createHandoff({ root: repository, output: path.join(repository, 'openlabstock-handoff-20260918T000001Z.tar.gz') }),
       /Handoff output must be outside the repository/,
+    );
+    await assert.rejects(
+      createHandoff({ root: repository, output: path.join(workspace, 'openlabstock-handoff-final.tar.gz') }),
+      /openlabstock-handoff-YYYYMMDDTHHMMSSZ\.tar\.gz/,
     );
 
     const inspected = await inspectHandoff(output);
@@ -94,7 +98,7 @@ test('handoff captures complete history, dirty changes and restores safely', asy
     );
     assert.deepEqual(await readdir(emptyTarget), []);
 
-    await writeFile(`${output}.sha256`, `${'0'.repeat(64)}  handoff.tar.gz\n`);
+    await writeFile(`${output}.sha256`, `${'0'.repeat(64)}  openlabstock-handoff-20260918T000000Z.tar.gz\n`);
     await assert.rejects(inspectHandoff(output), /Handoff archive SHA-256 mismatch/);
   } finally {
     await rm(workspace, { recursive: true, force: true });

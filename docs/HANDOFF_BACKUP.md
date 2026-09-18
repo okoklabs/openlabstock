@@ -31,10 +31,10 @@
 pnpm run handoff
 ```
 
-默认输出到项目同级的 `openlabstock-backups/openlabstock-handoff-时间.tar.gz`，旁边同时生成同名 `.sha256` 文件。备份目录必须位于仓库之外，避免项目目录损坏、误删或再次打包时连备份一起受影响。传递交接包时应把两者一起传递；`inspect` 和 `restore` 发现旁置校验文件后会先验证整个压缩包，再验证包内每个文件。也可以指定其他磁盘：
+默认输出到项目同级的 `openlabstock-backups/`，文件名严格使用可排序的 UTC 时间戳格式：`openlabstock-handoff-YYYYMMDDTHHMMSSZ.tar.gz`，旁边同时生成同名 `.sha256` 文件。不要使用 `final`、`latest` 或 `backup` 等模糊后缀；每次创建都生成新的时间戳文件。备份目录必须位于仓库之外，避免项目目录损坏、误删或再次打包时连备份一起受影响。传递交接包时应把两者一起传递；`inspect` 和 `restore` 发现旁置校验文件后会先验证整个压缩包，再验证包内每个文件。也可以指定其他磁盘：
 
 ```powershell
-pnpm run handoff -- create --output "E:\handoff\openlabstock-handoff-20260902.tar.gz"
+pnpm run handoff -- create --output "E:\handoff\openlabstock-handoff-20260918T120000Z.tar.gz"
 ```
 
 如果只想交接已提交内容和 Git 历史，不包含当前非忽略未跟踪文件：
@@ -63,7 +63,7 @@ Windows 维护者也可以双击仓库根目录的 `handoff-backup.cmd`。它只
 在不恢复文件的情况下验证内部清单并查看元数据：
 
 ```powershell
-pnpm run handoff:inspect -- "E:\handoff\openlabstock-handoff-20260902.tar.gz"
+pnpm run handoff:inspect -- "E:\handoff\openlabstock-handoff-20260918T120000Z.tar.gz"
 ```
 
 `inspect` 会先检查归档路径安全性，再验证 `handoff.json` 和 `checksums.sha256`。校验失败时不会继续恢复。
@@ -72,9 +72,9 @@ pnpm run handoff:inspect -- "E:\handoff\openlabstock-handoff-20260902.tar.gz"
 
 ```powershell
 New-Item -ItemType Directory -Path .\handoff-tool
-tar -xzf .\openlabstock-handoff-20260902.tar.gz -C .\handoff-tool README-FIRST.md tools/handoff.mjs
-node .\handoff-tool\tools\handoff.mjs inspect .\openlabstock-handoff-20260902.tar.gz
-node .\handoff-tool\tools\handoff.mjs restore .\openlabstock-handoff-20260902.tar.gz --target .\openlabstock-restored
+tar -xzf .\openlabstock-handoff-20260918T120000Z.tar.gz -C .\handoff-tool README-FIRST.md tools/handoff.mjs
+node .\handoff-tool\tools\handoff.mjs inspect .\openlabstock-handoff-20260918T120000Z.tar.gz
+node .\handoff-tool\tools\handoff.mjs restore .\openlabstock-handoff-20260918T120000Z.tar.gz --target .\openlabstock-restored
 ```
 
 便携工具只使用 Node.js 内置模块以及系统中的 `git`、`tar`，不需要先安装项目依赖。外层 `.sha256` 可以发现传输损坏，但不能证明发送者身份；仍应通过可信渠道核对哈希或文件来源。
@@ -84,7 +84,7 @@ node .\handoff-tool\tools\handoff.mjs restore .\openlabstock-handoff-20260902.ta
 恢复必须指向新建或空目录，工具不会覆盖已有非空目录：
 
 ```powershell
-pnpm run handoff:restore -- "E:\handoff\openlabstock-handoff-20260902.tar.gz" --target "C:\Work\openlabstock-handoff"
+pnpm run handoff:restore -- "E:\handoff\openlabstock-handoff-20260918T120000Z.tar.gz" --target "C:\Work\openlabstock-handoff"
 ```
 
 恢复过程为：
