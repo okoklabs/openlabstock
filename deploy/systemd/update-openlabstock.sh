@@ -136,6 +136,27 @@ read_version() {
   "$NODE_BIN" -e 'const fs=require("fs"); const p=JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if (!p.version) process.exit(2); process.stdout.write(String(p.version));' "$directory/package.json"
 }
 
+manifest_field() {
+  local manifest="$1" field="$2"
+  awk -F': ' -v field="$field" '$1 == field { print substr($0, length(field) + 3); exit }' "$manifest"
+}
+
+read_release_manifest() {
+  local manifest="$1" package="$2" manifest_hash manifest_archive manifest_version package_name
+  [[ -f "$manifest" ]] || die "找不到发布清单：$manifest"
+  [[ -r "$manifest" ]] || die "发布清单不可读：$manifest"
+  manifest_hash="$(manifest_field "$manifest" sha256)"
+  manifest_archive="$(manifest_field "$manifest" archive)"
+  manifest_version="$(manifest_field "$manifest" version)"
+  [[ "$manifest_hash" =~ ^[A-Fa-f0-9]{64}$ ]] || die "发布清单中的 sha256 无效"
+  [[ -n "$manifest_archive" ]] || die "发布清单缺少 archive 字段"
+  [[ -n "$manifest_version" ]] || die "发布清单缺少 version 字段"
+  package_name="$(basename "$package")"
+  [[ "$(basename "$manifest_archive")" == "$package_name" ]] || die "发布清单的 archive 与生产包不匹配：$(basename "$manifest_archive") != $package_name"
+  RELEASE_MANIFEST_HASH="$(printf '%s' "$manifest_hash" | tr '[:lower:]' '[:upper:]')"
+  RELEASE_MANIFEST_VERSION="$manifest_version"
+}
+
 validate_version() {
   local version="$1"
   [[ "$version" =~ ^[0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}-r[0-9]+$ ]] || die "package.json version 格式无效：$version"
@@ -281,11 +302,22 @@ restore_after_failure() {
 }
 
 update_install() {
-  local package="$1" expected_hash="${2:-}" actual_hash staging candidate_version current_version
+  local package="$1" expected_hash="${2:-}" manifest="${3:-}" actual_hash staging candidate_version current_version manifest_hash manifest_version
   require_service
   [[ -d "$APP_DIR" ]] || die "当前程序目录不存在：$APP_DIR"
   [[ -f "$APP_DIR/server.mjs" ]] || die "当前程序目录不完整：$APP_DIR"
   package="$(package_path "$package")"
+  if [[ -n "$manifest" ]]; then
+    manifest="$(readlink -f "$manifest")"
+    read_release_manifest "$manifest" "$package"
+    manifest_hash="$RELEASE_MANIFEST_HASH"
+    manifest_version="$RELEASE_MANIFEST_VERSION"
+    if [[ -n "$expected_hash" && "$(printf '%s' "$expected_hash" | tr '[:lower:]' '[:upper:]')" != "$manifest_hash" ]]; then
+      die "--sha256 与发布清单不一致：$expected_hash != $manifest_hash"
+    fi
+    expected_hash="$manifest_hash"
+    log "使用发布清单校验：$manifest（版本 $manifest_version）"
+  fi
   if [[ -n "$expected_hash" ]]; then
     [[ "$expected_hash" =~ ^[A-Fa-f0-9]{64}$ ]] || die '--sha256 必须是 64 位十六进制字符串'
     actual_hash="$(sha256sum "$package" | awk '{print toupper($1)}')"
@@ -298,6 +330,9 @@ update_install() {
   staging="$(timestamped_dir staging)"
   UPDATE_STAGING="$staging"
   candidate_version="$(extract_release "$package" "$staging")"
+  if [[ -n "$manifest_version" && "$candidate_version" != "$manifest_version" ]]; then
+    die "生产包版本与发布清单不一致：$candidate_version != $manifest_version"
+  fi
   current_version="$(read_version "$APP_DIR" 2>/dev/null || true)"
   [[ "$candidate_version" != "$current_version" ]] || log "警告：候选版本与当前版本相同（$candidate_version）"
   UPDATE_EXPECTED_VERSION="$candidate_version"
@@ -398,8 +433,9 @@ usage() {
 用法：sudo $SCRIPT_NAME <命令> [参数]
 
 命令：
-  update <生产包.tar.gz> [--sha256 HASH]
+  update <生产包.tar.gz> [--sha256 HASH | --manifest 清单.txt]
       备份数据库，校验并解包生产包，切换程序；失败自动恢复旧目录。
+      --manifest 会自动读取归档文件名、版本和 SHA-256。
   rollback [previous目录]
       切回最近的 previous 目录；失败自动恢复当前程序目录。
   status
@@ -422,14 +458,17 @@ case "$command_name" in
     shift || true
     [[ -n "$package" ]] || die 'update 需要生产包路径'
     hash=''
+    manifest=''
     while (($#)); do
       case "$1" in
         --sha256) hash="${2:-}"; shift 2 || die '--sha256 需要哈希值' ;;
         --sha256=*) hash="${1#*=}"; shift ;;
+        --manifest) manifest="${2:-}"; shift 2 || die '--manifest 需要清单路径' ;;
+        --manifest=*) manifest="${1#*=}"; shift ;;
         *) die "未知参数：$1" ;;
       esac
     done
-    update_install "$package" "$hash"
+    update_install "$package" "$hash" "$manifest"
     ;;
   rollback)
     [[ $# -le 1 ]] || die 'rollback 最多接受一个目录参数'
@@ -451,4 +490,3 @@ case "$command_name" in
     exit 1
     ;;
 esac
-

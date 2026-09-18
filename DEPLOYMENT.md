@@ -113,7 +113,7 @@ curl --fail --show-error \
 ```bash
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh \
   update /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.tar.gz \
-  --sha256 PUBLISH_MANIFEST_SHA256
+  --manifest /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.manifest.txt
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh status
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh rollback
 ```

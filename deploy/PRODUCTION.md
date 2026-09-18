@@ -38,11 +38,11 @@ directory if startup or health checks fail. The database and backup directory ar
 ```bash
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh \
   update /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.tar.gz \
-  --sha256 PUBLISH_MANIFEST_SHA256
+  --manifest /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.manifest.txt
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh rollback
 ```
 
-Rollback changes only the application directory. Do not restore or delete SQLite data as part of
+The update script reads the archive name, version, and SHA-256 from the manifest before making a backup or stopping the service. Rollback changes only the application directory. Do not restore or delete SQLite data as part of
 an application rollback; use a verified database snapshot and the documented restore procedure.
 
 ## Release verification

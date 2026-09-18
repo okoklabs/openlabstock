@@ -28,10 +28,10 @@ export OPENLABSTOCK_BACKUP_DIR=/var/lib/openlabstock/backups
 ```bash
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh \
   update /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.tar.gz \
-  --sha256 PUBLISH_MANIFEST_SHA256
+  --manifest /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.manifest.txt
 ```
 
-执行顺序是：校验 SHA-256 和生产包内容，在当前版本上生成 SQLite 一致性备份，解包并检查 Node 语法，停止服务后原子切换程序目录，最后等待本地 `/api/health` 返回候选版本。
+执行顺序是：读取并校验 manifest 的归档文件名、版本和 SHA-256，校验生产包内容，在当前版本上生成 SQLite 一致性备份，解包并检查 Node 语法，停止服务后原子切换程序目录，最后等待本地 `/api/health` 返回候选版本。也可以继续使用 `--sha256 HASH`；同时传入两者时必须一致。
 
 备份、解包、切换或健康检查任一步失败时，脚本会自动恢复上一程序目录，重启服务，并将失败目录保留为 `*-failed-*` 供排查。失败不会删除数据库或旧版本。
 
