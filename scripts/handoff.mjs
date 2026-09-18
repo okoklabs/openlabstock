@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 const rootDir = path.resolve(path.dirname(path.dirname(fileURLToPath(import.meta.url))));
 const HANDOFF_FORMAT = 1;
 const DEFAULT_OUTPUT_DIR = 'openlabstock-backups';
+const CHILD_PROCESS_MAX_BUFFER = 64 * 1024 * 1024;
 const RECEIPT_NAMES = [
   '.openlabstock-verification.json',
   '.openlabstock-auto-verification.json',
@@ -38,6 +39,7 @@ function run(command, args, { cwd = rootDir, input = undefined, encoding = 'utf8
     cwd,
     input,
     encoding,
+    maxBuffer: CHILD_PROCESS_MAX_BUFFER,
     stdio: ['pipe', 'pipe', 'pipe'],
   });
   if (result.error) throw result.error;
@@ -53,6 +55,7 @@ function tryRun(command, args, options = {}) {
     cwd: options.cwd ?? rootDir,
     input: options.input,
     encoding: options.encoding ?? 'utf8',
+    maxBuffer: CHILD_PROCESS_MAX_BUFFER,
     stdio: ['pipe', 'pipe', 'pipe'],
   });
   return {
@@ -269,6 +272,7 @@ function createSourceArchive(root, destination) {
   const result = spawnSync('git', ['archive', '--format=tar.gz', '--prefix=source/', 'HEAD'], {
     cwd: root,
     encoding: null,
+    maxBuffer: CHILD_PROCESS_MAX_BUFFER,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   if (result.error) throw result.error;
@@ -614,4 +618,3 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     process.exitCode = 1;
   });
 }
-

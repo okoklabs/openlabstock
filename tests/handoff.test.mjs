@@ -95,4 +95,3 @@ test('handoff captures complete history, dirty changes and restores safely', asy
     await rm(workspace, { recursive: true, force: true });
   }
 });
-
