@@ -109,7 +109,7 @@ tar -xOzf "$PACKAGE" server.mjs | "$NODE_BIN" --check - >/dev/null || die 'serve
 
 if ! getent group "$SYSTEM_GROUP" >/dev/null 2>&1; then groupadd --system "$SYSTEM_GROUP"; fi
 if ! id "$SYSTEM_USER" >/dev/null 2>&1; then useradd --system --home-dir "$APP_DIR" --shell /usr/sbin/nologin --gid "$SYSTEM_GROUP" "$SYSTEM_USER"; fi
-install -d -o root -g root -m 755 "$APP_DIR" /etc/openlabstock
+install -d -o root -g root -m 755 /etc/openlabstock
 install -d -o "$SYSTEM_USER" -g "$SYSTEM_GROUP" -m 700 "$DATA_DIR" "$BACKUP_DIR"
 
 GENERATED_PASSWORD=0
@@ -149,7 +149,6 @@ trap cleanup EXIT
 tar -xzf "$PACKAGE" -C "$STAGING" --no-same-owner
 chown -R root:root "$STAGING"
 chmod -R a+rX "$STAGING"
-rm -rf -- "$APP_DIR"
 mv "$STAGING" "$APP_DIR"
 STAGING=''
 
