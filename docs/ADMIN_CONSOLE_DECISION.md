@@ -58,3 +58,9 @@ OpenLabStock 继续采用“一实验室 / 组织一个独立实例”的默认�
 - 多租户 PostgreSQL 是否由容量与灾备需求证明，而不是由“看起来更企业级”推动？
 
 在这些问题有可测试答案前，不在公共应用中增加无响应的客户后台入口。
+
+## 参考资料
+
+- [AWS SaaS Lens：租户隔离模型](https://docs.aws.amazon.com/wellarchitected/latest/saas-lens/tenant-isolation.html)：用于比较独立资源、共享资源和混合隔离的运维取舍。
+- [PostgreSQL：Row-Level Security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html)：未来共享数据库时的第二道租户边界，不能替代应用层授权和测试。
+- [SQLite：适合的使用场景](https://www.sqlite.org/whentouse.html)：用于确认当前单实例、低写并发和自托管部署继续使用 SQLite 的边界。
