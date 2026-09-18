@@ -543,7 +543,7 @@ async function restoreHandoff({ archivePath, target } = {}) {
 }
 
 function help() {
-  console.log(`OpenLabStock handoff backup\n\nUsage:\n  pnpm run handoff -- create [--output openlabstock-handoff-YYYYMMDDTHHMMSSZ.tar.gz] [--no-untracked]\n  pnpm run handoff:inspect -- handoff.tar.gz\n  pnpm run handoff:restore -- handoff.tar.gz --target new-directory\n\nThe package contains a full Git bundle, a clean git archive snapshot, tracked worktree changes, optional non-ignored untracked files, handoff notes, metadata and SHA-256 checksums. Runtime data and credentials are excluded by design.`);
+  console.log(`OpenLabStock handoff backup\n\nUsage:\n  pnpm run handoff -- create [--output openlabstock-handoff-YYYYMMDDTHHMMSSZ.tar.gz] [--no-untracked]\n  pnpm run handoff:inspect -- openlabstock-handoff-YYYYMMDDTHHMMSSZ.tar.gz\n  pnpm run handoff:restore -- openlabstock-handoff-YYYYMMDDTHHMMSSZ.tar.gz --target new-directory\n\nThe package contains a full Git bundle, a clean git archive snapshot, tracked worktree changes, optional non-ignored untracked files, handoff notes, metadata and SHA-256 checksums. Runtime data and credentials are excluded by design.`);
 }
 
 function parseCreateArgs(args) {
