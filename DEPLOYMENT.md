@@ -122,6 +122,8 @@ sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh rollback
 
 回滚只切换程序，不自动恢复数据库；确认稳定后可用 `prune 30 --yes` 清理超过 30 天的旧程序目录。
 
+Windows 维护者可以双击 [`deploy/windows/OpenLabStock-Operations.cmd`](./deploy/windows/OpenLabStock-Operations.cmd)，用菜单执行更新、独立备份、回滚、状态和旧程序清理。首次运行填写 SSH 目标和服务器目录后，非敏感配置会保存到当前 Windows 用户的 `%LOCALAPPDATA%\OpenLabStock\operations.json`；密码不会保存。向导仍要求校验 manifest，并调用服务器上的同一个原子更新脚本，不会自行拼接任意远程命令。
+
 ## HTTPS 反向代理
 
 [`deploy/Caddyfile.example`](./deploy/Caddyfile.example) 提供最小 Caddy 片段。只把片段合并到操作者自己的配置，不要用示例覆盖已有 Caddyfile：

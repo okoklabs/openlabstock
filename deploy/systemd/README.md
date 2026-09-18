@@ -37,6 +37,16 @@ sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh \
 
 `OPENLABSTOCK_PUBLIC_HEALTH_URL` 可选。设置后本地检查通过还会额外检查公网 HTTPS 健康地址。
 
+## 独立备份
+
+如果只需要备份而不更新程序：
+
+```bash
+sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh backup
+```
+
+该动作使用同一把更新锁和 SQLite 一致性备份流程，但不会停止服务、切换程序目录或修改数据库内容。
+
 ## 查看、回滚和清理
 
 ```bash

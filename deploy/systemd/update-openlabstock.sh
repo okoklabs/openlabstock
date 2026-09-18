@@ -416,6 +416,16 @@ status_install() {
   fi
 }
 
+backup_install() {
+  require_service
+  [[ -d "$APP_DIR" ]] || die "当前程序目录不存在：$APP_DIR"
+  [[ -f "$APP_DIR/scripts/backup.mjs" ]] || die "当前程序目录缺少 scripts/backup.mjs"
+  consistent_backup
+  if latest_backup_manifest="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'labstock-*.sqlite.json' -printf '%T@ %p\n' 2>/dev/null | sort -nr | sed 's/^[^ ]* //; 1q')"; then
+    [[ -n "$latest_backup_manifest" ]] && log "最新备份清单：$latest_backup_manifest"
+  fi
+}
+
 prune_install() {
   local days="${1:-30}" confirm="${2:-}" candidate
   [[ "$days" =~ ^[0-9]+$ ]] || die 'prune 天数必须是非负整数'
@@ -433,6 +443,8 @@ usage() {
 用法：sudo $SCRIPT_NAME <命令> [参数]
 
 命令：
+  backup
+      生成并校验一次 SQLite 一致性备份，不停止服务、不切换程序目录。
   update <生产包.tar.gz> [--sha256 HASH | --manifest 清单.txt]
       备份数据库，校验并解包生产包，切换程序；失败自动恢复旧目录。
       --manifest 会自动读取归档文件名、版本和 SHA-256。
@@ -477,6 +489,10 @@ case "$command_name" in
   status)
     [[ $# -eq 0 ]] || die 'status 不接受参数'
     status_install
+    ;;
+  backup)
+    [[ $# -eq 0 ]] || die 'backup 不接受参数'
+    backup_install
     ;;
   prune)
     [[ $# -le 2 ]] || die 'prune 用法：prune <保留天数> --yes'

@@ -204,6 +204,7 @@ sudo bash deploy/docker/openlabstock.sh init
 ## 部署与运维
 
 - [部署概览](./DEPLOYMENT.md)：Node/systemd、HTTPS、持久数据、备份、更新和回滚边界。
+- [Windows 运维向导](./deploy/windows/README.md)：双击执行更新、备份、回滚和状态检查，不保存 SSH 密码。
 - [Docker 部署](./deploy/docker/README.md)：仅环回地址监听、数据与备份卷、健康检查和隔离烟测。
 - [生产包约定](./deploy/PRODUCTION.md)：发布内容、版本、完整性清单和独立解包启动。
 - [AI / 维护者交接备份](./docs/HANDOFF_BACKUP.md)：完整 Git 历史、干净源码快照、未提交改动和安全恢复；业务数据库仍单独备份。

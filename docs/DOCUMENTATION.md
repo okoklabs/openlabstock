@@ -13,8 +13,9 @@
 ### 部署与运维人员
 
 1. [`deploy/docker/README.md`](../deploy/docker/README.md)：可复用 Docker 部署流程。
-2. [`deploy/PRODUCTION.md`](../deploy/PRODUCTION.md)：发布包运行约定。
-3. [`QR_CODE_WORKFLOW.md`](./QR_CODE_WORKFLOW.md) 与 [`PWA_MOBILE_APP.md`](./PWA_MOBILE_APP.md)：专项部署条件和验收。
+2. [`deploy/windows/README.md`](../deploy/windows/README.md)：Windows 双击运维向导与 SSH 密码边界。
+3. [`deploy/PRODUCTION.md`](../deploy/PRODUCTION.md)：发布包运行约定。
+4. [`QR_CODE_WORKFLOW.md`](./QR_CODE_WORKFLOW.md) 与 [`PWA_MOBILE_APP.md`](./PWA_MOBILE_APP.md)：专项部署条件和验收。
 
 ### 开发者与 AI
 
