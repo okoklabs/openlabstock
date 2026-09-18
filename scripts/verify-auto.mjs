@@ -73,7 +73,7 @@ const fullRisk = paths.some((entry) => (
   || entry.startsWith('deploy/')
   || entry.startsWith('.github/workflows/')
   || entry === 'public/sw.js'
-  || /^scripts\/(?:backup|instance-agent|release|release-version|prepare-release|next-version|release-smoke|verify|verification-state|verify-auto|check-public-boundary)\.mjs$/i.test(entry)
+  || /^scripts\/(?:backup|handoff|instance-agent|release|release-version|prepare-release|next-version|release-smoke|verify|verification-state|verify-auto|check-public-boundary)\.mjs$/i.test(entry)
   || entry === 'src/server/instance-health.mjs'
 ));
 

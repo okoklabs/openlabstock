@@ -152,7 +152,7 @@ for (const excluded of excludedReleasePaths) {
 }
 const required = [
   'dist/index.html', 'server.mjs', 'storage.mjs', 'password.mjs', 'scripts/backup.mjs',
-  'scripts/instance-agent.mjs', 'scripts/reset-owner-password.mjs', 'package.json', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md',
+  'scripts/handoff.mjs', 'scripts/instance-agent.mjs', 'scripts/reset-owner-password.mjs', 'package.json', 'LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md',
 ];
 for (const entry of required) {
   if (!files.includes(entry)) throw new Error(`Release file list is missing required entry: ${entry}`);
