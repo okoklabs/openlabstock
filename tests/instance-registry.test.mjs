@@ -50,6 +50,8 @@ test('instance registry rejects secrets, paths, and malformed health records', (
   assert.throws(() => validateInstanceRecord({ ...record, domain: 'https://a.example.org/path' }), /domain/);
   assert.throws(() => validateInstanceRecord({ ...record, instanceId: '../prod' }), /instanceId/);
   assert.throws(() => validateInstanceRecord({ ...record, health: { status: 'healthy', observedAt: 'bad', latencyMs: 1 } }), /health.observedAt/);
+  assert.throws(() => validateInstanceRecord({ ...record, health: { status: 'healthy', observedAt: null, latencyMs: 1 } }), /必须有observedAt/);
+  assert.throws(() => validateInstanceRecord({ ...record, task: { taskId: 'task-1', action: 'update', status: 'shell', createdAt: '2026-09-18T00:00:00Z', updatedAt: '2026-09-18T00:00:00Z' } }), /task.status/);
   assert.throws(() => validateInstanceRecord({ ...record, apiToken: 'secret' }), /实例记录/);
   assert.throws(() => createTaskSummary({ action: 'shell', status: 'running' }), /task.action/);
 });

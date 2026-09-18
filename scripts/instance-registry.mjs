@@ -5,6 +5,7 @@ export const INSTANCE_KIND = 'openlabstock.instance';
 export const LIFECYCLE_STATES = Object.freeze(['provisioning', 'active', 'suspended', 'retired']);
 export const HEALTH_STATES = Object.freeze(['unknown', 'healthy', 'degraded', 'unreachable']);
 export const BACKUP_STATES = Object.freeze(['unknown', 'ok', 'stale', 'invalid']);
+export const TASK_STATES = Object.freeze(['planned', 'approved', 'running', 'succeeded', 'failed', 'expired']);
 
 const instanceIdPattern = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 const versionPattern = /^[A-Za-z0-9][A-Za-z0-9._+\-]{0,63}$/;
@@ -71,9 +72,11 @@ function validateHealth(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) reject('health必须是对象');
   assertKeys(value, HEALTH_KEYS, 'health');
   if (!HEALTH_STATES.includes(value.status)) reject('health.status无效');
+  const observedAt = isoTime(value.observedAt, 'health.observedAt');
+  if (value.status !== 'unknown' && observedAt === null) reject('非unknown健康状态必须有observedAt');
   return {
     status: value.status,
-    observedAt: isoTime(value.observedAt, 'health.observedAt'),
+    observedAt,
     latencyMs: nonNegativeInteger(value.latencyMs, 'health.latencyMs'),
   };
 }
@@ -81,9 +84,11 @@ function validateHealth(value) {
 function validateBackup(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) reject('backup必须是对象');
   assertKeys(value, BACKUP_KEYS, 'backup');
+  const observedAt = isoTime(value.observedAt, 'backup.observedAt');
+  if (value.status !== 'unknown' && observedAt === null) reject('非unknown备份状态必须有observedAt');
   return {
     status: BACKUP_STATES.includes(value.status) ? value.status : reject('backup.status无效'),
-    observedAt: isoTime(value.observedAt, 'backup.observedAt'),
+    observedAt,
     ageSeconds: nonNegativeInteger(value.ageSeconds, 'backup.ageSeconds'),
     bytes: nonNegativeInteger(value.bytes, 'backup.bytes'),
     schemaVersion: nonNegativeInteger(value.schemaVersion, 'backup.schemaVersion'),
@@ -94,6 +99,7 @@ function validateTask(value) {
   if (value === null || value === undefined) return null;
   if (!value || typeof value !== 'object' || Array.isArray(value)) reject('task必须是对象或null');
   assertKeys(value, TASK_KEYS, 'task');
+  if (!TASK_STATES.includes(value.status)) reject('task.status无效');
   return {
     taskId: requiredString(value.taskId, 'task.taskId', { pattern: taskIdPattern, max: 140 }),
     action: requiredString(value.action, 'task.action', { pattern: actionPattern, max: 20 }),
@@ -169,6 +175,7 @@ export function recordHealth(record, { health, backup = record.backup, observedV
 
 export function createTaskSummary({ action, status, now = new Date(), taskId = `task-${randomUUID()}` }) {
   if (!(now instanceof Date) || Number.isNaN(now.valueOf())) reject('任务时间无效');
+  if (!TASK_STATES.includes(status)) reject('task.status无效');
   const timestamp = now.toISOString();
   return validateTask({ taskId, action, status, createdAt: timestamp, updatedAt: timestamp });
 }
