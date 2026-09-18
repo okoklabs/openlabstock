@@ -79,6 +79,18 @@ COOKIE_SECURE=1
 HEALTH_DETAIL_TOKEN=replace-with-a-random-secret
 ```
 
+如果是全新 Ubuntu/Debian 服务器，生产包自带的
+[`deploy/systemd/install-openlabstock.sh`](./deploy/systemd/install-openlabstock.sh)
+可以把上述首次安装收敛成一个可重复执行的步骤。先把生产包和 manifest 上传到服务器，再运行：
+
+```bash
+sudo bash deploy/systemd/install-openlabstock.sh \
+  --package /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.tar.gz \
+  --manifest /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.manifest.txt
+```
+
+脚本会校验 SHA-256 和版本，创建专用账号、数据目录、环境文件、systemd 服务和更新辅助脚本，并等待健康接口通过。检测到已有实例时会停止并提示使用更新流程，不会覆盖现有数据库。
+
 `INITIAL_ADMIN_PASSWORD` 只用于空库创建第一个系统所有者。首次启动成功并修改密码后，应从环境文件移除该明文值。
 
 ## systemd
@@ -117,6 +129,7 @@ sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh \
   update /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.tar.gz \
   --manifest /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.manifest.txt
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh status
+sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh doctor
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh rollback
 ```
 

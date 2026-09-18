@@ -6,7 +6,9 @@
 2. 备份数据库
 3. 回滚到最近的程序版本
 4. 查看状态
-5. 清理超过 30 天的旧程序目录
+5. 检查部署是否就绪
+6. 修改连接配置
+7. 清理超过 30 天的旧程序目录
 
 ## 使用前
 
@@ -28,8 +30,8 @@ deploy\windows\OpenLabStock-Operations.cmd
 
 - SSH 目标，例如 `maintainer@inventory.example.org`；只输入主机名或 IP 时，向导默认使用 `root@主机`；
 - SSH 端口；
-- 服务器上的程序、数据、环境、备份目录；
-- systemd 服务名和更新脚本路径；
+- 标准目录确认；如果服务器沿用 `/opt/openlabstock`、`/var/lib/openlabstock` 和 `openlabstock.service`，直接接受默认值即可；
+- 非标准部署才需要继续填写服务器上的程序、数据、环境、备份目录、systemd 服务名和更新脚本路径；
 - 可选的公网 `/api/health` 地址。
 
 这些非敏感配置保存在当前 Windows 用户的：
@@ -39,6 +41,8 @@ deploy\windows\OpenLabStock-Operations.cmd
 ```
 
 文件不保存密码、私钥、数据库或生产包。删除该文件即可重新填写服务器配置。
+
+首次配置后，普通操作会直接复用已保存的连接信息，不会每次重复询问目录。需要更换服务器或修正路径时，在菜单选择“修改连接配置”。“检查部署是否就绪”会检查 systemd、程序目录、数据目录、环境文件、Node.js 和最近备份；旧版服务器如果还没有该命令，会退回显示状态，不会阻塞维护。
 
 ## 更新流程
 
@@ -50,16 +54,17 @@ deploy\windows\OpenLabStock-Operations.cmd
 4. 服务器脚本先做 SQLite 一致性备份，再校验 manifest、解包、原子切换和健康检查；
 5. 成功后清理远程临时目录；失败时保留服务器的失败程序目录，方便排查和回滚。
 
-向导不会执行任意服务器命令，也不会移动 `/var/lib/openlabstock`。回滚只切换程序目录，不恢复数据库。
+向导不会执行任意服务器命令，也不会移动 `/var/lib/openlabstock`。更新时优先使用上传包内经过校验的新辅助脚本，因此旧服务器即使还不认识 `--manifest` 也能升级；回滚只切换程序目录，不恢复数据库。
 
 ## 服务器端动作
 
-菜单中的备份、回滚、状态和清理分别调用固定的 systemd 更新脚本动作：
+菜单中的备份、回滚、状态、就绪检查和清理分别调用固定的 systemd 更新脚本动作：
 
 ```bash
 backup
 rollback
 status
+doctor
 prune 30 --yes
 ```
 

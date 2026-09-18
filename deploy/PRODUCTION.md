@@ -35,11 +35,16 @@ systemd deployment. It creates a consistent SQLite backup before stopping the se
 the archive and candidate version, switches the application directory, and restores the previous
 directory if startup or health checks fail. The database and backup directory are never moved.
 
+For a new default-layout host, run [`deploy/systemd/install-openlabstock.sh`](./systemd/install-openlabstock.sh)
+once with a verified archive and manifest. It creates the system user, environment file, service,
+data directories and update helper, and refuses to overwrite an existing instance.
+
 ```bash
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh \
   update /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.tar.gz \
   --manifest /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.manifest.txt
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh rollback
+sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh doctor
 ```
 
 The update script reads the archive name, version, and SHA-256 from the manifest before making a backup or stopping the service. Rollback changes only the application directory. Do not restore or delete SQLite data as part of

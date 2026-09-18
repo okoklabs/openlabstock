@@ -1,6 +1,6 @@
-# systemd 更新与回滚
+# systemd 首次安装、更新与回滚
 
-本目录提供单台 Linux 服务器上的 Node.js + systemd 更新脚本。脚本只切换程序目录；SQLite 数据和备份目录必须位于程序目录之外，因此不会被发布包覆盖。
+本目录提供单台 Linux 服务器上的 Node.js + systemd 首次安装、更新和回滚脚本。脚本只切换程序目录；SQLite 数据和备份目录必须位于程序目录之外，因此不会被发布包覆盖。
 
 ## 默认目录
 
@@ -22,6 +22,18 @@ export OPENLABSTOCK_BACKUP_DIR=/var/lib/openlabstock/backups
 ```
 
 脚本需要 root 权限、`curl`、`tar`、`sha256sum`、`flock`、`node` 和 systemd。它不需要 pnpm，也不会从 GitHub 自动下载文件。先上传已经在本地验证过的生产包，再执行更新。
+
+## 新服务器首次安装
+
+先从 GitHub Release 下载同版本的生产包和 manifest，再把两个文件上传到服务器。首次安装脚本会创建 `openlabstock` 系统账号、数据目录、环境文件、systemd 服务和更新辅助脚本；它不会覆盖已有实例：
+
+```bash
+sudo bash deploy/systemd/install-openlabstock.sh \
+  --package /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.tar.gz \
+  --manifest /home/maintainer/OpenLabStock-production-YYYYMMDD-rN.manifest.txt
+```
+
+没有提供初始密码时，脚本会在终端中询问；直接回车会生成一次性密码并只显示一次。首次登录并修改密码后，应从 `/etc/openlabstock/openlabstock.env` 删除 `INITIAL_ADMIN_PASSWORD`。如果服务已经存在，请改用下面的 `update`，不要再次运行首次安装。
 
 ## 更新
 
@@ -51,6 +63,7 @@ sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh backup
 
 ```bash
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh status
+sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh doctor
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh rollback
 sudo bash /opt/openlabstock/deploy/systemd/update-openlabstock.sh prune 30 --yes
 ```

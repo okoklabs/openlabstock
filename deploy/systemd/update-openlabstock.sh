@@ -5,6 +5,7 @@ set -Eeuo pipefail
 # The database is deliberately outside APP_DIR and is never moved by this file.
 
 SCRIPT_NAME="$(basename "$0")"
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
 
 die() {
   printf '错误：%s\n' "$*" >&2
@@ -416,6 +417,98 @@ status_install() {
   fi
 }
 
+doctor_install() {
+  local failures=0 node_version current_user current_group db_path latest_manifest latest_backup_age
+  printf 'OpenLabStock 部署检查\n\n'
+
+  check_item() {
+    local label="$1" result="$2" detail="${3:-}"
+    if [[ "$result" == 0 ]]; then
+      printf '通过  %-18s %s\n' "$label" "$detail"
+    else
+      printf '失败  %-18s %s\n' "$label" "$detail" >&2
+      failures=$((failures + 1))
+    fi
+  }
+
+  if systemctl cat "$SERVICE_NAME" >/dev/null 2>&1; then
+    check_item 'systemd 服务' 0 "$SERVICE_NAME.service"
+  else
+    check_item 'systemd 服务' 1 "找不到 $SERVICE_NAME.service"
+  fi
+
+  if systemctl is-active --quiet "$SERVICE_NAME"; then
+    check_item '服务状态' 0 'active'
+  else
+    check_item '服务状态' 1 "$(systemctl is-active "$SERVICE_NAME" 2>/dev/null || printf 'inactive')"
+  fi
+
+  if [[ -f "$APP_DIR/server.mjs" && -f "$APP_DIR/package.json" && -f "$APP_DIR/dist/index.html" ]]; then
+    check_item '程序文件' 0 "$APP_DIR"
+  else
+    check_item '程序文件' 1 "程序目录不完整：$APP_DIR"
+  fi
+
+  if [[ -d "$DATA_DIR" && -w "$DATA_DIR" ]]; then
+    check_item '数据目录' 0 "$DATA_DIR"
+  else
+    check_item '数据目录' 1 "不可写或不存在：$DATA_DIR"
+  fi
+
+  db_path="$DATA_DIR/labstock.sqlite"
+  if [[ -f "$db_path" ]]; then
+    check_item 'SQLite 数据库' 0 "$db_path"
+  else
+    check_item 'SQLite 数据库' 1 "找不到：$db_path"
+  fi
+
+  if [[ -f "$ENV_FILE" ]]; then
+    check_item '环境文件' 0 "$ENV_FILE"
+  else
+    check_item '环境文件' 1 "找不到：$ENV_FILE"
+  fi
+
+  if [[ -x "$SCRIPT_PATH" ]]; then
+    check_item '更新脚本' 0 "$SCRIPT_PATH"
+  else
+    check_item '更新脚本' 1 "当前脚本不可执行：$SCRIPT_PATH"
+  fi
+
+  node_version="$($NODE_BIN --version 2>/dev/null || true)"
+  if [[ "$node_version" =~ ^v([0-9]+)\.([0-9]+)\. ]]; then
+    if (( BASH_REMATCH[1] > 22 || (BASH_REMATCH[1] == 22 && BASH_REMATCH[2] >= 12) )); then
+      check_item 'Node.js' 0 "$node_version"
+    else
+      check_item 'Node.js' 1 "$node_version（需要 >= v22.12.0）"
+    fi
+  else
+    check_item 'Node.js' 1 '无法读取 node 版本'
+  fi
+
+  if [[ -d "$BACKUP_DIR" ]]; then
+    latest_manifest="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'labstock-*.sqlite.json' -printf '%T@ %p\n' 2>/dev/null | sort -nr | sed 's/^[^ ]* //; 1q')"
+    if [[ -n "$latest_manifest" ]]; then
+      latest_backup_age="$(( $(date +%s) - $(stat -c %Y "$latest_manifest") ))"
+      check_item '最近备份' 0 "$(basename "$latest_manifest")（${latest_backup_age}s 前）"
+    else
+      check_item '最近备份' 1 "备份目录为空：$BACKUP_DIR"
+    fi
+  else
+    check_item '最近备份' 1 "备份目录不存在：$BACKUP_DIR"
+  fi
+
+  if command -v df >/dev/null 2>&1; then
+    printf '\n磁盘空间：\n'
+    df -h "$APP_DIR" "$DATA_DIR" 2>/dev/null | awk 'NR == 1 || !seen[$0]++'
+  fi
+
+  if (( failures > 0 )); then
+    printf '\n检查未通过：%s 项。先修复失败项，再执行更新。\n' "$failures" >&2
+    return 1
+  fi
+  printf '\n检查通过：可以安全执行备份或更新。\n'
+}
+
 backup_install() {
   require_service
   [[ -d "$APP_DIR" ]] || die "当前程序目录不存在：$APP_DIR"
@@ -452,6 +545,8 @@ usage() {
       切回最近的 previous 目录；失败自动恢复当前程序目录。
   status
       查看目录、版本、systemd 状态和健康检查。
+  doctor
+      检查服务、程序、数据、环境、Node.js 和最近备份是否就绪。
   prune <保留天数> --yes
       删除超过保留天数的 previous/failed 程序目录（不触碰数据库）。
 
@@ -489,6 +584,10 @@ case "$command_name" in
   status)
     [[ $# -eq 0 ]] || die 'status 不接受参数'
     status_install
+    ;;
+  doctor)
+    [[ $# -eq 0 ]] || die 'doctor 不接受参数'
+    doctor_install
     ;;
   backup)
     [[ $# -eq 0 ]] || die 'backup 不接受参数'

@@ -197,7 +197,8 @@ sudo bash deploy/docker/openlabstock.sh init
 | --- | --- | --- |
 | 本机试用或开发 | 上面的 `pnpm run dev` | 想先体验流程或修改代码的人 |
 | 单台 Linux 服务器 | [`deploy/docker/README.md`](./deploy/docker/README.md) 的 Docker `init` | 希望自动生成初始密码、持久化数据并用脚本更新/回滚的团队 |
-| 已有 systemd 和反向代理 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) 与 [`deploy/systemd/README.md`](./deploy/systemd/README.md) | 需要把程序、SQLite 数据和备份分开管理的维护者 |
+| 全新 systemd 服务器 | [`deploy/systemd/README.md`](./deploy/systemd/README.md) 的首次安装脚本 | 不使用 Docker、需要把程序、SQLite 数据和备份分开管理的维护者 |
+| 已有 systemd 和反向代理 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) 与 [`deploy/systemd/README.md`](./deploy/systemd/README.md) | 需要手工控制目录、代理和服务的维护者 |
 
 当前项目仍是公开预览；在全新 Linux 环境完成安装、升级、备份、恢复和回滚演练后，再把版本标记为稳定发行。正式环境应使用固定版本的 GitHub Release 包和 SHA-256 清单，不要从任意工作分支直接部署。
 
@@ -205,6 +206,7 @@ sudo bash deploy/docker/openlabstock.sh init
 
 - [部署概览](./DEPLOYMENT.md)：Node/systemd、HTTPS、持久数据、备份、更新和回滚边界。
 - [Windows 运维向导](./deploy/windows/README.md)：双击执行更新、备份、回滚和状态检查，不保存 SSH 密码。
+- [systemd 首次安装与运维](./deploy/systemd/README.md)：校验发布包、创建服务、检查就绪状态、更新和回滚。
 - [Docker 部署](./deploy/docker/README.md)：仅环回地址监听、数据与备份卷、健康检查和隔离烟测。
 - [生产包约定](./deploy/PRODUCTION.md)：发布内容、版本、完整性清单和独立解包启动。
 - [AI / 维护者交接备份](./docs/HANDOFF_BACKUP.md)：完整 Git 历史、干净源码快照、未提交改动和安全恢复；业务数据库仍单独备份。

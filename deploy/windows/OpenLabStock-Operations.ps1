@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [ValidateSet('menu', 'update', 'backup', 'rollback', 'status', 'prune')]
+  [ValidateSet('menu', 'configure', 'update', 'backup', 'rollback', 'status', 'doctor', 'prune')]
   [string]$Action = 'menu'
 )
 
@@ -69,8 +69,24 @@ function Assert-SafeRemotePath([string]$Value, [string]$Label) {
   if ($Value -notmatch '^/[A-Za-z0-9._/@-]+$') { Stop-WithMessage "$Label must be an absolute path without shell characters." }
 }
 
-function Get-RemoteConfig {
+function Get-RemoteConfig([switch]$Edit) {
   $config = Get-Config
+  $hasSavedConfig = Test-Path -LiteralPath $configPath -PathType Leaf
+  if ($hasSavedConfig -and -not $Edit) {
+    Assert-SafeTarget ([string]$config.target)
+    $port = 0
+    if (-not ([int]::TryParse([string]$config.port, [ref]$port))) { Stop-WithMessage 'Saved SSH port is invalid. Choose Configure to fix it.' }
+    if ($port -lt 1 -or $port -gt 65535) { Stop-WithMessage 'Saved SSH port is outside 1-65535. Choose Configure to fix it.' }
+    foreach ($entry in @(
+      @{ Key = 'appDir'; Label = 'Application directory' },
+      @{ Key = 'dataDir'; Label = 'Data directory' },
+      @{ Key = 'envFile'; Label = 'Environment file' },
+      @{ Key = 'backupDir'; Label = 'Backup directory' },
+      @{ Key = 'updateScript'; Label = 'Update script path' }
+    )) { Assert-SafeRemotePath ([string]$config.($entry.Key)) $entry.Label }
+    if ([string]$config.serviceName -notmatch '^[A-Za-z0-9_.@-]+$') { Stop-WithMessage 'Saved service name is invalid. Choose Configure to fix it.' }
+    return $config
+  }
   $config.target = Read-Value 'SSH target (user@host)' ([string]$config.target)
   if ($config.target -notmatch '@') {
     if ($config.target -notmatch '^[A-Za-z0-9][A-Za-z0-9._:-]*$') { Stop-WithMessage 'Host or IP contains unsafe characters.' }
@@ -82,6 +98,11 @@ function Get-RemoteConfig {
   $port = 0
   if (-not [int]::TryParse($portText, [ref]$port) -or $port -lt 1 -or $port -gt 65535) { Stop-WithMessage 'SSH port must be between 1 and 65535.' }
   $config.port = $port
+  $standardLayout = Read-Host 'Use standard OpenLabStock directories and service name? [Y/n]'
+  if ([string]::IsNullOrWhiteSpace($standardLayout) -or $standardLayout.Trim().ToLowerInvariant() -eq 'y') {
+    Save-Config $config
+    return $config
+  }
   foreach ($entry in @(
     @{ Key = 'appDir'; Label = 'Application directory' },
     @{ Key = 'serviceName'; Label = 'systemd service name' },
@@ -112,7 +133,7 @@ function Quote-Bash([string]$Value) {
   return "'" + $Value + "'"
 }
 
-function Invoke-RemoteAction($Config, [ValidateSet('backup', 'rollback', 'status', 'prune')][string]$RemoteAction) {
+function Invoke-RemoteAction($Config, [ValidateSet('backup', 'rollback', 'status', 'doctor', 'prune')][string]$RemoteAction) {
   $script = @"
 set -euo pipefail
 export OPENLABSTOCK_APP_DIR=$(Quote-Bash $Config.appDir)
@@ -127,11 +148,16 @@ if [ $(Quote-Bash $RemoteAction) = 'backup' ] && ! grep -q 'backup_install()' $(
   [ -n "`$SERVICE_USER" ] && [ "`$SERVICE_USER" != '-' ] || SERVICE_USER=root
   [ -n "`$SERVICE_GROUP" ] && [ "`$SERVICE_GROUP" != '-' ] || SERVICE_GROUP="`$SERVICE_USER"
   install -d -o "`$SERVICE_USER" -g "`$SERVICE_GROUP" -m 700 $(Quote-Bash $Config.backupDir)
+  NODE_BIN=$(command -v node || true)
+  [ -n "`$NODE_BIN" ] || { echo 'Remote node command not found.' >&2; exit 1; }
   if [ "`$SERVICE_USER" = root ]; then
-    env DATA_DIR=$(Quote-Bash $Config.dataDir) BACKUP_DIR=$(Quote-Bash $Config.backupDir) $(Quote-Bash "$Config.appDir/scripts/backup.mjs")
+    env DATA_DIR=$(Quote-Bash $Config.dataDir) BACKUP_DIR=$(Quote-Bash $Config.backupDir) "`$NODE_BIN" $(Quote-Bash "$Config.appDir/scripts/backup.mjs")
   else
-    runuser -u "`$SERVICE_USER" -- env DATA_DIR=$(Quote-Bash $Config.dataDir) BACKUP_DIR=$(Quote-Bash $Config.backupDir) /usr/bin/node $(Quote-Bash "$Config.appDir/scripts/backup.mjs")
+    runuser -u "`$SERVICE_USER" -- env DATA_DIR=$(Quote-Bash $Config.dataDir) BACKUP_DIR=$(Quote-Bash $Config.backupDir) "`$NODE_BIN" $(Quote-Bash "$Config.appDir/scripts/backup.mjs")
   fi
+elif [ $(Quote-Bash $RemoteAction) = 'doctor' ] && ! grep -q 'doctor_install()' $(Quote-Bash $Config.updateScript) 2>/dev/null; then
+  echo 'Remote helper is older than the doctor command; showing status instead.'
+  $(Quote-Bash $Config.updateScript) status
 else
   $(Quote-Bash $Config.updateScript) $(Quote-Bash $RemoteAction)$(if ($RemoteAction -eq 'prune') { ' 30 --yes' } else { '' })
 fi
@@ -220,8 +246,8 @@ $(if ($Config.publicHealthUrl) { "export OPENLABSTOCK_PUBLIC_HEALTH_URL=$(Quote-
 NEXT_UPDATE_SCRIPT=$(Quote-Bash "$remoteDirectory/update-openlabstock.sh")
 tar -xOzf $(Quote-Bash "$remoteDirectory/$archiveName") deploy/systemd/update-openlabstock.sh > "`$NEXT_UPDATE_SCRIPT"
 chmod 755 "`$NEXT_UPDATE_SCRIPT"
-$(Quote-Bash $Config.updateScript) update $(Quote-Bash "$remoteDirectory/$archiveName") --manifest $(Quote-Bash "$remoteDirectory/$manifestName")
-$(Quote-Bash $Config.updateScript) status
+$(Quote-Bash $NEXT_UPDATE_SCRIPT) update $(Quote-Bash "$remoteDirectory/$archiveName") --manifest $(Quote-Bash "$remoteDirectory/$manifestName")
+$(Quote-Bash $NEXT_UPDATE_SCRIPT) status
 install -o root -g root -m 755 "`$NEXT_UPDATE_SCRIPT" $(Quote-Bash $Config.updateScript)
 echo 'Installed the update/backup helper from the verified release package.'
 "@
@@ -238,23 +264,32 @@ function Show-Menu {
   Write-Host '2. Backup database'
   Write-Host '3. Rollback application'
   Write-Host '4. Show status'
-  Write-Host '5. Prune old application directories'
+  Write-Host '5. Check deployment readiness'
+  Write-Host '6. Configure connection'
+  Write-Host '7. Prune old application directories'
   Write-Host '0. Exit'
   switch (Read-Host 'Choose an action') {
     '1' { return 'update' }
     '2' { return 'backup' }
     '3' { return 'rollback' }
     '4' { return 'status' }
-    '5' { return 'prune' }
+    '5' { return 'doctor' }
+    '6' { return 'configure' }
+    '7' { return 'prune' }
     default { return 'exit' }
   }
 }
 
 try {
-  Require-Command 'ssh'
-  Require-Command 'scp'
   if ($Action -eq 'menu') { $Action = Show-Menu }
   if ($Action -eq 'exit') { exit 0 }
+  if ($Action -eq 'configure') {
+    Get-RemoteConfig -Edit | Out-Null
+    Write-Host "`nConfiguration saved to $configPath" -ForegroundColor Green
+    exit 0
+  }
+  Require-Command 'ssh'
+  Require-Command 'scp'
   $config = Get-RemoteConfig
   switch ($Action) {
     'update' { Invoke-Update $config }
@@ -264,6 +299,7 @@ try {
       Invoke-RemoteAction $config 'rollback'
     }
     'status' { Invoke-RemoteAction $config 'status' }
+    'doctor' { Invoke-RemoteAction $config 'doctor' }
     'prune' {
       if ((Read-Host 'Delete old program directories older than 30 days? Type DELETE') -ne 'DELETE') { Stop-WithMessage 'Prune cancelled.' }
       Invoke-RemoteAction $config 'prune'
