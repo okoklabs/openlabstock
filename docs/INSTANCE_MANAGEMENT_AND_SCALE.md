@@ -4,6 +4,8 @@
 
 ## 1. 当前结论
 
+后台边界的正式决策见 [`ADMIN_CONSOLE_DECISION.md`](./ADMIN_CONSOLE_DECISION.md)：当前不增加公共共享客户后台，先把独立实例的运维协议和部署体验做稳。
+
 OpenLabStock 当前应继续保持：
 
 - 一套通用应用代码；
@@ -70,12 +72,13 @@ inventory-b.example.org -> instance-b -> data-b / backups-b
 
 ```bash
 pnpm run instance-agent -- status
+pnpm run instance-agent -- doctor
 pnpm run instance-agent -- backup
 pnpm run instance-agent -- plan update --version 2026.9.1-r66 --sha256 <发布包 SHA-256>
 pnpm run instance-agent -- plan rollback --target-version 2026.9.1-r57 --reason "健康检查失败"
 ```
 
-`status` 和 `backup` 会输出结构化实例回执；`plan update` 与 `plan rollback` 只生成带 `approvalRequired: true` 的任务 JSON，不会自行执行发布或回滚。每个任务有稳定的 `idempotencyKey`、24 小时 `expiresAt` 和“先备份、再健康检查”的前置条件；控制面重试时应按幂等键去重，并拒绝执行过期任务。任务回执默认写入数据目录下的 `instance-tasks/`，文件使用原子替换和受限权限。未来私有控制面应消费这些明确动作，并由部署适配器执行已经审核的任务；不要把网页输入直接拼接为 shell 命令。任务 JSON 只包含实例 ID、版本、校验和、时间和结果摘要，不包含库存、成员、数据库内容或凭据。
+`status`、`doctor` 和 `backup` 会输出结构化实例回执；其中 `doctor` 是只读检查，返回 `ready`、`degraded` 或 `blocked`，不会生成备份或修改库存。`plan update` 与 `plan rollback` 只生成带 `approvalRequired: true` 的任务 JSON，不会自行执行发布或回滚。每个任务有稳定的 `idempotencyKey`、24 小时 `expiresAt` 和“先备份、再健康检查”的前置条件；控制面重试时应按幂等键去重，并拒绝执行过期任务。任务回执默认写入数据目录下的 `instance-tasks/`，文件使用原子替换和受限权限。未来私有控制面应消费这些明确动作，并由部署适配器执行已经审核的任务；不要把网页输入直接拼接为 shell 命令。任务 JSON 只包含实例 ID、版本、校验和、时间和结果摘要，不包含库存、成员、数据库内容或凭据。
 
 公共仓库还提供 `scripts/instance-registry.mjs` 的纯数据协议，供私有控制面或其他部署适配器复用。实例记录只允许保存：
 

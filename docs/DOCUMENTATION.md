@@ -23,7 +23,8 @@
 2. 架构、API、数据库或权限改动再读 [`BUILD_ARCHITECTURE.md`](./BUILD_ARCHITECTURE.md)。
 3. 验证、发布或回滚时再读 [`ENGINEERING_WORKFLOW.md`](./ENGINEERING_WORKFLOW.md)。
 4. 产品方向变化时读 [`ROADMAP.md`](../ROADMAP.md)；需要成熟产品依据时读 [`PRODUCT_REVIEW.md`](../PRODUCT_REVIEW.md)。
-5. 需要转交项目或恢复另一份开发工作树时读 [`HANDOFF_BACKUP.md`](./HANDOFF_BACKUP.md)。
+5. 评估实例后台、控制面或多客户扩展时读 [`INSTANCE_MANAGEMENT_AND_SCALE.md`](./INSTANCE_MANAGEMENT_AND_SCALE.md) 与 [`ADMIN_CONSOLE_DECISION.md`](./ADMIN_CONSOLE_DECISION.md)。
+6. 需要转交项目或恢复另一份开发工作树时读 [`HANDOFF_BACKUP.md`](./HANDOFF_BACKUP.md)。
 
 同一任务内不要反复读取未变化的长文档。上下文恢复时先看 `git status`、最近提交和 `TODO.md`，再从最后一个未完成步骤继续；修改完成后运行 `pnpm run verify:auto`，正式发布前才查看 `pnpm run verify:status`。
 
@@ -51,6 +52,7 @@
 | 产品方向与触发条件 | `ROADMAP.md` | 具体实现步骤、确定发布日期 |
 | 用户可感知的发布变化 | `CHANGELOG.md` / GitHub Release | 完整测试输出、服务器操作记录 |
 | 架构和数据模型 | `BUILD_ARCHITECTURE.md` | 临时调试过程 |
+| 实例后台与扩展边界 | `INSTANCE_MANAGEMENT_AND_SCALE.md`、`ADMIN_CONSOLE_DECISION.md` | 客户清单、服务器拓扑和凭据 |
 | 代码交接与开发工作树恢复 | `HANDOFF_BACKUP.md` | 业务数据库、凭据和生产拓扑 |
 | 验证和发布门禁 | `ENGINEERING_WORKFLOW.md` | 在其他文档复制另一套命令 |
 | 通用部署方式 | `DEPLOYMENT.md`、`deploy/` | 客户、IP、凭据和真实备份 |

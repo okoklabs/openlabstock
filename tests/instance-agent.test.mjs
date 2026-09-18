@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createTask, expireTask, isTaskExpired, parseArgs, transitionTask, validateBackupManifest, validatePlan, AGENT_FORMAT, TASK_TTL_MS } from '../scripts/instance-agent.mjs';
+import { createTask, expireTask, isTaskExpired, parseArgs, summarizeDoctorReadiness, transitionTask, validateBackupManifest, validatePlan, AGENT_FORMAT, TASK_TTL_MS } from '../scripts/instance-agent.mjs';
 
 const sha256 = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
@@ -15,6 +15,12 @@ test('instance agent parses flag values without accepting an arbitrary command',
 test('instance agent exposes help without touching the instance', async () => {
   const { main } = await import('../scripts/instance-agent.mjs');
   assert.equal(await main(['--help']), 0);
+});
+
+test('instance doctor distinguishes ready, degraded and blocked checks', () => {
+  assert.equal(summarizeDoctorReadiness([{ key: 'health', status: 'ok' }]), 'ready');
+  assert.equal(summarizeDoctorReadiness([{ key: 'backup', status: 'degraded' }]), 'degraded');
+  assert.equal(summarizeDoctorReadiness([{ key: 'health', status: 'blocked' }, { key: 'backup', status: 'degraded' }]), 'blocked');
 });
 
 test('instance agent validates update and rollback plans', () => {

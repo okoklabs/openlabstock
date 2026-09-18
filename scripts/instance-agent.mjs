@@ -24,6 +24,7 @@ export const TASK_TTL_MS = 24 * 60 * 60 * 1000;
 export const AGENT_FORMAT = 1;
 export const ALLOWED_ACTIONS = Object.freeze(['status', 'backup', 'update', 'rollback']);
 export const TASK_STATUSES = Object.freeze(['planned', 'approved', 'running', 'succeeded', 'failed', 'expired']);
+export const DOCTOR_READINESS = Object.freeze(['ready', 'degraded', 'blocked']);
 
 const TASK_TRANSITIONS = Object.freeze({
   planned: Object.freeze(['approved', 'failed', 'expired']),
@@ -384,6 +385,67 @@ async function latestBackupManifest(backupDir) {
   return validateBackupManifest(manifest, databaseStats);
 }
 
+async function readPackageVersion(appDir) {
+  try {
+    const packageJson = JSON.parse(await readFile(path.join(appDir, 'package.json'), 'utf8'));
+    return typeof packageJson.version === 'string' && packageJson.version.length > 0 ? packageJson.version : null;
+  } catch {
+    return null;
+  }
+}
+
+export function summarizeDoctorReadiness(checks) {
+  if (checks.some((check) => check.status === 'blocked')) return 'blocked';
+  if (checks.some((check) => check.status === 'degraded')) return 'degraded';
+  return 'ready';
+}
+
+async function runDoctor(config, base) {
+  const checks = [];
+  const addCheck = (key, status, message) => checks.push({ key, status, message });
+  const requiredFiles = ['package.json', 'server.mjs', 'dist/index.html', 'scripts/backup.mjs'];
+  for (const relativePath of requiredFiles) {
+    const absolutePath = path.join(config.appDir, relativePath);
+    if (existsSync(absolutePath)) addCheck(`app.${relativePath}`, 'ok', '存在');
+    else addCheck(`app.${relativePath}`, 'blocked', '缺少必需文件');
+  }
+
+  const packageVersion = await readPackageVersion(config.appDir);
+  if (packageVersion) addCheck('app.version', 'ok', packageVersion);
+  else addCheck('app.version', 'blocked', '无法读取 package.json 版本');
+
+  if (existsSync(config.dataDir)) addCheck('data.directory', 'ok', '数据目录存在');
+  else addCheck('data.directory', 'blocked', '数据目录不存在');
+
+  let health = null;
+  try {
+    health = await fetchHealth(config);
+    addCheck('runtime.health', 'ok', '健康检查通过');
+  } catch (error) {
+    addCheck('runtime.health', 'blocked', error instanceof AgentError ? error.message : '健康检查失败');
+  }
+
+  let backup = null;
+  try {
+    backup = await latestBackupManifest(config.backupDir);
+    if (backup) addCheck('backup.latest', 'ok', `${backup.database}；${backup.bytes} bytes`);
+    else addCheck('backup.latest', 'degraded', '尚未找到一致性备份');
+  } catch (error) {
+    addCheck('backup.latest', 'degraded', error instanceof AgentError ? error.message : '最近备份无法读取');
+  }
+
+  return {
+    ...base,
+    status: 'succeeded',
+    completedAt: new Date().toISOString(),
+    readiness: summarizeDoctorReadiness(checks),
+    checks,
+    ...(packageVersion ? { packageVersion } : {}),
+    ...(health ? { health } : {}),
+    ...(backup ? { backup } : {}),
+  };
+}
+
 function runBackup(config) {
   const backupScript = path.join(config.appDir, 'scripts', 'backup.mjs');
   if (!existsSync(backupScript)) throw new AgentError('BACKUP_SCRIPT_MISSING', '部署目录缺少 scripts/backup.mjs');
@@ -412,7 +474,7 @@ function runBackup(config) {
 async function runCommand(parsed, taskId, requestedAt) {
   const config = instanceConfig(parsed.options);
   const command = parsed.positionals[0];
-  if ((command === 'status' || command === 'backup') && parsed.positionals.length !== 1) {
+  if ((command === 'status' || command === 'backup' || command === 'doctor') && parsed.positionals.length !== 1) {
     throw new AgentError('INVALID_ARGUMENT', `${command} 不接受额外位置参数`);
   }
   if (command === 'plan' && parsed.positionals.length !== 2) {
@@ -424,6 +486,10 @@ async function runCommand(parsed, taskId, requestedAt) {
   if (command === 'status') {
     const health = await fetchHealth(config);
     return { ...base, status: 'succeeded', completedAt: new Date().toISOString(), health };
+  }
+
+  if (command === 'doctor') {
+    return runDoctor(config, base);
   }
 
   if (command === 'backup') {
@@ -441,7 +507,7 @@ async function runCommand(parsed, taskId, requestedAt) {
     return plan;
   }
 
-  throw new AgentError('INVALID_ARGUMENT', '用法：instance-agent.mjs status | backup | plan update | plan rollback');
+  throw new AgentError('INVALID_ARGUMENT', '用法：instance-agent.mjs status | doctor | backup | plan update | plan rollback');
 }
 
 function print(value, compact) {
@@ -453,6 +519,7 @@ function usage() {
     '用法：node scripts/instance-agent.mjs <命令>',
     '',
     '  status                                                     查看健康摘要',
+    '  doctor                                                     只读检查程序、数据、健康和最近备份',
     '  backup                                                     生成并校验一致性备份',
     '  plan update --version <版本> --sha256 <SHA-256>             生成待批准更新任务',
     '  plan rollback --target-version <版本> [--reason <原因>]      生成待批准回滚任务',
@@ -464,7 +531,7 @@ export async function main(argv = process.argv.slice(2)) {
   const parsed = parseArgs(argv);
   const command = parsed.positionals[0];
   if (parsed.options.help) { usage(); return 0; }
-  if (!command) throw new AgentError('USAGE', '用法：node scripts/instance-agent.mjs status | backup | plan update | plan rollback');
+  if (!command) throw new AgentError('USAGE', '用法：node scripts/instance-agent.mjs status | doctor | backup | plan update | plan rollback');
   const config = instanceConfig(parsed.options);
   const taskId = `task-${Date.now()}-${randomUUID().slice(0, 12)}`;
   const requestedAt = new Date().toISOString();
@@ -479,7 +546,7 @@ export async function main(argv = process.argv.slice(2)) {
     print(result, Boolean(parsed.options.compact));
     return 1;
   }
-  if (command === 'status' || command === 'backup') await writeReceipt(config.taskDir, result);
+  if (command === 'status' || command === 'backup' || command === 'doctor') await writeReceipt(config.taskDir, result);
   print(result, Boolean(parsed.options.compact));
   return 0;
 }
